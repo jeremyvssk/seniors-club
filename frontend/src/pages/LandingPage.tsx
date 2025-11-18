@@ -1,9 +1,7 @@
-import React from 'react';
-import logoImg from '../assets/images/logo.png';
-import bgImg from '../assets/images/landing_bg.jpg';
-import { useNavigate } from 'react-router-dom';
-
-
+import React from "react";
+import logoImg from "../assets/images/logo.png";
+import bgImg from "../assets/images/landing_bg.jpg";
+import { useNavigate } from "react-router-dom";
 
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +13,10 @@ const SeniorsClubLanding: React.FC = () => {
         <div className="text-center">
           {/* Logo */}
           <div className="inline-block">
-            <div style={{ backgroundImage: `url(${logoImg})` }} className="h-48 w-32 bg-cover bg-center"></div>
+            <div
+              style={{ backgroundImage: `url(${logoImg})` }}
+              className="h-48 w-32 bg-cover bg-center"
+            ></div>
           </div>
         </div>
       </div>
@@ -23,7 +24,7 @@ const SeniorsClubLanding: React.FC = () => {
       {/* Hero Section */}
       <div className="flex-1 relative">
         {/* Background Image with Overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${bgImg})` }}
         >
@@ -46,28 +47,32 @@ const SeniorsClubLanding: React.FC = () => {
             {/* Login Card */}
             <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center min-w-[280px] hover:bg-black/50 transition-all">
               <p className="text-white text-lg mb-6 text-center">
-                Already an<br />user?
+                Already an
+                <br />
+                user?
               </p>
-              <button 
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-3 px-8 py-3 bg-white/10 border-2 border-white text-white rounded-full hover:bg-white/20 transition-all text-lg font-medium">
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-3 px-8 py-3 bg-white/10 border-2 border-white text-white rounded-full hover:bg-white/20 transition-all text-lg font-medium"
+              >
                 Log in
-                <div className="bg-white rounded-full p-1.5">
-                 
-                </div>
+                <div className="bg-white rounded-full p-1.5"></div>
               </button>
             </div>
 
             {/* Sign Up Card */}
             <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center min-w-[280px] hover:bg-black/50 transition-all">
               <p className="text-white text-lg mb-6 text-center">
-                Sign up to get<br />started!
+                Sign up to get
+                <br />
+                started!
               </p>
-              <button className="flex items-center gap-3 px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all text-lg font-medium shadow-lg">
+              <button
+                onClick={() => navigate("/signup")}
+                className="flex items-center gap-3 px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all text-lg font-medium shadow-lg"
+              >
                 Sign up
-                <div className="bg-white rounded-full p-1.5">
-                
-                </div>
+                <div className="bg-white rounded-full p-1.5"></div>
               </button>
             </div>
           </div>
@@ -78,3 +83,5 @@ const SeniorsClubLanding: React.FC = () => {
 };
 
 export default SeniorsClubLanding;
+
+
