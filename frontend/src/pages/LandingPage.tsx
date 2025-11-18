@@ -1,8 +1,13 @@
 import React from 'react';
 import logoImg from '../assets/images/logo.png';
+import bgImg from '../assets/images/landing_bg.jpg';
+import { useNavigate } from 'react-router-dom';
+
 
 
 const SeniorsClubLanding: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-teal-900 flex flex-col">
       {/* Logo Section */}
@@ -10,7 +15,7 @@ const SeniorsClubLanding: React.FC = () => {
         <div className="text-center">
           {/* Logo */}
           <div className="inline-block">
-            <div style={{ backgroundImage: `url(${logoImg})` }} className="h-16 w-16 bg-cover bg-center"></div>
+            <div style={{ backgroundImage: `url(${logoImg})` }} className="h-48 w-32 bg-cover bg-center"></div>
           </div>
         </div>
       </div>
@@ -20,9 +25,7 @@ const SeniorsClubLanding: React.FC = () => {
         {/* Background Image with Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url('data:image/svg+xml,%3Csvg width="800" height="600" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cfilter id="blur"%3E%3CfeGaussianBlur stdDeviation="3"/%3E%3C/filter%3E%3C/defs%3E%3Cg filter="url(%23blur)"%3E%3Crect width="800" height="600" fill="%23c4b5a0"/%3E%3Ccircle cx="200" cy="150" r="80" fill="%23e8d5c4" opacity="0.6"/%3E%3Ccircle cx="600" cy="200" r="60" fill="%23f0e5d8" opacity="0.5"/%3E%3Cellipse cx="400" cy="400" rx="150" ry="100" fill="%23d4c5b4" opacity="0.4"/%3E%3Ccircle cx="150" cy="450" r="50" fill="%23f5e8dc" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E')`,
-          }}
+          style={{ backgroundImage: `url(${bgImg})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-teal-900/40 via-teal-800/30 to-teal-900/60"></div>
         </div>
@@ -45,7 +48,9 @@ const SeniorsClubLanding: React.FC = () => {
               <p className="text-white text-lg mb-6 text-center">
                 Already an<br />user?
               </p>
-              <button className="flex items-center gap-3 px-8 py-3 bg-white/10 border-2 border-white text-white rounded-full hover:bg-white/20 transition-all text-lg font-medium">
+              <button 
+              onClick={() => navigate('/login')}
+              className="flex items-center gap-3 px-8 py-3 bg-white/10 border-2 border-white text-white rounded-full hover:bg-white/20 transition-all text-lg font-medium">
                 Log in
                 <div className="bg-white rounded-full p-1.5">
                  
