@@ -17,6 +17,9 @@ model User {
   id        Int     @id @default(autoincrement())
   email     String  @unique
   password  String
-  name      String
-  picture   String? @default("user")
 }
+
+// npx prisma migrate dev --name init
+// - command to create the tables in the database based on the structure above 
+// npx prisma generate
+// - command to create a client that interacts with the database via server.js
