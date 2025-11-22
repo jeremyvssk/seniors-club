@@ -1,15 +1,19 @@
-dotenv.config();
-
-import express from "express";
 import dotenv from "dotenv";
-
-//this might cause some errors.. for somerason it wants me to use SignUp w caps..
+import express from "express";
+import cors from "cors";
 import signupRoutes from "./routes/signup.js";
 import { PrismaClient } from "@prisma/client";
+
+dotenv.config();
 
 // app and prisma instances to call for later on
 const app = express();
 const prisma = new PrismaClient();
+
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 
 app.use(express.json());
 
@@ -17,7 +21,7 @@ app.use(express.json());
 app.use("/routes/signup", signupRoutes);
 
 //what port to use
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });

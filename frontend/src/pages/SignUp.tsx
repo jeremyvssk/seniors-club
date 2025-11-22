@@ -6,29 +6,49 @@ const SeniorsClubSignUp: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setrepeatPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-  // Handle signup logic here, checks if passwords match
-
+    // Handle signup logic here, checks if passwords match
 
     const repeatInput = e.currentTarget.repeatpassword as HTMLInputElement;
 
     if (password !== repeatPassword) {
       repeatInput.setCustomValidity("Passwords do not match"); //browser needs to validate that passwords match to submit
-      repeatInput.reportValidity(); //gives a popup that this field needs to be filled. 
+      repeatInput.reportValidity(); //gives a popup that this field needs to be filled.
       return;
     } else {
-      repeatInput.setCustomValidity(""); //if match, all good and clears error. 
+      repeatInput.setCustomValidity(""); //if match, all good and clears error.
     }
 
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:3001/routes/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
+      const data = await response.json();
 
-
-    console.log("Email:", email);
-    console.log("Repeat Password:", password);
+      if (response.ok) {
+        // Success! Redirect to login
+        console.log("User created:", data);
+        navigate("/login");
+      } else {
+        // Show error message from backend
+        setError(data.message || "Sign up failed");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,7 +60,11 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 
       <div className="relative z-10 bg-black/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md">
         <h2 className="text-3xl font-serif text-center mb-8">Sign up</h2>
-
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -96,9 +120,10 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 
           <button
             type="submit"
-            className="w-full px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all text-lg font-medium shadow-lg"
+            disabled={loading}
+            className="w-full px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all text-lg font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign up
+            {loading ? "Signing up..." : "Sign up"}
           </button>
         </form>
 
