@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 //create a router and prisma client to use
 const router = Router();
@@ -23,9 +24,11 @@ router.post("/", async (req: Request, res: Response) => {
     if (existingUser) {
       return res.status(409).json({ message: "Email already in use." });
     }
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
     //if not, creates a new user - this is where we add password crypts I think
     const newUser = await prisma.user.create({
-      data: { email, password },
+      data: { email, password: passwordHash },
     });
 
     //user created messaged

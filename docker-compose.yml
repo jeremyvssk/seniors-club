@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: matchme-db
+    restart: always
+    environment:
+      POSTGRES_USER: matchme_user
+      POSTGRES_PASSWORD: matchme-password
+      POSTGRES_DB: matchme
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

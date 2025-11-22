@@ -28,7 +28,7 @@ const SeniorsClubLanding: React.FC = () => {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${bgImg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-teal-900/40 via-teal-800/30 to-teal-900/60"></div>
+          <div className="absolute inset-0 bg-linear-to-b from-teal-900/40 via-teal-800/30 to-teal-900/60"></div>
         </div>
 
         {/* Content */}
