@@ -21,7 +21,7 @@ app.use(express.json());
 app.use("/api/signup", signupRoutes);
 
 //what port to use
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
