@@ -34,7 +34,7 @@ router.post("/", async (req: Request, res: Response) => {
     //user created messaged
     return res
       .status(201)
-      .json({ message: "Congratiolations! User created.", userId: newUser.id });
+      .json({ message: "Congratulations! User created.", userId: newUser.id });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error." });

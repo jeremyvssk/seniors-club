@@ -6,12 +6,35 @@ const SeniorsClubLogIn: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
-
-    const handleSubmit = (e: React.FormEvent) => {
+    // function that runs when login button is clicked
+    const handleSubmit = async (e: React.FormEvent) => {
+        // stops the form from refreshing the page
         e.preventDefault();
-        // Handle login logic here
-        console.log('Email:', email);
-        console.log('Password:', password);
+        try {
+            // create a post request to /api/login
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // sends email and password to backend (JSON.stringify converts it to a string {email: madis@mail.ee, password:123})
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // stores JWT token in browsers localStorage atm
+                localStorage.setItem('token', data.token);
+                // same with id and email
+                localStorage.setItem('user', JSON.stringify(data.user));
+                alert('Login successful!');
+                // returns user to landing page atm, need to switch this when we have home page
+                navigate('/');
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Login failed');
+        }
       };
 
 return (
@@ -67,7 +90,7 @@ return (
             onClick={() => navigate('/')}
             className="mt-6 w-full text-center text-white/80 hover:text-white transition-all"
             >
-               👈 Back to home
+               Back to home
             </button>
 
      </div>

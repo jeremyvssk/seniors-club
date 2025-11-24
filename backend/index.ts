@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import signupRoutes from "./routes/signup.js";
+import signupRouter from "./api/signup.js";
+import loginRouter from "./api/login.js";
 import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
@@ -18,7 +19,8 @@ app.use(cors({
 app.use(express.json());
 
 //to use the signup.ts
-app.use("/api/signup", signupRoutes);
+app.use("/api/signup", signupRouter);
+app.use("/api/login", loginRouter);
 
 //what port to use
 const PORT = process.env.PORT || 3001;
