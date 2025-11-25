@@ -2,6 +2,7 @@ import React from "react";
 import logoImg from "../assets/images/logo.png";
 import bgImg from "../assets/images/landing_bg.jpg";
 import { useNavigate } from "react-router-dom";
+import { AuthButton } from "../components/AuthButtons";
 
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
@@ -51,13 +52,13 @@ const SeniorsClubLanding: React.FC = () => {
                 <br />
                 user?
               </p>
-              <button
+              <AuthButton 
+                variant="login"
                 onClick={() => navigate("/login")}
-                className="flex items-center gap-3 px-8 py-3 bg-white/10 border-2 border-white text-white rounded-full hover:bg-white/20 transition-all text-lg font-medium"
+                className="px-8 py-3"
               >
                 Log in
-                <div className="bg-white rounded-full p-1.5"></div>
-              </button>
+              </AuthButton>
             </div>
 
             {/* Sign Up Card */}
@@ -67,13 +68,13 @@ const SeniorsClubLanding: React.FC = () => {
                 <br />
                 started!
               </p>
-              <button
+              <AuthButton 
+                variant="signup"
                 onClick={() => navigate("/signup")}
-                className="flex items-center gap-3 px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-all text-lg font-medium shadow-lg"
+                className="px-8 py-3"
               >
                 Sign up
-                <div className="bg-white rounded-full p-1.5"></div>
-              </button>
+              </AuthButton>
             </div>
           </div>
         </div>

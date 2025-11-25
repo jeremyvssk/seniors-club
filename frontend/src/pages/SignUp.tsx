@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logoImg from "../assets/images/logo.png";
 import { useNavigate } from "react-router-dom";
+import { AuthButton } from "../components/AuthButtons";
 
 const SeniorsClubSignUp: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -127,12 +128,13 @@ const SeniorsClubSignUp: React.FC = () => {
           </button>
         </form>
 
-        <button
+        <AuthButton 
+          variant="link"
           onClick={() => navigate("/")}
-          className="mt-6 w-full text-center text-white/80 hover:text-white transition-all"
+          className="mt-6 w-full"
         >
-          👈 Back to home
-        </button>
+          Back to home
+        </AuthButton>
       </div>
     </div>
   );
