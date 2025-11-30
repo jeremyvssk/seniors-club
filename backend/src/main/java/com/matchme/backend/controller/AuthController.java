@@ -34,7 +34,7 @@ public class AuthController {
             );
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-            
+        // error handling here atm, should do a seperate file for error handling later
         } catch (IllegalArgumentException e) {
             // Email already exists
             Map<String, String> error = new HashMap<>();
