@@ -1,80 +1,53 @@
 import React from "react";
-import logoImg from "../assets/images/logo.png";
-import bgImg from "../assets/images/landing_bg.jpg";
 import { useNavigate } from "react-router-dom";
-import { AuthButton } from "../components/AuthButtons";
+import Header from '../components/Header';
+import exampleImg from '../assets/images/example.svg';
+import LogInButton from "../components/LogInButton";
+import SignUpButton from "../components/SignUpButton";
 
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-teal-900 flex flex-col">
-      {/* Logo Section */}
-      <div className="w-full bg-teal-800 py-8 flex justify-center">
-        <div className="text-center">
-          {/* Logo */}
-          <div className="inline-block">
-            <div
-              style={{ backgroundImage: `url(${logoImg})` }}
-              className="h-48 w-32 bg-cover bg-center"
-            ></div>
-          </div>
-        </div>
-      </div>
+    <div>
+      <Header  />
+      <div className="min-h-screen flex flex-col items-center px-6 pt-4 pb-16"
+              style={{
+                background: "linear-gradient(to top, #C74815, #f8fafc )"
+              }}>
+        <div className="max-w-2xl w-full text-center">
 
-      {/* Hero Section */}
-      <div className="flex-1 relative">
-        {/* Background Image with Overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${bgImg})` }}
-        >
-          <div className="absolute inset-0 bg-linear-to-b from-teal-900/40 via-teal-800/30 to-teal-900/60"></div>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 py-16">
-          <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-serif text-white mb-4">
-              Welcome to Senior's Club!
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 font-light">
-              Find your soulmates
-            </p>
-          </div>
-
-          {/* Action Cards */}
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12 max-w-4xl w-full justify-center">
-            {/* Login Card */}
-            <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center min-w-[280px] hover:bg-black/50 transition-all">
-              <p className="text-white text-lg mb-6 text-center">
-                Already an
-                <br />
-                user?
+          {/* Welcome message */}
+          <h1 className="text-5xl text-slate-900 mb-6 font-bold">
+            Welcome to Senior's Club!
+          </h1>
+          
+          {/* Grid Container */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            
+            {/* Left Column */}
+            <div className="flex flex-col items-start justify-center lg:items-start text-left lg:text-left">
+              {/* Text for Log in button */}
+              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed">
+                Already an user?
               </p>
-              <AuthButton 
-                variant="login"
-                onClick={() => navigate("/login")}
-                className="px-8 py-3"
-              >
-                Log in
-              </AuthButton>
+              <LogInButton onClick={() => navigate('/login')} className="mb-4"/>
+              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed">
+                Join us!
+              </p>
+              <SignUpButton onClick={() => navigate('/signup')} />
             </div>
 
-            {/* Sign Up Card */}
-            <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center min-w-[280px] hover:bg-black/50 transition-all">
-              <p className="text-white text-lg mb-6 text-center">
-                Sign up to get
-                <br />
-                started!
+            {/* Right Column */}
+            <div className="flex flex-col items-center justify-center">
+              <img 
+                src={exampleImg} 
+                alt="Example" 
+                className="max-w-md lg:max-w-xl w-full h-auto object-contain"
+              />
+              <p className="text-xl text-slate-50 font-medium mt-2">
+                All your new friends are here!
               </p>
-              <AuthButton 
-                variant="signup"
-                onClick={() => navigate("/signup")}
-                className="px-8 py-3"
-              >
-                Sign up
-              </AuthButton>
             </div>
           </div>
         </div>
@@ -84,5 +57,3 @@ const SeniorsClubLanding: React.FC = () => {
 };
 
 export default SeniorsClubLanding;
-
-
