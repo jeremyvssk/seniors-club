@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SignUpButton from "../components/SignUpButton";
-import HomeButton from "../components/HomeButton";
+import SignUpButton from "../components/buttons/SignUpButton";
+import HomeButton from "../components/buttons/HomeButton";
 import Header from "../components/Header";
 
 const SeniorsClubSignUp: React.FC = () => {
@@ -60,10 +60,10 @@ const SeniorsClubSignUp: React.FC = () => {
       <div
         className="min-h-screen text-white p-10 relative flex flex-col items-center px-6 pt-4 pb-16" 
         style={{
-          background: "linear-gradient(to top, #C74815, #f8fafc )"
+          background: "linear-gradient(to top, #3b82f6, #f8fafc )"
         }}>
       
-        <div className="relative z-10 bg-white/60 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
+        <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
           <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">Sign up</h2>
           {error && (
             <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm">

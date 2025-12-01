@@ -2,8 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from '../components/Header';
 import exampleImg from '../assets/images/example.svg';
-import LogInButton from "../components/LogInButton";
-import SignUpButton from "../components/SignUpButton";
+import LogInButton from "../components/buttons/LogInButton";
+import SignUpButton from "../components/buttons/SignUpButton";
 
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const SeniorsClubLanding: React.FC = () => {
       <Header  />
       <div className="min-h-screen flex flex-col items-center px-6 pt-4 pb-16"
               style={{
-                background: "linear-gradient(to top, #C74815, #f8fafc )"
+                background: "linear-gradient(to top, #3b82f6, #f8fafc )"
               }}>
         <div className="max-w-2xl w-full text-center">
 
