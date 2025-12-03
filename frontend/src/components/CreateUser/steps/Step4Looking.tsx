@@ -1,6 +1,7 @@
 import { UserFormData } from '../../../types/User';
-import NextButton from '../../buttons/NextButton';
-import PrevStepButton from '../../buttons/PrevStepButton';
+import NextButton from '../../Buttons/NextButton';
+import PrevStepButton from '../../Buttons/PrevStepButton';
+import { Heart, Handshake, Plane } from "lucide-react";
 
 interface Step4Props {
   data: UserFormData;
@@ -13,19 +14,19 @@ const options = [
   {
     value: 'love' as const,
     label: 'Love',
-    icon: '❤️',
+    icon: <Heart />,
     description: 'Looking for a romantic relationship',
   },
   {
     value: 'friend' as const,
     label: 'Friend',
-    icon: '🤝',
+    icon: <Handshake />,
     description: 'Looking for companionship and friendship',
   },
   {
     value: 'travel' as const,
     label: 'Travel Buddy',
-    icon: '✈️',
+    icon: <Plane />,
     description: 'Looking for someone to explore with',
   },
 ];
@@ -84,9 +85,11 @@ const Step4Looking = ({ data, updateData, onNext, onBack }: Step4Props) => {
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex gap-4 pt-2">
-          <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
+        <div className="flex-col gap-4 pt-2">
+          
           <NextButton type="submit" className="flex-1 py-4 text-xl" onClick={onNext} />
+          <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
+
         </div>
       </form>
     </div>

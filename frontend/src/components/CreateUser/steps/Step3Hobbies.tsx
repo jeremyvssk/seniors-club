@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UserFormData } from '../../../types/User';
-import NextButton from '../../buttons/NextButton';
-import PrevStepButton from '../../buttons/PrevStepButton';
+import NextButton from '../../Buttons/NextButton';
+import PrevStepButton from '../../Buttons/PrevStepButton';
 
 interface Step3Props {
   data: UserFormData;
@@ -106,9 +106,11 @@ const Step3Hobbies = ({ data, updateData, onNext, onBack }: Step3Props) => {
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex gap-4">
-          <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
+        <div className="flex-col gap-4">
+          
           <NextButton type="submit" className="flex-1 py-4 text-xl" onClick={onNext} />
+          <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
+          
         </div>
       </form>
     </div>

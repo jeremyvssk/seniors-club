@@ -1,9 +1,9 @@
 import React from "react";
 import { useNavigate } from 'react-router-dom';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import HomeButton from "../components/buttons/HomeButton";
-import LogInButton from "../components/buttons/LogInButton";
-import Header from "../components/Header";
+import HomeButton from "../components/Buttons/HomeButton";
+import LogInButton from "../components/Buttons/LogInButton";
+import Header from "../components/Headers/Header";
 
 type LogInFields = {
     email: string;

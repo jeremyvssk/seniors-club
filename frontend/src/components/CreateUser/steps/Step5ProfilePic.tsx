@@ -1,6 +1,10 @@
 import { useState, useRef } from 'react';
 import { UserFormData } from '../../../types/User';
-import PrevStepButton from '../../buttons/PrevStepButton';
+import PrevStepButton from '../../Buttons/PrevStepButton';
+import CompleteProfileButton from '../../Buttons/CompleteProfile';
+
+
+
 
 interface Step5Props {
   data: UserFormData;
@@ -81,9 +85,16 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
             <div className="w-full border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors bg-white/10">
               <div className="text-6xl mb-4">📷</div>
               <p className="text-slate-600 mb-4">No photo selected</p>
-              <label 
+              
+            </div>
+          )}
+        </div>
+
+        {/* Upload Info */}
+        <div className="text-center space-y-1">
+        <label 
                 htmlFor="profilePic" 
-                className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors cursor-pointer"
+                className="inline-block px-6 py-2 bg-white hover:bg-slate-50 text-slate-800 rounded-lg font-medium transition-colors cursor-pointer -mt-4"
               >
                 Choose Photo
               </label>
@@ -95,25 +106,17 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
                 onChange={handleFileChange}
                 className="hidden"
               />
-            </div>
-          )}
-        </div>
 
-        {/* Upload Info */}
-        <div className="text-center space-y-1">
           <p className="text-sm text-slate-500">Supported formats: JPG, PNG, GIF</p>
           <p className="text-sm text-slate-500">Maximum size: 5MB</p>
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex gap-4 pt-2">
+        <div className="flex-col gap-4 pt-2">
+          
+          <CompleteProfileButton type="submit" className="flex-1 py-4 text-xl" onClick={onSubmit} />
           <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
-          <button
-            type="submit"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-xl text-xl font-medium transition-all shadow-md hover:shadow-lg"
-          >
-            Complete Profile
-          </button>
+
         </div>
       </form>
     </div>

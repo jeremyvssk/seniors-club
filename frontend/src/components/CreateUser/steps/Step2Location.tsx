@@ -1,6 +1,6 @@
 import { UserFormData } from '../../../types/User';
-import NextButton from '../../buttons/NextButton';
-import PrevStepButton from '../../buttons/PrevStepButton';
+import NextButton from '../../Buttons/NextButton';
+import PrevStepButton from '../../Buttons/PrevStepButton';
 
 interface Step2Props {
   data: UserFormData;
