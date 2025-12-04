@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SignUpButton from "../components/buttons/SignUpButton";
 import HomeButton from "../components/buttons/HomeButton";
 import Header from "../components/headers/Header";
+import api from "../api/axios";
 
 const SeniorsClubSignUp: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -29,25 +30,25 @@ const SeniorsClubSignUp: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await api.post('/signup', {
+        email,
+        password
       });
 
-      const data = await response.json();
+      // Success! Redirect to login
+      console.log("User created:", response.data);
+      navigate("/login");
 
-      if (response.ok) {
-        // Success! Redirect to login
-        console.log("User created:", data);
-        navigate("/login");
+    } catch (error: any) {
+      if (error.response) {
+        // Server responded with error
+        setError(error.response.data.message || "Sign up failed");
+      } else if (error.request) {
+        // Request made but no response
+        setError("Network error. Please try again.");
       } else {
-        // Show error message from backend
-        setError(data.message || "Sign up failed");
+        setError("An error occurred");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }

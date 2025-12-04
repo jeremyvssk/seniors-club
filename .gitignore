@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.local
+
+# Docker volumes (if needed)
+*.log
+
+# Ignore README temporarily
+README.md

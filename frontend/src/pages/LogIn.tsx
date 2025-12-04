@@ -4,6 +4,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import HomeButton from "../components/buttons/HomeButton";
 import LogInButton from "../components/buttons/LogInButton";
 import Header from "../components/headers/Header";
+import api from "../api/axios";
 
 type LogInFields = {
     email: string;
@@ -21,28 +22,34 @@ const SeniorsClubLogIn: React.FC = () => {
 
     const onSubmit: SubmitHandler<LogInFields> = async (data) => {
         try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: data.email, password: data.password }),
+            const response = await api.post('/login', {
+                email: data.email,
+                password: data.password
             });
 
-            const responseData = await response.json();
+            // Axios automatically parses JSON, data is in response.data
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            alert('Login successful!');
+            navigate('/');
 
-            if (response.ok) {
-                localStorage.setItem('token', responseData.token);
-                localStorage.setItem('user', JSON.stringify(responseData.user));
-                alert('Login successful!');
-                navigate('/');
+        } catch (error: any) {
+            // Axios error handling
+            if (error.response) {
+                // Server responded with error
+                setError('root', {
+                    message: error.response.data.message || 'Login failed'
+                });
+            } else if (error.request) {
+                // Request made but no response
+                setError('root', {
+                    message: 'Network error. Please try again.'
+                });
             } else {
                 setError('root', {
-                    message: responseData.message || 'Login failed'
+                    message: 'An error occurred'
                 });
             }
-        } catch (error) {
-            setError('root', {
-                message: 'Network error. Please try again.'
-            });
         }
     }; 
 
