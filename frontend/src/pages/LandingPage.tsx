@@ -2,8 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from '../components/headers/Header';
 import exampleImg from '../assets/images/example.svg';
-import LogInButton from "../components/Buttons/LogInButton";
-import SignUpButton from "../components/Buttons/SignUpButton";
+import LogInButton from "../components/buttons/LogInButton";
+import SignUpButton from "../components/buttons/SignUpButton";
 
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
