@@ -1,6 +1,6 @@
 import React from 'react';
-import Header from '../components/Headers/Header';
-import CreateUser from '../components/CreateUser';
+import Header from '../components/headers/Header';
+import CreateUser from '../components/create-user';
 
 const TestPage: React.FC = () => {
   return (

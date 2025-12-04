@@ -29,3 +29,6 @@ dist-ssr
 
 # Vite cache
 .vite
+
+# macOS
+.DS_Store

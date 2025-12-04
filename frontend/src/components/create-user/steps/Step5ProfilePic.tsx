@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { UserFormData } from '../../../types/User';
-import PrevStepButton from '../../Buttons/PrevStepButton';
-import CompleteProfileButton from '../../Buttons/CompleteProfile';
+import PrevStepButton from '../../buttons/PrevStepButton';
+import CompleteProfileButton from '../../buttons/CompleteProfile';
 
 
 

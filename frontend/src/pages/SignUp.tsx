@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SignUpButton from "../components/Buttons/SignUpButton";
-import HomeButton from "../components/Buttons/HomeButton";
-import Header from "../components/Headers/Header";
+import SignUpButton from "../components/buttons/SignUpButton";
+import HomeButton from "../components/buttons/HomeButton";
+import Header from "../components/headers/Header";
 
 const SeniorsClubSignUp: React.FC = () => {
   const [email, setEmail] = useState("");
