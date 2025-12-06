@@ -16,7 +16,7 @@ public class UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
+
     public User createUser(String email, String password) {
         // Check if email already exists
         if (userRepository.existsByEmail(email)) {
