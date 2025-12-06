@@ -7,6 +7,8 @@ import Step4Looking from './steps/Step4Looking';
 import Step5ProfilePic from './steps/Step5ProfilePic';
 import { UserFormData } from '../../types/User';
 
+
+
 const CreateUser = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<UserFormData>({
@@ -18,6 +20,8 @@ const CreateUser = () => {
     lookingFor: 'love',
     profilePicture: null,
   });
+
+  
 
   const totalSteps = 5;
 
@@ -108,3 +112,5 @@ const CreateUser = () => {
 };
 
 export default CreateUser;
+
+//kas siin peaks olema see, et ta saadab data backendi tagasi

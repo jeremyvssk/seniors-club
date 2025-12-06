@@ -114,7 +114,7 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
         {/* Navigation Buttons */}
         <div className="flex-col gap-4 pt-2">
           
-          <CompleteProfileButton type="submit" className="flex-1 py-4 text-xl" onClick={onSubmit} />
+          <CompleteProfileButton type="submit" className="flex-1 py-4 text-xl" />
           <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
 
         </div>

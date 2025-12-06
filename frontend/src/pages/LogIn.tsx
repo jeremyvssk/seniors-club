@@ -1,135 +1,151 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { useNavigate } from "react-router-dom";
+import { SubmitHandler, useForm } from "react-hook-form";
 import HomeButton from "../components/buttons/HomeButton";
 import LogInButton from "../components/buttons/LogInButton";
 import Header from "../components/headers/Header";
 import api from "../api/axios";
 
 type LogInFields = {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 };
 
 const SeniorsClubLogIn: React.FC = () => {
-    const navigate = useNavigate();
-    const { 
-        register,
-        handleSubmit, 
-        formState: { errors, isSubmitting },
-        setError
-    } = useForm<LogInFields>(); 
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LogInFields>();
 
-    const onSubmit: SubmitHandler<LogInFields> = async (data) => {
-        try {
-            const response = await api.post('/login', {
-                email: data.email,
-                password: data.password
-            });
+  const onSubmit: SubmitHandler<LogInFields> = async (data) => {
+    try {
+      const response = await api.post("/login", {
+        email: data.email,
+        password: data.password,
+      });
 
-            // Axios automatically parses JSON, data is in response.data
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            alert('Login successful!');
-            navigate('/');
+      // Axios automatically parses JSON, data is in response.data
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-        } catch (error: any) {
-            // Axios error handling
-            if (error.response) {
-                // Server responded with error
-                setError('root', {
-                    message: error.response.data.message || 'Login failed'
-                });
-            } else if (error.request) {
-                // Request made but no response
-                setError('root', {
-                    message: 'Network error. Please try again.'
-                });
-            } else {
-                setError('root', {
-                    message: 'An error occurred'
-                });
-            }
-        }
-    }; 
+      // checks if there is a profile
+      if (response.data.user.profileComplete) {
+        navigate("/"); // if there is, go to main page
+      } else {
+        navigate("/complete-profile"); // if not, set profile up
+      }
+    } catch (error: any) {
+      // Axios error handling
+      if (error.response) {
+        // Server responded with error
+        setError("root", {
+          message: error.response.data.message || "Login failed",
+        });
+      } else if (error.request) {
+        // Request made but no response
+        setError("root", {
+          message: "Network error. Please try again.",
+        });
+      } else {
+        setError("root", {
+          message: "An error occurred",
+        });
+      }
+    }
+  };
 
-    return (
-        <div>
-            <Header />
-            <div
-                className="min-h-screen text-white p-10 relative flex flex-col items-center px-6 pt-4 pb-16"
-                style={{
-                    background: "linear-gradient(to top, #3b82f6, #f8fafc )"
-                }}>
+  return (
+    <div>
+      <Header />
+      <div
+        className="min-h-screen text-white p-10 relative flex flex-col items-center px-6 pt-4 pb-16"
+        style={{
+          background: "linear-gradient(to top, #3b82f6, #f8fafc )",
+        }}
+      >
+        <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
+          <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
+            Log In
+          </h2>
 
-                <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
-                    <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">Log In</h2>
-
-                    {errors.root && (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-700 text-sm">
-                            {errors.root.message}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        <div>
-                            <label htmlFor="email" className="block text-xl font-medium text-slate-500 mb-2">
-                                Email
-                            </label>
-                            <input
-                                {...register("email", {
-                                    required: "Email is required",
-                                    pattern: { 
-                                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 
-                                        message: "Invalid email address" 
-                                    },
-                                })}
-                                type="email"
-                                id="email"
-                                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
-                                placeholder="Enter your email"
-                            />
-                            {errors.email && (
-                                <div className="text-red-600 text-sm mt-1">{errors.email.message}</div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label htmlFor="password" className="block text-xl font-medium text-slate-500 mb-2">
-                                Password
-                            </label>
-                            <input
-                                {...register("password", {
-                                    required: "Password is required",
-                                    minLength: { 
-                                        value: 6, 
-                                        message: "Password must be at least 6 characters long" 
-                                    },
-                                })}
-                                type="password"
-                                id="password"
-                                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-400 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
-                                placeholder="Enter your password"
-                            />
-                            {errors.password && (
-                                <div className="text-red-600 text-sm mt-1">{errors.password.message}</div>
-                            )}
-                        </div>
-
-                        <LogInButton 
-                            onClick={handleSubmit(onSubmit)}
-                            disabled={isSubmitting}
-                            className="py-4 text-xl"
-                        />
-                    </form>
-
-                    <div className="flex justify-center mt-6">
-                        <HomeButton onClick={() => navigate('/')} className="text-xl"/>
-                    </div>
-                </div>
+          {errors.root && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-700 text-sm">
+              {errors.root.message}
             </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-xl font-medium text-slate-500 mb-2"
+              >
+                Email
+              </label>
+              <input
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    message: "Invalid email address",
+                  },
+                })}
+                type="email"
+                id="email"
+                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
+                placeholder="Enter your email"
+              />
+              {errors.email && (
+                <div className="text-red-600 text-sm mt-1">
+                  {errors.email.message}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-xl font-medium text-slate-500 mb-2"
+              >
+                Password
+              </label>
+              <input
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must be at least 6 characters long",
+                  },
+                })}
+                type="password"
+                id="password"
+                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-400 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
+                placeholder="Enter your password"
+              />
+              {errors.password && (
+                <div className="text-red-600 text-sm mt-1">
+                  {errors.password.message}
+                </div>
+              )}
+            </div>
+
+            <LogInButton
+              onClick={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              className="py-4 text-xl"
+            />
+          </form>
+
+          <div className="flex justify-center mt-6">
+            <HomeButton onClick={() => navigate("/")} className="text-xl" />
+          </div>
         </div>
-    );
-}
+      </div>
+    </div>
+  );
+};
 
 export default SeniorsClubLogIn;

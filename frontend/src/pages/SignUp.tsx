@@ -37,7 +37,8 @@ const SeniorsClubSignUp: React.FC = () => {
 
       // Success! Redirect to login
       console.log("User created:", response.data);
-      navigate("/login");
+      navigate("/complete-profile"); // if not, set profile up
+      
 
     } catch (error: any) {
       if (error.response) {

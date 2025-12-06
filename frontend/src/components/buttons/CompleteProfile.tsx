@@ -2,7 +2,7 @@ import React from 'react';
 import { UserCheck } from 'lucide-react';
 
 interface CompleteProfileButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   className?: string;
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;

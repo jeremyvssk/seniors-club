@@ -1,8 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
-import TestPage from './pages/TestPage';
+import TestPage from "./pages/TestPage";
+import CreateUser from "./components/create-user/StepIndex";
 
 function App() {
   return (
@@ -12,11 +13,12 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LogIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/complete-profile" element={<CreateUser />} />
           <Route path="/test" element={<TestPage />} />
         </Routes>
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
