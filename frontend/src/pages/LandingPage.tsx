@@ -26,16 +26,16 @@ const SeniorsClubLanding: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             
             {/* Left Column */}
-            <div className="flex flex-col items-start justify-center lg:items-start text-left lg:text-left">
+            <div className="flex flex-col items-center justify-center">
               {/* Text for Log in button */}
-              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed">
+              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed text-center">
                 Already an user?
               </p>
-              <LogInButton onClick={() => navigate('/login')} className="mb-4"/>
-              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed">
+              <LogInButton onClick={() => navigate('/login')} className="mb-4 max-w-xs"/>
+              <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed text-center">
                 Join us!
               </p>
-              <SignUpButton onClick={() => navigate('/signup')} />
+              <SignUpButton onClick={() => navigate('/signup')} className="max-w-xs" />
             </div>
 
             {/* Right Column */}
