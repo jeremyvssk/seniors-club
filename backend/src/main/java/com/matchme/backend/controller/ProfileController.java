@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 @RestController
-@RequestMapping("/me")
+@RequestMapping("/api/me")
 public class ProfileController {
 
     private final ProfileService profileService;

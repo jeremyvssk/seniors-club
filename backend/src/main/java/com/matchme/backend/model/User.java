@@ -26,7 +26,7 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
+    // getters/setters
     public Long getId() {
         return id;
     }

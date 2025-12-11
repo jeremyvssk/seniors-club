@@ -11,6 +11,7 @@ import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.UserProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
@@ -23,10 +24,11 @@ public class ProfileService {
     public ProfileService(UserProfileRepository profileRepo) {
         this.profileRepo = profileRepo;
     }
-//main method to create or update a profile
+    //main method to create or update a profile
+    @Transactional // ← Ensures database rollback on errors
     public ProfileResponse saveOrUpdateProfile(User user, ProfileRequest request, MultipartFile picture, String uploadedUrl) {
 
-//checks if the user already exists or not
+        //checks if the user already exists or not
         Optional<UserProfile> existing = profileRepo.findByUser(user);
         UserProfile profile = existing.orElseGet(UserProfile::new);
 
@@ -50,12 +52,12 @@ public class ProfileService {
         profile.getHobbies() != null;
 
         profile.setProfileCompleted(completed);
-//saves the profile to database
+        //saves the profile to database
         profileRepo.save(profile);
-//returns the info to frontend
+        //returns the info to frontend
         return toResponse(profile);
     }
-//helper method to convert the userprofile to DTO for safety, security etc
+    //helper method to convert the userprofile to DTO for safety, security etc
     private ProfileResponse toResponse(UserProfile p) {
         ProfileResponse r = new ProfileResponse();
         r.id = p.getId();

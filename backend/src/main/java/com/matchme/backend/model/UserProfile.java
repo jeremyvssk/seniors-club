@@ -42,7 +42,7 @@ public class UserProfile {
     private String profilePictureUrl;
 
     private boolean profileCompleted = false;
-
+    // getters/setters
     public Long getId() {return id;}
     public void setId(Long id) {this.id=id;}
 
