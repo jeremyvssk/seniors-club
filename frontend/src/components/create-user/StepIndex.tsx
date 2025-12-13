@@ -9,8 +9,6 @@ import Step5ProfilePic from './steps/Step5ProfilePic';
 import { UserFormData } from '../../types/User';
 import api from '../../api/axios';
 
-
-
 const CreateUser = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -23,8 +21,6 @@ const CreateUser = () => {
     lookingFor: 'love',
     profilePicture: null,
   });
-
-  
 
   const totalSteps = 5;
 
@@ -46,55 +42,106 @@ const CreateUser = () => {
 
   const handleSubmit = async () => {
     try {
-      console.log('Submitting profile data:', formData);
+      console.log('=== SUBMITTING PROFILE ===');
+      console.log('Form data:', formData);
 
-      // Validate required fields
-      if (!formData.name || !formData.age || !formData.gender || !formData.location) {
-        alert('Please fill in all required fields');
+      if (!formData.name.trim()) {
+        alert('Name is required');
+        setCurrentStep(1);
         return;
       }
 
-      if (formData.hobbies.length < 5) {
-        alert('Please select at least 5 hobbies');
+      const age = parseInt(formData.age);
+      if (!formData.age || isNaN(age) || age < 18) {
+        alert('You must be at least 18 years old');
+        setCurrentStep(1);
         return;
       }
 
-      // Prepare data for API
+      if (!formData.gender) {
+        alert('Gender is required');
+        setCurrentStep(1);
+        return;
+      }
+
+      if (!formData.location.trim()) {
+        alert('Location is required');
+        setCurrentStep(2);
+        return;
+      }
+
+      if (formData.hobbies.length === 0) {
+        alert('Please select at least one hobby');
+        setCurrentStep(3);
+        return;
+      }
+
+      if (!formData.lookingFor) {
+        alert('Please select what you are looking for');
+        setCurrentStep(4);
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to create a profile');
+        navigate('/login');
+        return;
+      }
+
       const profileData = {
-        name: formData.name,
+        name: formData.name.trim(),
         age: parseInt(formData.age),
         gender: formData.gender,
-        location: formData.location,
+        location: formData.location.trim(),
         hobbies: formData.hobbies,
-        lookingFor: formData.lookingFor
+        lookingFor: formData.lookingFor,
       };
 
       console.log('Sending to API:', profileData);
 
-      // Call API to save profile
       const response = await api.post('/me/profile', profileData);
       
       console.log('Profile created successfully:', response.data);
-      alert('Profile created successfully!');
       
-      // Redirect to home/recommendations page
+      if (formData.profilePicture) {
+        console.log('Profile picture upload will be implemented later');
+      }
+      
+      alert('Profile created successfully!');
       navigate('/');
       
     } catch (error: any) {
       console.error('Error creating profile:', error);
       
       if (error.response) {
-        // Server responded with error
-        console.error('Server error:', error.response.data);
-        alert(error.response.data.message || 'Failed to create profile. Please try again.');
+        const status = error.response.status;
+        console.error('Server status:', status);
+        console.error('Server data:', error.response.data);
+        
+        if (status === 403) {
+          alert('Session expired. Please login again.');
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        
+        if (status === 401) {
+          alert('Authentication failed. Please login again.');
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        
+        const message = error.response.data?.message || 
+                       error.response.data?.error || 
+                       'Failed to create profile';
+        
+        alert(`Error: ${message}`);
       } else if (error.request) {
-        // Request made but no response
-        console.error('No response from server');
         alert('Cannot connect to server. Please check your connection.');
       } else {
-        // Something else happened
-        console.error('Error:', error.message);
-        alert('An error occurred. Please try again.');
+        alert(`An error occurred: ${error.message}`);
       }
     }
   };
@@ -151,13 +198,20 @@ const CreateUser = () => {
   };
 
   return (
-    <div className="create-user-container">
-      <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
-      {renderStep()}
+    <div className="min-h-screen flex flex-col bg-gradient-to-t from-blue-500 to-slate-50 py-4 md:py-8">
+      {/* Fixed height container for step indicator */}
+      <div className="w-full max-w-2xl mx-auto px-4 mb-4 md:mb-8">
+        <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
+      </div>
+
+      {/* Content area - centered boxes */}
+      <div className="flex-1 flex items-start justify-center px-4">
+        <div className="w-full max-w-md mx-auto">
+          {renderStep()}
+        </div>
+      </div>
     </div>
   );
 };
 
 export default CreateUser;
-
-//kas siin peaks olema see, et ta saadab data backendi tagasi

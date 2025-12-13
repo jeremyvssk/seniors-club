@@ -12,11 +12,38 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
     e.preventDefault();
     
     // Validation
-    if (!data.name || !data.age || !data.gender) {
-      alert('Please fill in all fields');
+    if (!data.name.trim()) {
+      alert('Please enter your name');
+      return;
+    }
+
+    if (data.name.trim().length < 2) {
+      alert('Name must be at least 2 characters long');
       return;
     }
     
+    const age = parseInt(data.age);
+    if (!data.age || isNaN(age)) {
+      alert('Please enter a valid age');
+      return;
+    }
+
+    if (age < 18) {
+      alert('You must be at least 18 years old to use this service');
+      return;
+    }
+
+    if (age > 130) {
+      alert('Please enter a valid age');
+      return;
+    }
+    
+    if (!data.gender) {
+      alert('Please select your gender');
+      return;
+    }
+    
+    // All validation passed - move to next step
     onNext();
   };
 
@@ -35,8 +62,10 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
             id="name"
             value={data.name}
             onChange={(e) => updateData({ name: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
+            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter your name"
+            minLength={2}
+            maxLength={50}
             required
           />
         </div>
@@ -50,9 +79,10 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
             id="age"
             value={data.age}
             onChange={(e) => updateData({ age: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
+            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter your age"
             min="18"
+            max="120"
             required
           />
         </div>
@@ -65,7 +95,7 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
             id="gender"
             value={data.gender}
             onChange={(e) => updateData({ gender: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 focus:outline-none focus:ring-2 focus:ring-black/50"
+            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
             <option value="">Select gender</option>
@@ -76,7 +106,7 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
           </select>
         </div>
 
-        <NextButton type="submit" className="py-4 text-xl" onClick={onNext} />
+        <NextButton type="submit" />
       </form>
     </div>
   );

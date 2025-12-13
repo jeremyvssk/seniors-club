@@ -1,24 +1,29 @@
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
-
 interface PrevStepButtonProps {
-    onClick: () => void;
-    className?: string;
-    type?: 'button' | 'submit' | 'reset';
-    disabled?: boolean;
+  onClick: () => void;
+  type?: 'button' | 'submit';
+  className?: string;
 }
 
 export const PrevStepButton: React.FC<PrevStepButtonProps> = ({ 
-  onClick, 
+  onClick,
+  type = 'button',
   className = '' 
 }) => {
   return (
     <button
+      type={type}
       onClick={onClick}
-      className={`flex items-center gap-2 text-slate-400 hover:text-blue-500 transition-all ${className}`}
+      className={`w-full text-slate-600 hover:text-slate-900 py-3 px-6 text-lg font-medium transition-all flex items-center justify-center group ${className}`}
     >
-      <ArrowLeft className="w-5 h-5" />
-      <span>Previous question</span>
+      <svg 
+        className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+      Previous Step
     </button>
   );
 };

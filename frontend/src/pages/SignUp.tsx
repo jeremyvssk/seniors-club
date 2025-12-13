@@ -17,7 +17,6 @@ const SeniorsClubSignUp: React.FC = () => {
     e.preventDefault();
 
     // Handle signup logic here, checks if passwords match
-
     const repeatInput = e.currentTarget.repeatpassword as HTMLInputElement;
 
     if (password !== repeatPassword) {
@@ -29,23 +28,44 @@ const SeniorsClubSignUp: React.FC = () => {
     }
 
     setLoading(true);
+    setError("");
+    
     try {
-      const response = await api.post('/signup', {
+      console.log("Starting signup process...");
+      
+      // Step 1: Sign up
+      const signupResponse = await api.post('/signup', {
         email,
         password
       });
+      console.log("User created:", signupResponse.data);
 
-      // Success! Redirect to login
-      console.log("User created:", response.data);
-      navigate("/complete-profile"); // if not, set profile up
+      // Step 2: Automatically log in
+      const loginResponse = await api.post('/login', {
+        email,
+        password
+      });
+      console.log("Auto-logged in after signup");
+
+      // Step 3: Store token and user data
+      const token = loginResponse.data.token;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(loginResponse.data.user));
       
+      // Step 4: Update axios default headers immediately
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      console.log("Token stored, redirecting to profile creation...");
+
+      // Step 5: Redirect to complete profile
+      navigate("/complete-profile", { replace: true });
 
     } catch (error: any) {
+      console.error("Sign up error:", error);
+      
       if (error.response) {
-        // Server responded with error
         setError(error.response.data.message || "Sign up failed");
       } else if (error.request) {
-        // Request made but no response
         setError("Network error. Please try again.");
       } else {
         setError("An error occurred");
@@ -67,11 +87,13 @@ const SeniorsClubSignUp: React.FC = () => {
       
         <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
           <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">Sign up</h2>
+          
           {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm">
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-700 text-sm">
               {error}
             </div>
           )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-xl text-slate-500 font-medium mb-2">
@@ -83,7 +105,8 @@ const SeniorsClubSignUp: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
+                disabled={loading}
+                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50 disabled:opacity-50"
                 placeholder="Enter your email"
               />
             </div>
@@ -101,14 +124,15 @@ const SeniorsClubSignUp: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus-blakc/50"
+                disabled={loading}
+                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50 disabled:opacity-50"
                 placeholder="Enter your password"
               />
             </div>
 
             <div>
               <label
-                htmlFor="password"
+                htmlFor="repeatpassword"
                 className="block text-xl text-slate-500 font-medium mb-2"
               >
                 Repeat Password
@@ -120,12 +144,19 @@ const SeniorsClubSignUp: React.FC = () => {
                 value={repeatPassword}
                 onChange={(e) => setrepeatPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus-black/50"
+                disabled={loading}
+                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50 disabled:opacity-50"
                 placeholder="Repeat your password"
               />
             </div>
 
-            <SignUpButton onClick={() => navigate('/')} className="py-4 text-xl mb-8"/>
+            <SignUpButton 
+              type="submit" 
+              disabled={loading}
+              className="py-4 text-xl mb-8"
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </SignUpButton>
           </form>
 
           <div className="flex justify-center">

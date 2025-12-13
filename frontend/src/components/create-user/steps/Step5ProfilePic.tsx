@@ -1,10 +1,7 @@
 import { useState, useRef } from 'react';
 import { UserFormData } from '../../../types/User';
 import PrevStepButton from '../../buttons/PrevStepButton';
-import CompleteProfileButton from '../../buttons/CompleteProfile';
-
-
-
+import { UserCheck, ArrowRight } from 'lucide-react';
 
 interface Step5Props {
   data: UserFormData;
@@ -20,13 +17,11 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
       
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('File size must be less than 5MB');
         return;
@@ -34,7 +29,6 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
 
       updateData({ profilePicture: file });
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -56,69 +50,91 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
     onSubmit();
   };
 
-  return (
-    <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
-      <h2 className="text-3xl font-bold text-slate-900 text-center mb-2">Add a profile picture</h2>
-      <p className="text-center text-slate-600 mb-6">Optional - You can skip this step</p>
+  const hasPhoto = preview !== null;
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Upload Area */}
-        <div className="w-full">
-          {preview ? (
-            <div className="space-y-4">
-              <div className="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
-                <img 
-                  src={preview} 
-                  alt="Profile preview" 
-                  className="w-full h-full object-cover"
+  return (
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-white/55 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-md">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
+          Add a profile picture
+        </h2>
+        <p className="text-center text-slate-500 text-sm mb-4 md:mb-6">
+          You can add this later if you prefer
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          {/* Upload Area - Balanced size */}
+          <div className="w-full">
+            {preview ? (
+              <div className="space-y-2 md:space-y-3">
+                <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center shadow-sm">
+                  <img 
+                    src={preview} 
+                    alt="Profile preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="w-full px-4 py-2.5 md:py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors text-sm md:text-base shadow-md hover:shadow-lg"
+                >
+                  Remove Photo
+                </button>
+              </div>
+            ) : (
+              <div className="w-full border-2 border-dashed border-slate-300 rounded-lg p-8 md:p-12 text-center hover:border-slate-400 transition-colors bg-white/50">
+                <div className="text-6xl md:text-7xl mb-3">👤</div>
+                <p className="text-slate-700 mb-4 font-medium text-base">No photo selected</p>
+                <label 
+                  htmlFor="profilePic" 
+                  className="inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all cursor-pointer shadow-md hover:shadow-lg text-sm md:text-base"
+                >
+                  Choose Photo
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="profilePic"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
               </div>
-              <button
-                type="button"
-                onClick={handleRemove}
-                className="w-full px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
-              >
-                Remove Photo
-              </button>
-            </div>
-          ) : (
-            <div className="w-full border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors bg-white/10">
-              <div className="text-6xl mb-4">📷</div>
-              <p className="text-slate-600 mb-4">No photo selected</p>
-              
+            )}
+          </div>
+
+          {/* Upload Info */}
+          {!preview && (
+            <div className="text-center">
+              <p className="text-xs text-slate-500">JPG, PNG, GIF • Max 5MB</p>
             </div>
           )}
-        </div>
 
-        {/* Upload Info */}
-        <div className="text-center space-y-1">
-        <label 
-                htmlFor="profilePic" 
-                className="inline-block px-6 py-2 bg-white hover:bg-slate-50 text-slate-800 rounded-lg font-medium transition-colors cursor-pointer -mt-4"
+          {/* Dynamic Submit Button */}
+          <div className="space-y-2 md:space-y-3">
+            {hasPhoto ? (
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
               >
-                Choose Photo
-              </label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="profilePic"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-
-          <p className="text-sm text-slate-500">Supported formats: JPG, PNG, GIF</p>
-          <p className="text-sm text-slate-500">Maximum size: 5MB</p>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex-col gap-4 pt-2">
-          
-          <CompleteProfileButton type="submit" className="flex-1 py-4 text-xl" />
-          <PrevStepButton type="button" onClick={onBack} className="flex-1 py-4 text-xl" />
-
-        </div>
-      </form>
+                Complete Profile
+                <UserCheck className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:scale-110 transition-transform" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="w-full bg-slate-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
+              >
+                Skip This Step
+                <ArrowRight className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
+            
+            <PrevStepButton type="button" onClick={onBack} />
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
