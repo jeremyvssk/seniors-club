@@ -1,91 +1,92 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import StepProgress from './StepProgress';
-import Step1BasicInfo from './steps/Step1BasicInfo';
-import Step2Location from './steps/Step2Location';
-import Step3Hobbies from './steps/Step3Hobbies';
-import Step4Looking from './steps/Step4Looking';
-import Step5ProfilePic from './steps/Step5ProfilePic';
-import { UserFormData } from '../../types/User';
-import api from '../../api/axios';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import StepProgress from "./StepProgress";
+import Step1BasicInfo from "./steps/Step1BasicInfo";
+import Step2Hobbies from "./steps/Step2Hobbies";
+import Step3Looking from "./steps/Step3Looking";
+import Step4AboutMe from "./steps/Step4AboutMe";
+import Step5ProfilePic from "./steps/Step5ProfilePic";
+import { UserFormData } from "../../types/User";
+import api from "../../api/axios";
 
 const CreateUser = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<UserFormData>({
-    name: '',
-    age: '',
-    gender: '',
-    location: '',
+    name: "",
+    age: "",
+    gender: "",
+    location: "",
     hobbies: [],
-    lookingFor: 'love',
+    lookingFor: "love",
+    bio: "",
     profilePicture: null,
   });
 
   const totalSteps = 5;
 
   const updateFormData = (data: Partial<UserFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
+    setFormData((prev) => ({ ...prev, ...data }));
   };
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
   const handleSubmit = async () => {
     try {
-      console.log('=== SUBMITTING PROFILE ===');
-      console.log('Form data:', formData);
+      console.log("=== SUBMITTING PROFILE ===");
+      console.log("Form data:", formData);
 
       if (!formData.name.trim()) {
-        alert('Name is required');
+        alert("Name is required");
         setCurrentStep(1);
         return;
       }
 
       const age = parseInt(formData.age);
       if (!formData.age || isNaN(age) || age < 18) {
-        alert('You must be at least 18 years old');
+        alert("You must be at least 18 years old");
         setCurrentStep(1);
         return;
       }
 
       if (!formData.gender) {
-        alert('Gender is required');
+        alert("Gender is required");
         setCurrentStep(1);
         return;
       }
 
       if (!formData.location.trim()) {
-        alert('Location is required');
+        alert("Location is required");
         setCurrentStep(2);
         return;
       }
 
       if (formData.hobbies.length === 0) {
-        alert('Please select at least one hobby');
+        alert("Please select at least one hobby");
         setCurrentStep(3);
         return;
       }
 
       if (!formData.lookingFor) {
-        alert('Please select what you are looking for');
+        alert("Please select what you are looking for");
         setCurrentStep(4);
         return;
       }
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        alert('You must be logged in to create a profile');
-        navigate('/login');
+        alert("You must be logged in to create a profile");
+        navigate("/login");
         return;
       }
 
@@ -98,48 +99,48 @@ const CreateUser = () => {
         lookingFor: formData.lookingFor,
       };
 
-      console.log('Sending to API:', profileData);
+      console.log("Sending to API:", profileData);
 
-      const response = await api.post('/me/profile', profileData);
-      
-      console.log('Profile created successfully:', response.data);
-      
+      const response = await api.post("/me/profile", profileData);
+
+      console.log("Profile created successfully:", response.data);
+
       if (formData.profilePicture) {
-        console.log('Profile picture upload will be implemented later');
+        console.log("Profile picture upload will be implemented later");
       }
-      
-      alert('Profile created successfully!');
-      navigate('/');
-      
+
+      alert("Profile created successfully!");
+      navigate("/");
     } catch (error: any) {
-      console.error('Error creating profile:', error);
-      
+      console.error("Error creating profile:", error);
+
       if (error.response) {
         const status = error.response.status;
-        console.error('Server status:', status);
-        console.error('Server data:', error.response.data);
-        
+        console.error("Server status:", status);
+        console.error("Server data:", error.response.data);
+
         if (status === 403) {
-          alert('Session expired. Please login again.');
-          localStorage.removeItem('token');
-          navigate('/login');
+          alert("Session expired. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/login");
           return;
         }
-        
+
         if (status === 401) {
-          alert('Authentication failed. Please login again.');
-          localStorage.removeItem('token');
-          navigate('/login');
+          alert("Authentication failed. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/login");
           return;
         }
-        
-        const message = error.response.data?.message || 
-                       error.response.data?.error || 
-                       'Failed to create profile';
-        
+
+        const message =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          "Failed to create profile";
+
         alert(`Error: ${message}`);
       } else if (error.request) {
-        alert('Cannot connect to server. Please check your connection.');
+        alert("Cannot connect to server. Please check your connection.");
       } else {
         alert(`An error occurred: ${error.message}`);
       }
@@ -158,7 +159,7 @@ const CreateUser = () => {
         );
       case 2:
         return (
-          <Step2Location
+          <Step2Hobbies
             data={formData}
             updateData={updateFormData}
             onNext={nextStep}
@@ -167,16 +168,17 @@ const CreateUser = () => {
         );
       case 3:
         return (
-          <Step3Hobbies
+          <Step3Looking
             data={formData}
             updateData={updateFormData}
             onNext={nextStep}
             onBack={prevStep}
           />
         );
-      case 4:
+
+              case 4:
         return (
-          <Step4Looking
+          <Step4AboutMe
             data={formData}
             updateData={updateFormData}
             onNext={nextStep}
@@ -206,9 +208,7 @@ const CreateUser = () => {
 
       {/* Content area - centered boxes */}
       <div className="flex-1 flex items-start justify-center px-4">
-        <div className="w-full max-w-md mx-auto">
-          {renderStep()}
-        </div>
+        <div className="w-full max-w-md mx-auto">{renderStep()}</div>
       </div>
     </div>
   );

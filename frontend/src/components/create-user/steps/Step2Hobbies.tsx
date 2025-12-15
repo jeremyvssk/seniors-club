@@ -2,7 +2,7 @@ import { UserFormData } from '../../../types/User';
 import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
 
-interface Step3Props {
+interface Step2Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
   onNext: () => void;
@@ -24,7 +24,7 @@ const hobbiesOptions = [
   'Volunteering',
 ];
 
-const Step3Hobbies = ({ data, updateData, onNext, onBack }: Step3Props) => {
+const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
   const toggleHobby = (hobby: string) => {
     const currentHobbies = data.hobbies;
     if (currentHobbies.includes(hobby)) {
@@ -92,4 +92,4 @@ const Step3Hobbies = ({ data, updateData, onNext, onBack }: Step3Props) => {
   );
 };
 
-export default Step3Hobbies;
+export default Step2Hobbies;

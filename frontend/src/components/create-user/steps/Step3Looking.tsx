@@ -3,7 +3,7 @@ import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
 import { Heart, Handshake, Plane, Compass } from "lucide-react";
 
-interface Step4Props {
+interface Step3Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
   onNext: () => void;
@@ -37,7 +37,7 @@ const options = [
   },
 ];
 
-const Step4Looking = ({ data, updateData, onNext, onBack }: Step4Props) => {
+const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -106,4 +106,4 @@ const Step4Looking = ({ data, updateData, onNext, onBack }: Step4Props) => {
   );
 };
 
-export default Step4Looking;
+export default Step3Looking;
