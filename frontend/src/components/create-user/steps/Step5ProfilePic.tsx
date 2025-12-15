@@ -66,7 +66,8 @@ const Step5ProfilePic = ({
     onSubmit();
   };
 
-  const hasPhoto = preview !== null;
+  
+const hasPhoto = preview !== null;
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -142,9 +143,9 @@ const Step5ProfilePic = ({
             ) : (
               <button
                 type="submit"
-                className="w-full bg-slate-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
+                className="w-full bg-blue-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
               >
-                Skip This Step
+                Complete Profile
                 <ArrowRight className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:translate-x-1 transition-transform" />
               </button>
             )}
