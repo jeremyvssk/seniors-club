@@ -34,9 +34,19 @@ public class ProfileRequest {
         message = "Invalid lookingFor value. Must be: love, friend, travel, or open"
     )
     private String lookingFor;
-    
     // Optional - can be null
     private String profilePictureUrl;
+    // loication stuff
+    @NotNull(message = "Latitude is required")
+    private Double latitude;
+    
+    @NotNull(message = "Longitude is required")
+    private Double longitude;
+    
+    @NotNull(message = "Maximum radius is required")
+    @Min(value = 1, message = "Radius must be at least 1km")
+    @Max(value = 500, message = "Radius cannot exceed 500km")
+    private Integer maxRadiusKm;
 
     // Getters and Setters
     public String getName() { return name; }
@@ -61,4 +71,13 @@ public class ProfileRequest {
     public void setProfilePictureUrl(String profilePictureUrl) { 
         this.profilePictureUrl = profilePictureUrl; 
     }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    
+    public Integer getMaxRadiusKm() { return maxRadiusKm; }
+    public void setMaxRadiusKm(Integer maxRadiusKm) { this.maxRadiusKm = maxRadiusKm; }
 }

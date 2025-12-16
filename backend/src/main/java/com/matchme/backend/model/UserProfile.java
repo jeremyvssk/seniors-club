@@ -28,9 +28,15 @@ public class UserProfile {
     private String name;
     private Integer age;
     private String gender;
-    private String location;
 
-
+    @Column(name = "latitude")
+    private Double latitude;
+    
+    @Column(name = "longitude")
+    private Double longitude;
+    
+    @Column(name = "max_radius_km")
+    private Integer maxRadiusKm;
 
     @ElementCollection
     @CollectionTable(name = "user_hobbies", joinColumns = @JoinColumn(name = "profile_id"))
@@ -38,13 +44,10 @@ public class UserProfile {
     private List<String> hobbies;
 
     private String lookingFor;
-
     private String profilePictureUrl;
-
     private boolean profileCompleted = false;
     // getters/setters
     public Long getId() {return id;}
-    public void setId(Long id) {this.id=id;}
 
     public User getUser() {return user;}
     public void setUser(User user) {this.user = user;}
@@ -58,9 +61,6 @@ public class UserProfile {
     public String getGender() {return gender;}
     public void setGender(String gender) {this.gender = gender;}
 
-    public String getLocation() {return location;}
-    public void setLocation(String location) {this.location = location;}
-
     public List<String> getHobbies() {return hobbies;}
     public void setHobbies(List<String> hobbies) {this.hobbies = hobbies;}
 
@@ -73,14 +73,12 @@ public class UserProfile {
     public boolean isProfileCompleted() {return profileCompleted;}
     public void setProfileCompleted(boolean profileCompleted) {this.profileCompleted = profileCompleted;}
 
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    
+    public Integer getMaxRadiusKm() { return maxRadiusKm; }
+    public void setMaxRadiusKm(Integer maxRadiusKm) { this.maxRadiusKm = maxRadiusKm; }
 }
-
-
-//ID
-// name
-// age
-// gender
-// location
-// hobbies
-// lookingfor
-// profilepic

@@ -12,10 +12,7 @@ import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-
+import org.springframework.web.bind.annotation.*; // POST & GET mapping
 
 
 @RestController
@@ -23,7 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class ProfileController {
 
     private final ProfileService profileService;
-    private final UserService userService;
+    private final UserService userService; 
 
     public ProfileController(ProfileService profileService, UserService userService) {
         this.profileService = profileService;
@@ -51,7 +48,3 @@ public class ProfileController {
         return profileService.getProfile(user);
     }
 }
-
-
-//post
-//get
