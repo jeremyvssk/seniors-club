@@ -11,6 +11,8 @@ interface CompleteProfileButtonProps {
 const CompleteProfileButton: React.FC<CompleteProfileButtonProps> = ({ 
   onClick, 
   className = '' ,
+  type = 'button',
+  disabled = false,
 }) => {
   
   return (

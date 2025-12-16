@@ -80,7 +80,7 @@ const CreateUser = () => {
       }
         if (!formData.location) {
         alert("Please allow your location to access the application");
-        setCurrentStep(3);
+        setCurrentStep(6);
         return;
       }
 
@@ -98,9 +98,11 @@ const CreateUser = () => {
         name: formData.name.trim(),
         age: parseInt(formData.age),
         gender: formData.gender,
-        location: formData.location.trim(),
         hobbies: formData.hobbies,
         lookingFor: formData.lookingFor,
+        latitude: formData.latitude,         // ADD THIS
+        longitude: formData.longitude,       // ADD THIS
+        maxRadiusKm: formData.maxRadiusKm,  
       };
 
       console.log("Sending to API:", profileData);
@@ -194,7 +196,7 @@ const CreateUser = () => {
           <Step5ProfilePic
             data={formData}
             updateData={updateFormData}
-            onSubmit={handleSubmit}
+            onNext={nextStep}
             onBack={prevStep}
           />
         );

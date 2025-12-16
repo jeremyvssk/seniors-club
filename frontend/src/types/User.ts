@@ -8,4 +8,7 @@ export interface UserFormData {
   genderPreference: string[];
   bio: string;
   profilePicture?: File | null;
+  latitude?: number;
+  longitude?: number;
+  maxRadiusKm?: number | null; // null = unlimited
 }

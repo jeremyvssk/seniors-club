@@ -7,14 +7,14 @@ import NextButton from "../../buttons/NextButton";
 interface Step5Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
-  onSubmit: () => void;
+  onNext: () => void;
   onBack: () => void;
 }
 
 const Step5ProfilePic = ({
   data,
   updateData,
-  onSubmit,
+  onNext,
   onBack,
 }: Step5Props) => {
   const [preview, setPreview] = useState<string | null>(null);
@@ -64,7 +64,7 @@ const Step5ProfilePic = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+    onNext();
   };
 
   const hasPhoto = preview !== null;
@@ -130,7 +130,7 @@ const Step5ProfilePic = ({
             </div>
           )}
 
-                    <div className="space-y-2 md:space-y-3">
+          <div className="space-y-2 md:space-y-3">
           <NextButton type="submit">
             {hasPhoto ? "Next" : "I'll do this later"}
           </NextButton>
