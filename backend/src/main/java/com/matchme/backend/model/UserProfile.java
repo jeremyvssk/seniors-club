@@ -43,7 +43,9 @@ public class UserProfile {
     @Column(name = "hobby")
     private List<String> hobbies;
 
+    private String bio;
     private String lookingFor;
+    private String lookingForGender;
     private String profilePictureUrl;
     private boolean profileCompleted = false;
     // getters/setters
@@ -65,7 +67,14 @@ public class UserProfile {
     public void setHobbies(List<String> hobbies) {this.hobbies = hobbies;}
 
     public String getLookingFor() {return lookingFor;}
-    public void setLookingFor(String lookingFor) {this.lookingFor = lookingFor;}
+    public void setLookingFor(String lookingFor) {this.lookingFor = lookingFor;}  
+    
+    public String getLookingForGender() {return lookingForGender;}
+    public void setLookingForGender(String lookingForGender) {this.lookingForGender = lookingForGender;}
+
+    public String getBio() {return bio;}
+    public void setBio(String bio) {this.bio = bio;}  
+
 
     public String getProfilePictureUrl() {return profilePictureUrl;}
     public void setProfilePictureUrl(String profilePictureUrl) {this.profilePictureUrl = profilePictureUrl;}
