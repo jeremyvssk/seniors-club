@@ -38,6 +38,8 @@ public class ProfileService {
         profile.setGender(request.getGender());
         profile.setHobbies(request.getHobbies());
         profile.setLookingFor(request.getLookingFor());
+        profile.setLookingForGender(request.getLookingForGender());
+        profile.setBio(request.getBio());
         // location stuff
         profile.setLatitude(request.getLatitude());
         profile.setLongitude(request.getLongitude());
@@ -52,6 +54,8 @@ public class ProfileService {
         profile.getAge() != null &&
         profile.getGender() != null &&
         profile.getHobbies() != null &&
+        profile.getLookingFor() != null &&
+        profile.getLookingForGender() != null &&
         profile.getLatitude() != null &&
         profile.getLongitude() != null &&
         profile.getMaxRadiusKm() != null;
@@ -71,6 +75,10 @@ public class ProfileService {
         r.gender = p.getGender();
         r.hobbies = p.getHobbies();
         r.lookingFor = p.getLookingFor();
+        
+        r.lookingForGender = p.getLookingForGender();
+        r.bio = p.getBio();
+
         r.profilePictureUrl = p.getProfilePictureUrl();
         r.profileCompleted = p.isProfileCompleted();
         
