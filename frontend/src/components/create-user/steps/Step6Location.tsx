@@ -2,14 +2,14 @@ import { UserFormData } from '../../../types/User';
 import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
 
-interface Step2Props {
+interface Step6Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const Step2Location = ({ data, updateData, onNext, onBack }: Step2Props) => {
+const Step4Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -19,7 +19,7 @@ const Step2Location = ({ data, updateData, onNext, onBack }: Step2Props) => {
     }
 
     if (data.location.trim().length < 3) {
-      alert('Please enter a valid location (e.g., Tallinn, Estonia)');
+      alert('Please enter a valid location in Estonia, e.g. Tallinn');
       return;
     }
     
@@ -41,12 +41,12 @@ const Step2Location = ({ data, updateData, onNext, onBack }: Step2Props) => {
             value={data.location}
             onChange={(e) => updateData({ location: e.target.value })}
             className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., Tallinn, Estonia"
+            placeholder="e.g. Tallinn"
             minLength={3}
             maxLength={100}
             required
           />
-          <p className="text-sm text-slate-500 mt-1">Enter your city and country</p>
+          <p className="text-sm text-slate-500 mt-1">Enter a location in Estonia</p>
         </div>
 
         <div className="space-y-3">
@@ -59,4 +59,4 @@ const Step2Location = ({ data, updateData, onNext, onBack }: Step2Props) => {
   );
 };
 
-export default Step2Location;
+export default Step4Location;
