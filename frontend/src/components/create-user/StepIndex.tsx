@@ -6,6 +6,7 @@ import Step2Hobbies from "./steps/Step2Hobbies";
 import Step3Looking from "./steps/Step3Looking";
 import Step4AboutMe from "./steps/Step4AboutMe";
 import Step5ProfilePic from "./steps/Step5ProfilePic";
+import Step6Location from "./steps/Step6Location";
 import { UserFormData } from "../../types/User";
 import api from "../../api/axios";
 
@@ -74,6 +75,11 @@ const CreateUser = () => {
 
       if (!formData.lookingFor) {
         alert("Please select what you are looking for");
+        setCurrentStep(3);
+        return;
+      }
+        if (!formData.location) {
+        alert("Please allow your location to access the application");
         setCurrentStep(3);
         return;
       }
@@ -189,6 +195,16 @@ const CreateUser = () => {
             data={formData}
             updateData={updateFormData}
             onSubmit={handleSubmit}
+            onBack={prevStep}
+          />
+        );
+
+              case 6:
+        return (
+          <Step6Location
+            data={formData}
+            updateData={updateFormData}
+            onNext={handleSubmit}
             onBack={prevStep}
           />
         );

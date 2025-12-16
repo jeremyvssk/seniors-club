@@ -2,14 +2,14 @@ import { UserFormData } from '../../../types/User';
 import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
 
-interface Step2Props {
+interface Step6Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const Step4Location = ({ data, updateData, onNext, onBack }: Step2Props) => {
+const Step4Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
