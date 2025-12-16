@@ -9,7 +9,7 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
     //where will the files be uploaded
-    private final Path uploadDir = Paths.get("/app/uploads");
+    private final Path uploadDir = Paths.get("uploads").toAbsolutePath();
 
     public FileStorageService() {
         try {

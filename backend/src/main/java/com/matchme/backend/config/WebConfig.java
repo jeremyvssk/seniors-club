@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 
 public class WebConfig implements WebMvcConfigurer {
-    @Value("${file.upload-dir:/app/uploads}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Override
