@@ -9,30 +9,22 @@ interface Step4Props {
   onBack: () => void;
 }
 
-
-
 const Step4AboutMe = ({ data, updateData, onNext, onBack }: Step4Props) => {
   const hasBio = data.bio.trim().length > 0;
   const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // If user typed something, validate it
-  if (hasBio) {
-    if (data.bio.trim().length < 10) {
-      alert("Bio must be at least 10 characters long");
-      return;
+    // If user typed something, validate it
+    if (hasBio) {
+      if (data.bio.trim().length > 200) {
+        alert("Bio must be no more than 200 characters");
+        return;
+      }
     }
 
-    if (data.bio.trim().length > 200) {
-      alert("Bio must be no more than 200 characters");
-      return;
-    }
-  }
-
-  // Empty OR valid bio → continue
-  onNext();
-};
-
+    // Empty OR valid bio → continue
+    onNext();
+  };
 
   return (
     <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
@@ -63,22 +55,9 @@ const Step4AboutMe = ({ data, updateData, onNext, onBack }: Step4Props) => {
         </div>
 
         <div className="space-y-2 md:space-y-3">
-          {hasBio ? (
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg"
-            >
-              I’ll do this later
-            </button>
-          )}
-
+          <NextButton type="submit">
+            {hasBio ? "Next" : "I'll do this later"}
+          </NextButton>
           <PrevStepButton type="button" onClick={onBack} />
         </div>
       </form>

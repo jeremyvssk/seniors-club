@@ -5,6 +5,7 @@ export interface UserFormData {
   location: string;
   hobbies: string[];
   lookingFor: "love" | "friend" | "travel" | "open";
+  genderPreference: string[];
   bio: string;
   profilePicture?: File | null;
 }

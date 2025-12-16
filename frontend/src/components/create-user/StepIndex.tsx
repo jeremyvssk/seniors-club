@@ -19,11 +19,12 @@ const CreateUser = () => {
     location: "",
     hobbies: [],
     lookingFor: "love",
+    genderPreference: [],
     bio: "",
     profilePicture: null,
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const updateFormData = (data: Partial<UserFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -65,23 +66,20 @@ const CreateUser = () => {
         return;
       }
 
-      if (!formData.location.trim()) {
-        alert("Location is required");
-        setCurrentStep(2);
-        return;
-      }
-
       if (formData.hobbies.length === 0) {
         alert("Please select at least one hobby");
-        setCurrentStep(3);
+        setCurrentStep(2);
         return;
       }
 
       if (!formData.lookingFor) {
         alert("Please select what you are looking for");
-        setCurrentStep(4);
+        setCurrentStep(3);
         return;
       }
+
+      // Bio is optional - no validation needed
+      // Profile picture is optional - no validation needed
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -176,7 +174,7 @@ const CreateUser = () => {
           />
         );
 
-              case 4:
+      case 4:
         return (
           <Step4AboutMe
             data={formData}

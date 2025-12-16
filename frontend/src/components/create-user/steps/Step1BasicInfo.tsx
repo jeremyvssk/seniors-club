@@ -38,15 +38,6 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
       return;
     }
 
-    if (!data.location.trim()) {
-      alert("Please enter your location");
-      return;
-    }
-
-    if (data.location.trim().length < 3) {
-      alert("Please enter a valid location (e.g., Tallinn, Estonia)");
-      return;
-    }
 
     if (!data.gender) {
       alert("Please select your gender");
@@ -102,27 +93,6 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
             max="120"
             required
           />
-        </div>
-
-        <div>
-          <label
-            htmlFor="location"
-            className="block text-xl font-medium text-slate-500 mb-2"
-          >
-            Location
-          </label>
-          <input
-            type="text"
-            id="location"
-            value={data.location}
-            onChange={(e) => updateData({ location: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="City in Estonia"
-            minLength={3}
-            maxLength={100}
-            required
-          />
-
         </div>
 
         <div>

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { UserFormData } from "../../../types/User";
 import PrevStepButton from "../../buttons/PrevStepButton";
-import { UserCheck, ArrowRight } from "lucide-react";
+import NextButton from "../../buttons/NextButton";
+
 
 interface Step5Props {
   data: UserFormData;
@@ -66,8 +67,7 @@ const Step5ProfilePic = ({
     onSubmit();
   };
 
-  
-const hasPhoto = preview !== null;
+  const hasPhoto = preview !== null;
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -130,28 +130,12 @@ const hasPhoto = preview !== null;
             </div>
           )}
 
-          {/* Dynamic Submit Button */}
-          <div className="space-y-2 md:space-y-3">
-            {hasPhoto ? (
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
-              >
-                Complete Profile
-                <UserCheck className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:scale-110 transition-transform" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
-              >
-                Complete Profile
-                <ArrowRight className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:translate-x-1 transition-transform" />
-              </button>
-            )}
-
-            <PrevStepButton type="button" onClick={onBack} />
-          </div>
+                    <div className="space-y-2 md:space-y-3">
+          <NextButton type="submit">
+            {hasPhoto ? "Next" : "I'll do this later"}
+          </NextButton>
+          <PrevStepButton type="button" onClick={onBack} />
+        </div>
         </form>
       </div>
     </div>
