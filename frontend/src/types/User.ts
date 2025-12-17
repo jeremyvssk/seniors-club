@@ -1,9 +1,10 @@
 export interface UserFormData {
     name: string;
     age: string;
-    gender: string;
+    gender?: string;
     location: string;
     hobbies: string[];
-    lookingFor: 'love' | 'friend' | 'travel' | 'open';
+    lookingFor: 'Love' | 'Friend' | 'Travel' | 'Open';
     profilePicture?: File | null;
+    bio?: string;
   }

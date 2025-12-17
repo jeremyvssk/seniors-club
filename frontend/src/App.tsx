@@ -4,6 +4,7 @@ import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
 import TestPage from "./pages/TestPage";
 import CreateUser from "./components/create-user/StepIndex";
+import MainPage from "./pages/MainPage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/complete-profile" element={<CreateUser />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/explore" element={<MainPage />} />
         </Routes>
       </div>
     </Router>

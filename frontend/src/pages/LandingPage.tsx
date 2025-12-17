@@ -5,6 +5,7 @@ import exampleImg from '../assets/images/example.svg';
 import LogInButton from "../components/buttons/LogInButton";
 import SignUpButton from "../components/buttons/SignUpButton";
 
+
 const SeniorsClubLanding: React.FC = () => {
   const navigate = useNavigate();
 
@@ -16,6 +17,8 @@ const SeniorsClubLanding: React.FC = () => {
                 background: "linear-gradient(to top, #3b82f6, #f8fafc )"
               }}>
         <div className="max-w-2xl w-full text-center">
+
+
 
           {/* Welcome message */}
           <h1 className="text-5xl text-slate-900 mb-6 font-bold">
