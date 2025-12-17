@@ -55,6 +55,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
         updateData({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
+          maxRadiusKm: 50,
         });
         
         setHasLocation(true);
@@ -204,6 +205,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                     type="button"
                     onClick={() => {
                       if (data.latitude && data.longitude) {
+                        updateData({ maxRadiusKm: 50 });
                         setHasLocation(true);
                         setShowManualInput(false);
                         setLocationError(null);
@@ -286,7 +288,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                 {/* Helper Text */}
                 <p className="text-xs md:text-sm text-slate-600 text-center mt-2 md:mt-3">
                   {radius >= 300 
-                    ? '🌍 Match with everyone!' 
+                    ? 'Match with everyone!' 
                     : `Show matches within ${radius} km`
                   }
                 </p>
