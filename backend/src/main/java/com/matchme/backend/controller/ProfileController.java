@@ -3,6 +3,7 @@ package com.matchme.backend.controller;
 import com.matchme.backend.dto.ProfileRequest;
 import com.matchme.backend.dto.ProfileResponse;
 import com.matchme.backend.model.User;
+import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.FileStorageService;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
@@ -12,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/me")
@@ -29,50 +33,59 @@ public class ProfileController {
     @PostMapping(value = "/profile", consumes = "multipart/form-data")
     public ResponseEntity<?> createOrUpdateProfile(
             @AuthenticationPrincipal String email,
-            @Valid @ModelAttribute ProfileRequest request,
+            @RequestParam("name") String name,
+            @RequestParam("age") Integer age,
+            @RequestParam("gender") String gender,
+            @RequestParam("hobbies") String hobbiesString,
+            @RequestParam("lookingFor") String lookingFor,
+            @RequestParam("lookingForGender") String lookingForGender,
+            @RequestParam(value = "bio", required = false, defaultValue = "") String bio,
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestParam("maxRadiusKm") Integer maxRadiusKm,
             @RequestParam(value = "profilePicture", required = false) MultipartFile profilePicture) {
         
-        System.out.println("=== CREATING PROFILE ===");
-        System.out.println("Email: " + email);
-        System.out.println("Name: " + request.getName());
-        System.out.println("Age: " + request.getAge());
-        System.out.println("Gender: " + request.getGender());
-        System.out.println("Has picture: " + (profilePicture != null && !profilePicture.isEmpty()));
-        
-        // Get the logged-in user
+        // Step 1: Get user
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Initialize uploadedUrl variable
-        String uploadedUrl = null;
+        // Step 2: Build request DTO
+        ProfileRequest request = new ProfileRequest();
+        request.setName(name);
+        request.setAge(age);
+        request.setGender(gender);
+        request.setHobbies(Arrays.asList(hobbiesString.split(",")));
+        request.setLookingFor(lookingFor);
+        request.setLookingForGender(lookingForGender);
+        request.setBio(bio);
+        request.setLatitude(latitude);
+        request.setLongitude(longitude);
+        request.setMaxRadiusKm(maxRadiusKm);
         
-        // Check if user uploaded a file
+        // Step 3: Find or create profile
+        UserProfile profile = profileService.findOrCreateProfile(user);
+        
+        // Step 4: Update fields
+        profileService.updateProfileFields(profile, request);
+        
+        // Step 5: Handle picture if uploaded
         if (profilePicture != null && !profilePicture.isEmpty()) {
-            System.out.println("Processing picture upload...");
-            
-            // Get existing profile to check for old picture
-            ProfileResponse existingProfile = profileService.getProfile(user);
-            
-            // Delete old picture if they have it
-            if (existingProfile != null && existingProfile.profilePictureUrl != null) {
-                fileStorageService.deleteFile(existingProfile.profilePictureUrl);
+            // Delete old picture if exists
+            String oldPictureUrl = profile.getProfilePictureUrl();
+            if (oldPictureUrl != null) {
+                fileStorageService.deleteFile(oldPictureUrl);
             }
             
-            // Save the new picture to /uploads/ folder and get URL
-            uploadedUrl = fileStorageService.saveFile(profilePicture, user.getId());
-            System.out.println("Picture saved at: " + uploadedUrl);
-        } else {
-            System.out.println("No picture uploaded");
+            // Save new picture
+            String newPictureUrl = fileStorageService.saveFile(profilePicture, user.getId());
+            profileService.setProfilePicture(profile, newPictureUrl);
         }
         
-        // Save profile data to database (JSON data + URL)
-        ProfileResponse response = profileService.saveOrUpdateProfile(
-                user,
-                request,        // JSON data
-                profilePicture, // File (for validation)
-                uploadedUrl     // URL string → This goes to database!
-        );
+        // Step 6: Save to database
+        UserProfile savedProfile = profileService.saveProfile(profile);
         
+        // Step 7: Return response
+        ProfileResponse response = profileService.getProfile(user);
         return ResponseEntity.ok(response);
     }
     

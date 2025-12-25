@@ -119,12 +119,7 @@ const CreateUser = () => {
       if (formData.maxRadiusKm !== undefined && formData.maxRadiusKm !== null) {
         formDataToSend.append('maxRadiusKm', formData.maxRadiusKm.toString());
       }
-      
-      // Add hobbies (Spring Boot will receive as List<String>)
-      formData.hobbies.forEach(hobby => {
-        formDataToSend.append('hobbies', hobby);
-      });
-      
+      formDataToSend.append('hobbies', formData.hobbies.join(','));
       // Add profile picture if exists
       if (formData.profilePicture) {
         formDataToSend.append('profilePicture', formData.profilePicture);
