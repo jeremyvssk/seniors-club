@@ -9,10 +9,16 @@ const SkipButton: React.FC<SkipButtonProps> = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="flex items-center justify-center border border-black/40 p-3 rounded-full bg-gray-200 text-red-600 hover:bg-red-100 transition-colors duration-300"
+      className="flex items-center justify-center 
+                 border-2 border-gray-400 
+                 p-2 sm:p-2.5 md:p-3 lg:p-4
+                 rounded-full 
+                 bg-white text-red-600 hover:bg-red-50 
+                 shadow-lg hover:shadow-xl
+                 transition-all duration-300"
       aria-label="Skip"
     >
-      <X className="h-18 w-18" />
+      <X className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12" />
     </button>
   );
 };
