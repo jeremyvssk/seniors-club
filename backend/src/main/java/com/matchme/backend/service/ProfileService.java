@@ -12,7 +12,6 @@ import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -24,15 +23,26 @@ public class ProfileService {
     public ProfileService(UserProfileRepository profileRepo) {
         this.profileRepo = profileRepo;
     }
-    //main method to create or update a profile
-    @Transactional // ← Ensures database rollback on errors
-    public ProfileResponse saveOrUpdateProfile(User user, ProfileRequest request, MultipartFile picture, String uploadedUrl) {
 
-        //checks if the user already exists or not
-        Optional<UserProfile> existing = profileRepo.findByUser(user);
-        UserProfile profile = existing.orElseGet(UserProfile::new);
+    // get the profile, nothing else
+    public ProfileResponse getProfile(User user) {
+        return profileRepo.findByUser(user)
+                .map(this::toResponse)
+                .orElse(null);
+    }
 
-        profile.setUser(user);
+    // find existing profile or create new one
+    public UserProfile findOrCreateProfile(User user) {
+        return profileRepo.findByUser(user)
+                .orElseGet(() -> {
+                    UserProfile newProfile = new UserProfile();
+                    newProfile.setUser(user);
+                    return newProfile;
+                });
+    }
+
+    // update profile fields from request
+    public void updateProfileFields(UserProfile profile, ProfileRequest request) {
         profile.setName(request.getName());
         profile.setAge(request.getAge());
         profile.setGender(request.getGender());
@@ -40,33 +50,37 @@ public class ProfileService {
         profile.setLookingFor(request.getLookingFor());
         profile.setLookingForGender(request.getLookingForGender());
         profile.setBio(request.getBio());
-        // location stuff
         profile.setLatitude(request.getLatitude());
         profile.setLongitude(request.getLongitude());
         profile.setMaxRadiusKm(request.getMaxRadiusKm());
-
-        if (uploadedUrl !=null) {
-            profile.setProfilePictureUrl(uploadedUrl);
-        }
-
-        boolean completed =
-        profile.getName() != null &&
-        profile.getAge() != null &&
-        profile.getGender() != null &&
-        profile.getHobbies() != null &&
-        profile.getLookingFor() != null &&
-        profile.getLookingForGender() != null &&
-        profile.getLatitude() != null &&
-        profile.getLongitude() != null &&
-        profile.getMaxRadiusKm() != null;
-
-        profile.setProfileCompleted(completed);
-        //saves the profile to database
-        profileRepo.save(profile);
-        //returns the info to frontend
-        return toResponse(profile);
     }
-    //helper method to convert the userprofile to DTO for safety, security etc
+
+    // set the picture URL
+    public void setProfilePicture(UserProfile profile, String pictureUrl) {
+        profile.setProfilePictureUrl(pictureUrl);
+    }
+
+    // check if profile is complete
+    public boolean isProfileComplete(UserProfile profile) {
+        return profile.getName() != null &&
+               profile.getAge() != null &&
+               profile.getGender() != null &&
+               profile.getHobbies() != null &&
+               profile.getLookingFor() != null &&
+               profile.getLookingForGender() != null &&
+               profile.getLatitude() != null &&
+               profile.getLongitude() != null &&
+               profile.getMaxRadiusKm() != null;
+    }
+
+    // save to database
+    @Transactional
+    public UserProfile saveProfile(UserProfile profile) {
+        profile.setProfileCompleted(isProfileComplete(profile));
+        return profileRepo.save(profile);
+    }
+
+    // convert to response DTO
     private ProfileResponse toResponse(UserProfile p) {
         ProfileResponse r = new ProfileResponse();
         r.id = p.getId();
@@ -75,32 +89,13 @@ public class ProfileService {
         r.gender = p.getGender();
         r.hobbies = p.getHobbies();
         r.lookingFor = p.getLookingFor();
-        
         r.lookingForGender = p.getLookingForGender();
         r.bio = p.getBio();
-
         r.profilePictureUrl = p.getProfilePictureUrl();
         r.profileCompleted = p.isProfileCompleted();
-        
-        // location stuff
         r.latitude = p.getLatitude();
         r.longitude = p.getLongitude();
         r.maxRadiusKm = p.getMaxRadiusKm();
-        
         return r;
     }
-
-    public ProfileResponse getProfile(User user) {
-    return profileRepo.findByUser(user)
-            .map(this::toResponse)
-            .orElse(null);
 }
-
-    
-}
-
-
-//create/update profile
-//store image
-// validate that the user acually owns this profile
-// mark profile as complete

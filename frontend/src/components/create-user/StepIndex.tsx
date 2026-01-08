@@ -17,12 +17,14 @@ const CreateUser = () => {
     name: "",
     age: "",
     gender: "",
-    location: "",
     hobbies: [],
     lookingFor: "love",
     genderPreference: [],
     bio: "",
     profilePicture: null,
+    latitude: 0,
+    longitude: 0,
+    maxRadiusKm: 50,
   });
 
   const totalSteps = 6;
@@ -78,13 +80,19 @@ const CreateUser = () => {
         setCurrentStep(3);
         return;
       }
-      if (!formData.latitude || !formData.longitude) {
-        // ← Check these instead
-        alert("Please allow your location to access the application");
-        setCurrentStep(6);
+
+      if (!formData.genderPreference || formData.genderPreference.length === 0) {
+        alert("Please select at least one gender preference");
+        setCurrentStep(3);
         return;
       }
 
+      if (!formData.latitude || !formData.longitude) {
+        alert("Please allow location access");
+        setCurrentStep(6);
+        return;
+      }
+    
       // Bio is optional - no validation needed
       // Profile picture is optional - no validation needed
 
@@ -95,29 +103,46 @@ const CreateUser = () => {
         return;
       }
 
-      const profileData = {
-        name: formData.name.trim(),
-        age: parseInt(formData.age),
-        gender: formData.gender,
-        hobbies: formData.hobbies,
-        lookingFor: formData.lookingFor,
-        latitude: formData.latitude, // ADD THIS
-        longitude: formData.longitude, // ADD THIS
-        maxRadiusKm: formData.maxRadiusKm,
-      };
-
-      console.log("Sending to API:", profileData);
-
-      const response = await api.post("/me/profile", profileData);
-
-      console.log("Profile created successfully:", response.data);
-
+      const formDataToSend = new FormData();
+    
+      // Add all text fields
+      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('age', formData.age);
+      formDataToSend.append('gender', formData.gender);
+      formDataToSend.append('lookingFor', formData.lookingFor);
+      formDataToSend.append('lookingForGender', formData.genderPreference[0]);
+      formDataToSend.append('bio', formData.bio || '');
+      formDataToSend.append('latitude', formData.latitude.toString());
+      formDataToSend.append('longitude', formData.longitude.toString());
+      
+      // Handle maxRadiusKm
+      if (formData.maxRadiusKm !== undefined && formData.maxRadiusKm !== null) {
+        formDataToSend.append('maxRadiusKm', formData.maxRadiusKm.toString());
+      }
+      formDataToSend.append('hobbies', formData.hobbies.join(','));
+      // Add profile picture if exists
       if (formData.profilePicture) {
-        console.log("Profile picture upload will be implemented later");
+        formDataToSend.append('profilePicture', formData.profilePicture);
+        console.log("Profile picture attached:", formData.profilePicture.name);
+      } else {
+        console.log("No profile picture to upload");
       }
 
+      console.log("Sending FormData to API");
+
+      // ========================================
+      // CHANGED: Send FormData with multipart header
+      // ========================================
+      const response = await api.post("/me/profile", formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log("Profile created successfully:", response.data);
       alert("Profile created successfully!");
       navigate("/");
+
     } catch (error: any) {
       console.error("Error creating profile:", error);
 
@@ -127,9 +152,17 @@ const CreateUser = () => {
         console.error("Server data:", error.response.data);
 
         if (status === 403) {
-          alert("Session expired. Please login again.");
-          localStorage.removeItem("token");
-          navigate("/login");
+          // Check if it's actually a token issue or validation error
+          const errorMessage = error.response.data?.message || error.response.data?.error;
+          
+          if (errorMessage && errorMessage.toLowerCase().includes('token')) {
+            alert("Session expired. Please login again.");
+            localStorage.removeItem("token");
+            navigate("/login");
+          } else {
+            // It's a validation error, not token issue
+            alert(`Error: ${errorMessage || 'Failed to create profile'}`);
+          }
           return;
         }
 
@@ -137,6 +170,13 @@ const CreateUser = () => {
           alert("Authentication failed. Please login again.");
           localStorage.removeItem("token");
           navigate("/login");
+          return;
+        }
+
+        if (status === 400) {
+          // Bad request - validation error
+          const message = error.response.data?.message || error.response.data?.error;
+          alert(`Validation Error: ${message}`);
           return;
         }
 

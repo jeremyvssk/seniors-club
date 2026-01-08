@@ -13,6 +13,12 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // debug
+      console.log('=== AXIOS REQUEST ===');
+      console.log('URL:', `${config.baseURL || ''}${config.url || ''}`);
+      console.log('Method:', config.method?.toUpperCase());
+      console.log('Token:', token.substring(0, 20) + '...');
+      console.log('Data:', config.data);
     }
     return config;
   },
@@ -24,6 +30,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // debug
+    console.error('=== AXIOS RESPONSE ERROR ===');
+    console.error('Status:', error.response?.status);
+    console.error('Status Text:', error.response?.statusText);
+    console.error('Data:', error.response?.data);
+    console.error('Headers:', error.response?.headers);
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
