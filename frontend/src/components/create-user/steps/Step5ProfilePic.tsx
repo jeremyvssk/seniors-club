@@ -1,34 +1,51 @@
-import { useState, useRef } from 'react';
-import { UserFormData } from '../../../types/User';
-import PrevStepButton from '../../buttons/PrevStepButton';
-import { UserCheck, ArrowRight } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { UserFormData } from "../../../types/User";
+import PrevStepButton from "../../buttons/PrevStepButton";
+import NextButton from "../../buttons/NextButton";
+
 
 interface Step5Props {
   data: UserFormData;
   updateData: (data: Partial<UserFormData>) => void;
-  onSubmit: () => void;
+  onNext: () => void;
   onBack: () => void;
 }
 
-const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => {
+const Step5ProfilePic = ({
+  data,
+  updateData,
+  onNext,
+  onBack,
+}: Step5Props) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore preview when navigating back with existing profile picture
+  useEffect(() => {
+    if (data.profilePicture) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(data.profilePicture);
+    }
+  }, [data.profilePicture]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file");
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        alert("File size must be less than 5MB");
         return;
       }
 
       updateData({ profilePicture: file });
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -41,13 +58,13 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
     updateData({ profilePicture: null });
     setPreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+    onNext();
   };
 
   const hasPhoto = preview !== null;
@@ -68,9 +85,9 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
             {preview ? (
               <div className="space-y-2 md:space-y-3">
                 <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center shadow-sm">
-                  <img 
-                    src={preview} 
-                    alt="Profile preview" 
+                  <img
+                    src={preview}
+                    alt="Profile preview"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -85,9 +102,11 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
             ) : (
               <div className="w-full border-2 border-dashed border-slate-300 rounded-lg p-8 md:p-12 text-center hover:border-slate-400 transition-colors bg-white/50">
                 <div className="text-6xl md:text-7xl mb-3">👤</div>
-                <p className="text-slate-700 mb-4 font-medium text-base">No photo selected</p>
-                <label 
-                  htmlFor="profilePic" 
+                <p className="text-slate-700 mb-4 font-medium text-base">
+                  No photo selected
+                </p>
+                <label
+                  htmlFor="profilePic"
                   className="inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all cursor-pointer shadow-md hover:shadow-lg text-sm md:text-base"
                 >
                   Choose Photo
@@ -111,28 +130,12 @@ const Step5ProfilePic = ({ data, updateData, onSubmit, onBack }: Step5Props) => 
             </div>
           )}
 
-          {/* Dynamic Submit Button */}
           <div className="space-y-2 md:space-y-3">
-            {hasPhoto ? (
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
-              >
-                Complete Profile
-                <UserCheck className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:scale-110 transition-transform" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="w-full bg-slate-600 hover:bg-slate-700 text-white py-3 md:py-4 px-6 rounded-xl text-base md:text-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group"
-              >
-                Skip This Step
-                <ArrowRight className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3 group-hover:translate-x-1 transition-transform" />
-              </button>
-            )}
-            
-            <PrevStepButton type="button" onClick={onBack} />
-          </div>
+          <NextButton type="submit">
+            {hasPhoto ? "Next" : "I'll do this later"}
+          </NextButton>
+          <PrevStepButton type="button" onClick={onBack} />
+        </div>
         </form>
       </div>
     </div>

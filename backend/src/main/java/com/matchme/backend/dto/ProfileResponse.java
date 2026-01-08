@@ -9,9 +9,13 @@ public class ProfileResponse {
     public String name;
     public Integer age;
     public String gender;
-    public String location;
     public List<String> hobbies;
     public String lookingFor;
+    public String lookingForGender;
+    public String bio;
     public String profilePictureUrl;
     public boolean profileCompleted;
+    public Double latitude;
+    public Double longitude;
+    public Integer maxRadiusKm;
 }

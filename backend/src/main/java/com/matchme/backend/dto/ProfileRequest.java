@@ -21,9 +21,6 @@ public class ProfileRequest {
     @NotBlank(message = "Gender is required")
     private String gender;
     
-    @NotBlank(message = "Location is required")
-    private String location;
-    
     @NotNull(message = "Hobbies are required")
     @NotEmpty(message = "At least one hobby is required")
     private List<String> hobbies;
@@ -34,9 +31,35 @@ public class ProfileRequest {
         message = "Invalid lookingFor value. Must be: love, friend, travel, or open"
     )
     private String lookingFor;
-    
+
+
+
+   @NotBlank(message = "Please select who you are looking for")
+    @Pattern(
+        regexp = "^(man|woman|other)$",
+        message = "Invalid lookingFor value. Must be: man, woman, or other"
+    )
+    private String lookingForGender;
+
+
+    //optional - about me
+    private String bio;
+
+
+
     // Optional - can be null
     private String profilePictureUrl;
+    // loication stuff
+    @NotNull(message = "Latitude is required")
+    private Double latitude;
+    
+    @NotNull(message = "Longitude is required")
+    private Double longitude;
+    
+    @NotNull(message = "Maximum radius is required")
+    @Min(value = 1, message = "Radius must be at least 1km")
+    @Max(value = 500, message = "Radius cannot exceed 500km")
+    private Integer maxRadiusKm;
 
     // Getters and Setters
     public String getName() { return name; }
@@ -48,17 +71,31 @@ public class ProfileRequest {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-
     public List<String> getHobbies() { return hobbies; }
     public void setHobbies(List<String> hobbies) { this.hobbies = hobbies; }
 
     public String getLookingFor() { return lookingFor; }
     public void setLookingFor(String lookingFor) { this.lookingFor = lookingFor; }
 
+     public String getLookingForGender() { return lookingForGender; }
+    public void setLookingForGender(String lookingForGender) { this.lookingForGender = lookingForGender; }
+
+
+     public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+
     public String getProfilePictureUrl() { return profilePictureUrl; }
     public void setProfilePictureUrl(String profilePictureUrl) { 
         this.profilePictureUrl = profilePictureUrl; 
     }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    
+    public Integer getMaxRadiusKm() { return maxRadiusKm; }
+    public void setMaxRadiusKm(Integer maxRadiusKm) { this.maxRadiusKm = maxRadiusKm; }
 }

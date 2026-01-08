@@ -36,9 +36,14 @@ public class ProfileService {
         profile.setName(request.getName());
         profile.setAge(request.getAge());
         profile.setGender(request.getGender());
-        profile.setLocation(request.getLocation());
         profile.setHobbies(request.getHobbies());
         profile.setLookingFor(request.getLookingFor());
+        profile.setLookingForGender(request.getLookingForGender());
+        profile.setBio(request.getBio());
+        // location stuff
+        profile.setLatitude(request.getLatitude());
+        profile.setLongitude(request.getLongitude());
+        profile.setMaxRadiusKm(request.getMaxRadiusKm());
 
         if (uploadedUrl !=null) {
             profile.setProfilePictureUrl(uploadedUrl);
@@ -48,8 +53,12 @@ public class ProfileService {
         profile.getName() != null &&
         profile.getAge() != null &&
         profile.getGender() != null &&
-        profile.getLocation() != null && 
-        profile.getHobbies() != null;
+        profile.getHobbies() != null &&
+        profile.getLookingFor() != null &&
+        profile.getLookingForGender() != null &&
+        profile.getLatitude() != null &&
+        profile.getLongitude() != null &&
+        profile.getMaxRadiusKm() != null;
 
         profile.setProfileCompleted(completed);
         //saves the profile to database
@@ -64,11 +73,20 @@ public class ProfileService {
         r.name = p.getName();
         r.age = p.getAge();
         r.gender = p.getGender();
-        r.location = p.getLocation();
         r.hobbies = p.getHobbies();
         r.lookingFor = p.getLookingFor();
+        
+        r.lookingForGender = p.getLookingForGender();
+        r.bio = p.getBio();
+
         r.profilePictureUrl = p.getProfilePictureUrl();
         r.profileCompleted = p.isProfileCompleted();
+        
+        // location stuff
+        r.latitude = p.getLatitude();
+        r.longitude = p.getLongitude();
+        r.maxRadiusKm = p.getMaxRadiusKm();
+        
         return r;
     }
 
