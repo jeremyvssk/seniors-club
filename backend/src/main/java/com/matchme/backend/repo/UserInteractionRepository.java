@@ -18,11 +18,11 @@ public interface UserInteractionRepository extends JpaRepository<UserInteraction
     //find all profiles user has liked
     List<UserInteraction> findByUserAndInteractionType(User user, InteractionType interactionType);
     //check if user has already interacted with this profile
-    Optional<UserInteraction> findbyUserandTargetProfile(User user, UserProfile targetProfile);
+    Optional<UserInteraction> findByUserAndTargetProfile(User user, UserProfile targetProfile);
     //check if this interction exists
     boolean existsByUserAndTargetProfileAndInteractionType(User user, UserProfile targetProfile, InteractionType interactionType);
     //find all users who liked this profile
-    List<UserInteraction> findbyTargetProfileAndInteractionType(UserProfile targetProfile, InteractionType interactionType);
+    List<UserInteraction> findByTargetProfileAndInteractionType(UserProfile targetProfile, InteractionType interactionType);
 
 
 

@@ -78,7 +78,8 @@ const CreateUser = () => {
         setCurrentStep(3);
         return;
       }
-        if (!formData.location) {
+      if (!formData.latitude || !formData.longitude) {
+        // ← Check these instead
         alert("Please allow your location to access the application");
         setCurrentStep(6);
         return;
@@ -100,9 +101,9 @@ const CreateUser = () => {
         gender: formData.gender,
         hobbies: formData.hobbies,
         lookingFor: formData.lookingFor,
-        latitude: formData.latitude,         // ADD THIS
-        longitude: formData.longitude,       // ADD THIS
-        maxRadiusKm: formData.maxRadiusKm,  
+        latitude: formData.latitude, // ADD THIS
+        longitude: formData.longitude, // ADD THIS
+        maxRadiusKm: formData.maxRadiusKm,
       };
 
       console.log("Sending to API:", profileData);
@@ -201,7 +202,7 @@ const CreateUser = () => {
           />
         );
 
-              case 6:
+      case 6:
         return (
           <Step6Location
             data={formData}

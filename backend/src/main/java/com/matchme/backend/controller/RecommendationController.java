@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
-
-
 @RestController
 @RequestMapping("/api/profile")
 public class RecommendationController {
@@ -43,20 +41,8 @@ public class RecommendationController {
 
 
 
-
-
-
-
         List<UserProfile> profiles = recommendationService.getRecommendations(user);
         return ResponseEntity.ok(profiles);
-
-
-
-
-
-
-        
-
 
 
     }
