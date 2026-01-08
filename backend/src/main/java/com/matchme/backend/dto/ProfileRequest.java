@@ -41,11 +41,8 @@ public class ProfileRequest {
     )
     private String lookingForGender;
 
-
     //optional - about me
     private String bio;
-
-
 
     // Optional - can be null
     private String profilePictureUrl;
