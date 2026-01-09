@@ -8,7 +8,7 @@ const Header: React.FC = () => {
         <img 
           src={logoImg} 
           alt="Senior's Club Logo" 
-          className="h-32 sm:h-20 md:h-24 lg:h-64 w-auto object-contain"
+          className="h-32 sm:h-20 md:h-24 lg:h-48 w-auto object-contain"
         />
       </div>
     </header>
