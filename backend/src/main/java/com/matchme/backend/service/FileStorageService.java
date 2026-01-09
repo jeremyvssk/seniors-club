@@ -1,5 +1,6 @@
 package com.matchme.backend.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -8,26 +9,31 @@ import java.util.UUID;
 
 @Service
 public class FileStorageService {
-    //where will the files be uploaded
-    private final Path uploadDir = Paths.get("uploads").toAbsolutePath();
+    
+    private final Path uploadDir;
 
-    public FileStorageService() {
+    public FileStorageService(@Value("${file.upload-dir:uploads}") String uploadPath) {
+        // This will be relative to wherever the app runs from
+        // In dev: /home/jeremyvssk/matchme/web/backend/uploads
+        // On someone else's machine: /their/path/backend/uploads
+        this.uploadDir = Paths.get(uploadPath).toAbsolutePath();
         try {
             Files.createDirectories(uploadDir);
         } catch (IOException e) {
             throw new RuntimeException("Can't create upload dir", e);
         }
     }
+    
     //takes the file from frontend and user ID
     public String saveFile(MultipartFile file, Long userId) {
         if (file == null || file.isEmpty()) return null;
-    //generates unique file name
+    //generates unique file name. example: "user-32-abc123.jpg"
         try {
             String filename = "user-" + userId + "-" + UUID.randomUUID() + ".jpg";
-    //actually saves the file
+    //saves the file to uploads directory. example: web/backend/uploads/user-32-abc123.jpg
             Files.copy(file.getInputStream(), uploadDir.resolve(filename), 
                        StandardCopyOption.REPLACE_EXISTING);
-    //returns the file name to be stored in database
+    //returns the file name to be stored in database. example: "/uploads/user-32-abc123.jpg"
             return "/uploads/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to save file", e);

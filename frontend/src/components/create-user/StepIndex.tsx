@@ -129,6 +129,16 @@ const CreateUser = () => {
       }
 
       console.log("Sending FormData to API");
+      console.log("=== FORM DATA DEBUG ===");
+      let partCount = 0;
+      for (let pair of formDataToSend.entries()) {
+        partCount++;
+        console.log(`Part ${partCount}: ${pair[0]} = ${typeof pair[1] === 'object' && pair[1] instanceof File ? 'FILE: ' + pair[1].name : pair[1]}`);
+      }
+      console.log(`Total parts: ${partCount}`);
+      console.log("======================");
+
+      console.log("Sending FormData to API");
 
       // ========================================
       // CHANGED: Send FormData with multipart header
