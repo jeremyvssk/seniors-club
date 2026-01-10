@@ -1,7 +1,6 @@
 //business logic for updating and or creating a profile
 //receives the request from controller
 //interacts with repository
-//saves/udpates database and returns response
 
 package com.matchme.backend.service;
 
@@ -10,15 +9,22 @@ import com.matchme.backend.dto.ProfileResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.UserProfileRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProfileService {
 
     private final UserProfileRepository profileRepo;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public ProfileService(UserProfileRepository profileRepo) {
         this.profileRepo = profileRepo;
@@ -41,6 +47,61 @@ public class ProfileService {
                 });
     }
 
+    // Parse and validate comma-separated gender preferences
+    public List<String> parseAndValidateGenderPreferences(String genderString) {
+        if (genderString == null || genderString.trim().isEmpty()) {
+            throw new IllegalArgumentException("Gender preferences cannot be empty");
+        }
+
+        List<String> validGenders = Arrays.stream(genderString.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(g -> g.equals("man") || g.equals("woman") || g.equals("other"))
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (validGenders.isEmpty()) {
+            throw new IllegalArgumentException("Invalid gender preferences. Must be: man, woman, or other");
+        }
+
+        return validGenders;
+    }
+
+    // Build ProfileRequest DTO from raw parameters
+    public ProfileRequest buildProfileRequest(
+            String name,
+            Integer age,
+            String gender,
+            String hobbiesString,
+            String lookingFor,
+            String lookingForGenderString,
+            String bio,
+            Double latitude,
+            Double longitude,
+            Integer maxRadiusKm) {
+        
+        // Parse and validate gender preferences
+        List<String> lookingForGenderList = parseAndValidateGenderPreferences(lookingForGenderString);
+        
+        // Parse hobbies
+        List<String> hobbiesList = Arrays.asList(hobbiesString.split(","));
+        
+        // Build request DTO
+        ProfileRequest request = new ProfileRequest();
+        request.setName(name);
+        request.setAge(age);
+        request.setGender(gender.toLowerCase());
+        request.setHobbies(hobbiesList);
+        request.setLookingFor(lookingFor);
+        request.setLookingForGender(lookingForGenderList);
+        request.setBio(bio);
+        request.setLatitude(latitude);
+        request.setLongitude(longitude);
+        request.setMaxRadiusKm(maxRadiusKm);
+        
+        return request;
+    }
+
     // update profile fields from request
     public void updateProfileFields(UserProfile profile, ProfileRequest request) {
         profile.setName(request.getName());
@@ -55,9 +116,19 @@ public class ProfileService {
         profile.setMaxRadiusKm(request.getMaxRadiusKm());
     }
 
-    // set the picture URL
-    public void setProfilePicture(UserProfile profile, String pictureUrl) {
-        profile.setProfilePictureUrl(pictureUrl);
+    // Handle profile picture upload
+    public void handleProfilePicture(UserProfile profile, MultipartFile profilePicture, Long userId) {
+        if (profilePicture != null && !profilePicture.isEmpty()) {
+            // Delete old picture if exists
+            String oldPictureUrl = profile.getProfilePictureUrl();
+            if (oldPictureUrl != null && !oldPictureUrl.isEmpty()) {
+                fileStorageService.deleteFile(oldPictureUrl);
+            }
+            
+            // Save new picture
+            String newPictureUrl = fileStorageService.saveFile(profilePicture, userId);
+            profile.setProfilePictureUrl(newPictureUrl);
+        }
     }
 
     // check if profile is complete

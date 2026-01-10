@@ -1,10 +1,13 @@
+export type Gender = "man" | "woman" | "other";
+export type LookingFor = "love" | "friend" | "travel" | "open";
+
 export interface UserFormData {
   name: string;
   age: string;
-  gender: string;
+  gender: Gender;
   hobbies: string[];
-  lookingFor: "love" | "friend" | "travel" | "open";
-  genderPreference: string[];
+  lookingFor: LookingFor;
+  genderPreference: Gender[];
   bio: string;
   profilePicture?: File | null;
   latitude?: number;

@@ -1,12 +1,7 @@
 package com.matchme.backend.dto;
 
 import java.util.List;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 
 public class ProfileRequest {
     
@@ -19,6 +14,10 @@ public class ProfileRequest {
     private Integer age;
     
     @NotBlank(message = "Gender is required")
+    @Pattern(
+        regexp = "^(man|woman|other)$",
+        message = "Gender must be: man, woman, or other"
+    )
     private String gender;
     
     @NotNull(message = "Hobbies are required")
@@ -32,14 +31,10 @@ public class ProfileRequest {
     )
     private String lookingFor;
 
-
-
-   @NotBlank(message = "Please select who you are looking for")
-    @Pattern(
-        regexp = "^(man|woman|other)$",
-        message = "Invalid lookingFor value. Must be: man, woman, or other"
-    )
-    private String lookingForGender;
+    @NotNull(message = "Please select who you are looking for")
+    @NotEmpty(message = "At least one gender preference is required")
+    @Size(min = 1, max = 3, message = "Select between 1 and 3 gender preferences")
+    private List<@Pattern(regexp = "^(man|woman|other)$", message = "Each gender must be: man, woman, or other") String> lookingForGender;
 
     //optional - about me
     private String bio;
@@ -74,11 +69,11 @@ public class ProfileRequest {
     public String getLookingFor() { return lookingFor; }
     public void setLookingFor(String lookingFor) { this.lookingFor = lookingFor; }
 
-     public String getLookingForGender() { return lookingForGender; }
-    public void setLookingForGender(String lookingForGender) { this.lookingForGender = lookingForGender; }
+    public List<String> getLookingForGender() { return lookingForGender; }
+    public void setLookingForGender(List<String> lookingForGender) { this.lookingForGender = lookingForGender; }
 
 
-     public String getBio() { return bio; }
+    public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
 
 

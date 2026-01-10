@@ -38,7 +38,7 @@ const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
     e.preventDefault();
     
     if (data.hobbies.length === 0) {
-      alert('Please select at least one hobby');
+      alert('Please select at least one hobby'); 
       return;
     }
     
@@ -71,6 +71,13 @@ const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
               </button>
             ))}
           </div>
+
+          {/* Error message if no hobbies selected */}
+          {data.hobbies.length === 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+              <p className="text-red-800 text-sm font-medium"> Please select at least one hobby</p>
+            </div>
+          )}
 
           {/* Selected Hobbies Count */}
           {data.hobbies.length > 0 && (

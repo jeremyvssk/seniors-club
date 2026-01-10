@@ -10,11 +10,8 @@ RUN npm ci
 # Copy all source files
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Expose port 5173
 EXPOSE 5173
 
-# Run Vite preview server
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+# Run dev server with hot reloading instead of build + preview
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

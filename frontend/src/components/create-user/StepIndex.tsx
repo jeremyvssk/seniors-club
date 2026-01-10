@@ -16,7 +16,7 @@ const CreateUser = () => {
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     age: "",
-    gender: "",
+    gender: "" as any,
     hobbies: [],
     lookingFor: "love",
     genderPreference: [],
@@ -110,7 +110,7 @@ const CreateUser = () => {
       formDataToSend.append('age', formData.age);
       formDataToSend.append('gender', formData.gender);
       formDataToSend.append('lookingFor', formData.lookingFor);
-      formDataToSend.append('lookingForGender', formData.genderPreference[0]);
+      formDataToSend.append('lookingForGender', formData.genderPreference.join(','));
       formDataToSend.append('bio', formData.bio || '');
       formDataToSend.append('latitude', formData.latitude.toString());
       formDataToSend.append('longitude', formData.longitude.toString());

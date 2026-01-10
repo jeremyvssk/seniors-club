@@ -28,20 +28,19 @@ services:
     ports:
       - "3001:3001"
     environment:
-      # Database connection - uses Docker service name 'postgres'
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/matchme
       SPRING_DATASOURCE_USERNAME: matchme_user
       SPRING_DATASOURCE_PASSWORD: matchme-password
-      
-      # JWT secrets
       JWT_ACCESS_SECRET: matchme-access-key-need-to-be-at-least-32-characters
       JWT_REFRESH_SECRET: matchme-refresh-key-need-to-be-at-least-32-characters
-      
-      # CORS - allow requests from frontend
       CORS_ALLOWED_ORIGINS: http://localhost:5173
+      # Enable DevTools hot reload
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
     volumes:
-      # Mount uploads directory to persist files
       - ./backend/uploads:/app/uploads
+      # Mount source code for hot reload
+      - ./backend/src:/app/src
+      - ./backend/target:/app/target
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,6 +55,10 @@ services:
     restart: always
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules  # Prevent overwriting node_modules
     depends_on:
       - backend
     networks:

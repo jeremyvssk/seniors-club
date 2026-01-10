@@ -1,19 +1,9 @@
 //Model to represent user profile in the database
-//
-
 package com.matchme.backend.model;
 
+import java.util.ArrayList;
 import java.util.List;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_profiles")
@@ -27,6 +17,8 @@ public class UserProfile {
     private User user;
     private String name;
     private Integer age;
+    // Store as string but validate with enum
+    @Column(nullable = false)
     private String gender;
 
     @Column(name = "latitude")
@@ -43,9 +35,14 @@ public class UserProfile {
     @Column(name = "hobby")
     private List<String> hobbies;
 
+    // Explicitly set fetch type and initialize
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_looking_for_gender", joinColumns = @JoinColumn(name = "profile_id"))
+    @Column(name = "gender")
+    private List<String> lookingForGender = new ArrayList<>();
+
     private String bio;
     private String lookingFor;
-    private String lookingForGender;
     private String profilePictureUrl;
     private boolean profileCompleted = false;
     // getters/setters
@@ -68,13 +65,12 @@ public class UserProfile {
 
     public String getLookingFor() {return lookingFor;}
     public void setLookingFor(String lookingFor) {this.lookingFor = lookingFor;}  
-    
-    public String getLookingForGender() {return lookingForGender;}
-    public void setLookingForGender(String lookingForGender) {this.lookingForGender = lookingForGender;}
+
+    public List<String> getLookingForGender() {return lookingForGender;}
+    public void setLookingForGender(List<String> lookingForGender) {this.lookingForGender = lookingForGender;}
 
     public String getBio() {return bio;}
     public void setBio(String bio) {this.bio = bio;}  
-
 
     public String getProfilePictureUrl() {return profilePictureUrl;}
     public void setProfilePictureUrl(String profilePictureUrl) {this.profilePictureUrl = profilePictureUrl;}
