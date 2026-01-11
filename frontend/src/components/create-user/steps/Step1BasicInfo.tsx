@@ -1,4 +1,4 @@
-import { UserFormData } from "../../../types/User";
+import { Gender, UserFormData } from "../../../types/User";
 import NextButton from "../../buttons/NextButton";
 
 interface Step1Props {
@@ -11,7 +11,7 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Validations
     if (!data.name.trim()) {
       alert("Please enter your name");
       return;
@@ -105,15 +105,14 @@ const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
           <select
             id="gender"
             value={data.gender}
-            onChange={(e) => updateData({ gender: e.target.value })}
+            onChange={(e) => updateData({ gender: e.target.value as Gender})}
             className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
             <option value="">Select gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
+            <option value="man">Man</option>
+            <option value="woman">Woman</option>
             <option value="other">Other</option>
-            <option value="prefer-not-to-say">Prefer not to say</option>
           </select>
         </div>
 

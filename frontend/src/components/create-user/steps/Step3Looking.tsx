@@ -1,4 +1,4 @@
-import { UserFormData } from "../../../types/User";
+import { Gender, UserFormData } from "../../../types/User";
 import NextButton from "../../buttons/NextButton";
 import PrevStepButton from "../../buttons/PrevStepButton";
 import { Heart, Handshake, Plane, Compass, VenusAndMars } from "lucide-react";
@@ -37,14 +37,14 @@ const options = [
   },
 ];
 
-const genderOptions = [
+const genderOptions: { value: Gender; label: string }[] = [ // Explicitly type the array
   { value: "man", label: "Man" },
   { value: "woman", label: "Woman" },
   { value: "other", label: "Other" },
 ];
 
 const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
-  const toggleGenderPreference = (gender: string) => {
+  const toggleGenderPreference = (gender: Gender) => {
     const currentPreferences = data.genderPreference || [];
     const newPreferences = currentPreferences.includes(gender)
       ? currentPreferences.filter((g) => g !== gender)
@@ -130,6 +130,13 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
             ))}
           </div>
 
+          {/* Error message for lookingFor */}
+          {!data.lookingFor && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+              <p className="text-red-800 text-sm font-medium">Please select what you are looking for</p>
+            </div>
+          )}
+
           {/* Gender Preferences Section */}
           <div className="pt-4">
             <div className="flex items-center gap-2 mb-3">
@@ -161,6 +168,13 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
                 );
               })}
             </div>
+
+            {/* Error message for gender preferences */}
+            {(!data.genderPreference || data.genderPreference.length === 0) && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center mt-3">
+                <p className="text-red-800 text-sm font-medium"> Please select at least one gender preference</p>
+              </div>
+            )}
           </div>
 
           {/* Navigation Buttons */}

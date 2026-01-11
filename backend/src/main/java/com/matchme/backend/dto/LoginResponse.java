@@ -40,10 +40,13 @@ public class LoginResponse {
     public static class UserInfo {
         private Long id;
         private String email;
+        private Boolean profileCompleted;
+
         
-        public UserInfo(Long id, String email) {
+        public UserInfo(Long id, String email, Boolean profileCompleted) {
             this.id = id;
             this.email = email;
+            this.profileCompleted = profileCompleted;
         }
         
         public Long getId() {
@@ -60,6 +63,14 @@ public class LoginResponse {
         
         public void setEmail(String email) {
             this.email = email;
+        }
+
+        public Boolean getProfileComplete() {
+            return profileCompleted;
+        }
+
+        public void setProfileComplete(boolean profileCompleted) {
+            this.profileCompleted = profileCompleted;
         }
     }
 }

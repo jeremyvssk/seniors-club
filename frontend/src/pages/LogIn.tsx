@@ -33,7 +33,7 @@ const SeniorsClubLogIn: React.FC = () => {
 
       // checks if there is a profile
       if (response.data.user.profileComplete) {
-        navigate("/"); // if there is, go to main page
+        navigate("/explore"); // if there is, go to main page
       } else {
         navigate("/complete-profile"); // if not, set profile up
       }

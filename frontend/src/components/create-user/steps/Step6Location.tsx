@@ -47,6 +47,13 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
     setGettingLocation(true);
     setLocationError(null);
 
+    // Better geolocation options for reliability
+    const options = {
+      enableHighAccuracy: false, // Faster, less battery drain
+      timeout: 10000, // 10 second timeout
+      maximumAge: 300000 // Accept cached location up to 5 minutes old
+    };
+
     // Request current position from browser
     navigator.geolocation.getCurrentPosition(
       // Success callback
@@ -60,6 +67,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
         
         setHasLocation(true);
         setGettingLocation(false);
+        setLocationError(null);
       },
       // Error callback
       (error) => {
@@ -90,7 +98,8 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
           console.error('Unknown geolocation error');
           setLocationError('Unable to get your location. Please try again.');
         }
-      }
+      },
+      options // pass options to geolocation
     );
   };
 
@@ -130,8 +139,9 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
           Location Access
         </h2>
-        <p className="text-center text-slate-500 text-sm mb-4 md:mb-6">
-          We need your location to find matches near you
+        {/* Privacy text */}
+        <p className="text-center text-slate-600 text-sm mb-4 md:mb-6">
+          We need your location to find matches near you. Your exact location is never shared with others.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
@@ -161,7 +171,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
               {/* Error Message Box (shown if location request fails) */}
               {locationError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4 space-y-2">
-                  <p className="text-red-800 font-medium text-sm mb-1">⚠️ Location Required</p>
+                  <p className="text-red-800 font-medium text-sm mb-1">Location Required</p>
                   <p className="text-red-700 text-xs md:text-sm">{locationError}</p>
                   
                   {!showManualInput && (
@@ -170,22 +180,16 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                       onClick={() => setShowManualInput(true)}
                       className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded text-xs font-medium transition-colors"
                     >
-                      Enter Coordinates Manually (Testing)
+                      Enter Coordinates Manually
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Privacy Notice Box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-                <p className="text-blue-800 text-xs md:text-sm">
-                  <strong>Privacy:</strong> We only use your location to find nearby matches. Your exact coordinates are never shared.
-                </p>
-              </div>
               {/* Manual Input Section - for linux enjoyers */}
               {showManualInput && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
-                <p className="text-yellow-800 font-medium text-sm mb-2">📍 Manual Coordinates</p>
+                <p className="text-yellow-800 font-medium text-sm mb-2">Manual Coordinates</p>
                 <div className="space-y-2">
                   <input
                     type="number"
@@ -219,7 +223,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                   </button>
                 </div>
                 <div className="mt-2 text-xs text-yellow-700 space-y-1">
-                  <p><strong>Estonia Locations:</strong></p>
+                  <p><strong>Example Locations:</strong></p>
                   <p>• Tallinn: 59.4370, 24.7536</p>
                   <p>• Tartu: 58.3806, 26.7225</p>
                   <p>• Pärnu: 58.3859, 24.4971</p>

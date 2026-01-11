@@ -1,6 +1,8 @@
 package com.matchme.backend.service;
 
 import com.matchme.backend.model.User;
+import com.matchme.backend.model.UserProfile;
+import com.matchme.backend.repo.UserProfileRepository;
 import com.matchme.backend.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +15,9 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -50,5 +55,13 @@ public class UserService {
             }
         }
         return Optional.empty();
+    }
+
+    public Boolean isProfileCompleted(Long userId) {
+        Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(userId);
+        if (profileOpt.isPresent()) {
+            return profileOpt.get().getProfileCompleted();
+        }
+        return false;
     }
 }

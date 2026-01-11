@@ -11,7 +11,7 @@ public class ProfileResponse {
     public String gender;
     public List<String> hobbies;
     public String lookingFor;
-    public String lookingForGender;
+    public List<String> lookingForGender;
     public String bio;
     public String profilePictureUrl;
     public boolean profileCompleted;

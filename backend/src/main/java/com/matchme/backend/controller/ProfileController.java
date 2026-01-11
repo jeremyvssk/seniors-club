@@ -4,18 +4,13 @@ import com.matchme.backend.dto.ProfileRequest;
 import com.matchme.backend.dto.ProfileResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
-import com.matchme.backend.service.FileStorageService;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Arrays;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/me")
@@ -27,9 +22,6 @@ public class ProfileController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private FileStorageService fileStorageService;
-
     @PostMapping(value = "/profile", consumes = "multipart/form-data")
     public ResponseEntity<?> createOrUpdateProfile(
             @AuthenticationPrincipal String email,
@@ -38,55 +30,45 @@ public class ProfileController {
             @RequestParam("gender") String gender,
             @RequestParam("hobbies") String hobbiesString,
             @RequestParam("lookingFor") String lookingFor,
-            @RequestParam("lookingForGender") String lookingForGender,
+            @RequestParam("lookingForGender") String lookingForGenderString,
             @RequestParam(value = "bio", required = false, defaultValue = "") String bio,
             @RequestParam("latitude") Double latitude,
             @RequestParam("longitude") Double longitude,
             @RequestParam("maxRadiusKm") Integer maxRadiusKm,
             @RequestParam(value = "profilePicture", required = false) MultipartFile profilePicture) {
         
-        // Step 1: Get user
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // Step 2: Build request DTO
-        ProfileRequest request = new ProfileRequest();
-        request.setName(name);
-        request.setAge(age);
-        request.setGender(gender);
-        request.setHobbies(Arrays.asList(hobbiesString.split(",")));
-        request.setLookingFor(lookingFor);
-        request.setLookingForGender(lookingForGender);
-        request.setBio(bio);
-        request.setLatitude(latitude);
-        request.setLongitude(longitude);
-        request.setMaxRadiusKm(maxRadiusKm);
-        
-        // Step 3: Find or create profile
-        UserProfile profile = profileService.findOrCreateProfile(user);
-        
-        // Step 4: Update fields
-        profileService.updateProfileFields(profile, request);
-        
-        // Step 5: Handle picture if uploaded
-        if (profilePicture != null && !profilePicture.isEmpty()) {
-            // Delete old picture if exists
-            String oldPictureUrl = profile.getProfilePictureUrl();
-            if (oldPictureUrl != null) {
-                fileStorageService.deleteFile(oldPictureUrl);
-            }
+        try {
+            // Step 1: Get user
+            User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Step 2: Build request DTO
+            ProfileRequest request = profileService.buildProfileRequest(
+                name, age, gender, hobbiesString, lookingFor,
+                lookingForGenderString, bio, latitude, longitude, maxRadiusKm
+            );
             
-            // Save new picture
-            String newPictureUrl = fileStorageService.saveFile(profilePicture, user.getId());
-            profileService.setProfilePicture(profile, newPictureUrl);
+            // Step 3: Find or create profile
+            UserProfile profile = profileService.findOrCreateProfile(user);
+            
+            // Step 4: Update fields
+            profileService.updateProfileFields(profile, request);
+            
+            // Step 5: Handle picture upload
+            profileService.handleProfilePicture(profile, profilePicture, user.getId());
+            
+            // Step 6: Save to database
+            profileService.saveProfile(profile);
+            
+            // Step 7: Return response
+            ProfileResponse response = profileService.getProfile(user);
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("An error occurred while updating profile");
         }
-        
-        // Step 6: Save to database
-        UserProfile savedProfile = profileService.saveProfile(profile);
-        
-        // Step 7: Return response
-        ProfileResponse response = profileService.getProfile(user);
-        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/profile")

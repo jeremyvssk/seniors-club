@@ -73,13 +73,17 @@ public class AuthController {
             
             User user = userOpt.get();
             
+            //check if user is created or not
+            Boolean profileCompleted = userService.isProfileCompleted(user.getId());
+
             // Generate JWT token
             String token = jwtUtil.generateToken(user.getId(), user.getEmail());
             
             // Create response
             LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
                 user.getId(), 
-                user.getEmail()
+                user.getEmail(),
+                profileCompleted
             );
             
             LoginResponse response = new LoginResponse(
