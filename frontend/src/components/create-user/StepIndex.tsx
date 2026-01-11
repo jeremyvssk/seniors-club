@@ -151,7 +151,7 @@ const CreateUser = () => {
 
       console.log("Profile created successfully:", response.data);
       alert("Profile created successfully!");
-      navigate("/");
+      navigate("/explore");
 
     } catch (error: any) {
       console.error("Error creating profile:", error);

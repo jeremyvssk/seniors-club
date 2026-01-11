@@ -1,5 +1,5 @@
 //talks to the database, saves, finds etc. 
-// doesnt really save right now, only finds :D 
+
 
 package com.matchme.backend.repo;
 
@@ -11,4 +11,5 @@ import java.util.Optional;
 
 public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
     Optional<UserProfile> findByUser(User user);
+    Optional<UserProfile> findByUserId(Long userId);
 }

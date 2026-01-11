@@ -76,6 +76,10 @@ public class RecommendationService {
 
         //save the match to database 
 
+        //notification to both users
+
+        //enable chat
+
 
     
 }

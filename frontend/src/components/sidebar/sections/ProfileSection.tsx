@@ -1,18 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Edit } from 'lucide-react';
 import { UserFormData } from '../../../types/User';
+import api from '../../../api/axios';
+
 
 export const ProfileSection: React.FC = () => {
-  const profile: UserFormData = {
-    name: "Sarah Johnson",
-    age: "28",
-    gender: "female",
-    location: "New York, NY",
-    hobbies: ["Photography", "Hiking", "Cooking", "Reading"],
-    lookingFor: "Love",
-    bio: "I'm a passionate photographer who loves exploring nature and trying new recipes. On weekends, you'll find me hiking mountain trails or browsing through bookstores. I believe in kindness, authenticity, and making the most of every moment.",
-    profilePicture: null
-  };
+  const [profile, setProfile] = useState<UserFormData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get('/me/profile');
+        setProfile(response.data);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Error getting profile', err);
+        setError('Failed to load profile');
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="w-full bg-white rounded-xl md:rounded-2xl shadow-xl p-6 flex items-center justify-center">
+        <p className="text-gray-500">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="w-full bg-white rounded-xl md:rounded-2xl shadow-xl p-6 flex items-center justify-center">
+        <p className="text-red-500">{error || 'Profile not found'}</p>
+      </div>
+    );
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+//commenting out the hardcoded profile for now
+// export const ProfileSection: React.FC = () => {
+//   const profile: UserFormData = {
+//     name: "Sarah Johnson",
+//     age: "28",
+//     gender: "female",
+//     location: "New York, NY",
+//     hobbies: ["Photography", "Hiking", "Cooking", "Reading"],
+//     lookingFor: "Love",
+//     bio: "I'm a passionate photographer who loves exploring nature and trying new recipes. On weekends, you'll find me hiking mountain trails or browsing through bookstores. I believe in kindness, authenticity, and making the most of every moment.",
+//     profilePicture: null
+//   };
+
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <div className="w-full">

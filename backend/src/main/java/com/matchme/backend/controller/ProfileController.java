@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class ProfileController {
         request.setName(name);
         request.setAge(age);
         request.setGender(gender);
-        request.setHobbies(Arrays.asList(hobbiesString.split(",")));
+        request.setHobbies(new ArrayList<>(Arrays.asList(hobbiesString.split(","))));
         request.setLookingFor(lookingFor);
         request.setLookingForGender(lookingForGender);
         request.setBio(bio);

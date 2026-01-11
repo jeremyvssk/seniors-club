@@ -90,7 +90,7 @@ public class ProfileService {
         r.lookingForGender = p.getLookingForGender();
         r.bio = p.getBio();
         r.profilePictureUrl = p.getProfilePictureUrl();
-        r.profileCompleted = p.isProfileCompleted();
+        r.profileCompleted = p.getProfileCompleted();
         r.latitude = p.getLatitude();
         r.longitude = p.getLongitude();
         r.maxRadiusKm = p.getMaxRadiusKm();
