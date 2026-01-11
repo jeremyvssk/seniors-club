@@ -82,15 +82,15 @@ export const RequestsSection: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         {mockRequests.map((request) => (
           <div 
             key={request.id} 
-            className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition-shadow"
+            className="bg-white rounded-xl md:rounded-2xl  shadow-lg p-3 md:p-4 hover:shadow-xl transition-shadow"
           >
-            <div className="flex gap-4">
+            <div className="flex gap-3 md:gap-4">
               {/* Profile Picture - Left */}
-              <div className="w-36 h-38 rounded-lg bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md flex-shrink-0">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md flex-shrink-0">
                 {request.profilePicture ? (
                   <img 
                     src={request.profilePicture.toString()} 
@@ -98,34 +98,31 @@ export const RequestsSection: React.FC = () => {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-12 h-12 text-gray-400" />
+                  <User className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
                 )}
               </div>
 
               {/* Content - Right */}
-              <div className="flex-1 flex flex-col justify-between">
+              <div className="flex-1 flex flex-col justify-between min-w-0">
                 {/* Name and Age */}
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{request.name}</h3>
-                  <p className="text-lg text-gray-600">{request.age} years old</p>
-                  {request.location && (
-                    <p className="text-sm text-gray-500">{request.location}</p>
-                  )}
+                  <h3 className="text-lg md:text-2xl font-bold text-gray-900">{request.name}</h3>
+                  <p className="text-base md:text-lg text-gray-600">{request.age} years old</p>
                 </div>
 
                 {/* Hobbies */}
                 {request.hobbies && request.hobbies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 my-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 my-1.5 md:my-2">
                     {request.hobbies.slice(0, 3).map((hobby, index) => (
                       <span 
                         key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                        className="px-2 py-0.5 md:px-3 md:py:1 bg-blue-100 text-blue-700 rounded-full text-xs md:text-sm font-medium"
                       >
                         {hobby}
                       </span>
                     ))}
                     {request.hobbies.length > 3 && (
-                      <span className="px-3 py-1 text-gray-500 text-sm">
+                      <span className="px-2 py-0.5 md:px-3 md:py-1 text-gray-500 text-xs md:text-sm">
                         +{request.hobbies.length - 3} more
                       </span>
                     )}
@@ -133,17 +130,17 @@ export const RequestsSection: React.FC = () => {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 mt-2">
+                <div className="flex gap-2 md:gap-3 mt-1.5 md:mt-2">
                   <button
                     onClick={() => handleAccept(request.id, request.name)}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                    className="flex-1 px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white text-sm md:text-base rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 md:gap-2"
                   >
                     <UserCheck className="w-4 h-4" />
                     Accept
                   </button>
                   <button
                     onClick={() => handleDecline(request.id, request.name)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium  hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1"
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium text-white text-sm md:text-base hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1"
                   >
                     <UserX className="w-5 h-5" />
                     Decline
