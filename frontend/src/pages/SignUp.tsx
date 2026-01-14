@@ -19,6 +19,11 @@ const SeniorsClubSignUp: React.FC = () => {
     // Handle signup logic here, checks if passwords match
     const repeatInput = e.currentTarget.repeatpassword as HTMLInputElement;
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+    
     if (password !== repeatPassword) {
       repeatInput.setCustomValidity("Passwords do not match"); //browser needs to validate that passwords match to submit
       repeatInput.reportValidity(); //gives a popup that this field needs to be filled.

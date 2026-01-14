@@ -50,7 +50,7 @@ public class ProfileRequest {
     
     @NotNull(message = "Maximum radius is required")
     @Min(value = 1, message = "Radius must be at least 1km")
-    @Max(value = 500, message = "Radius cannot exceed 500km")
+    @Max(value = 300, message = "Radius cannot exceed 300km")
     private Integer maxRadiusKm;
 
     // Getters and Setters

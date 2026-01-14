@@ -12,5 +12,5 @@ export interface UserFormData {
   profilePicture?: File | null;
   latitude?: number;
   longitude?: number;
-  maxRadiusKm?: number | null; // null = unlimited
+  maxRadiusKm?: number;
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { UserFormData } from '../../../types/User';
 import CompleteProfileButton from '../../buttons/CompleteProfile';
 import PrevStepButton from '../../buttons/PrevStepButton';
-import { MapPin, Navigation, Globe } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
 
 interface Step6Props {
   data: UserFormData;
@@ -107,13 +107,7 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
   const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     setRadius(value);
-    
-    // If slider is at max (300km), set to null for unlimited matching
-    if (value >= 300) {
-      updateData({ maxRadiusKm: null });
-    } else {
-      updateData({ maxRadiusKm: value });
-    }
+    updateData({ maxRadiusKm: value });
   };
 
   // Handle form submission
@@ -140,9 +134,13 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
           Location Access
         </h2>
         {/* Privacy text */}
-        <p className="text-center text-slate-600 text-sm mb-4 md:mb-6">
-          We need your location to find matches near you. Your exact location is never shared with others.
+        <p className="text-center text-slate-700 text-base mb-2 md:mb-2">
+          We need your location to find matches near you. 
         </p>
+        <p className="text-center text-slate-600 text-sm mb-4 md:mb-6">
+          Your exact location will never be shared with others. 
+        </p>
+
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {/* STEP 1: Request Location (shown when location not granted) */}
@@ -255,17 +253,9 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                   <label className="block text-base md:text-lg font-medium text-slate-700">
                     Match Radius
                   </label>
-                  {/* Show "Unlimited" if slider at max, otherwise show km value */}
-                  {radius >= 300 ? (
-                    <div className="flex items-center text-blue-600 font-bold text-lg md:text-xl">
-                      <Globe className="w-4 h-4 md:w-5 md:h-5 mr-1" />
-                      Unlimited
-                    </div>
-                  ) : (
                     <span className="text-blue-600 font-bold text-xl md:text-2xl">
                       {radius} km
                     </span>
-                  )}
                 </div>
 
                 {/* Range Slider Input */}

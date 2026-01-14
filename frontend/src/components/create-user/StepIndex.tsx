@@ -22,8 +22,8 @@ const CreateUser = () => {
     genderPreference: [],
     bio: "",
     profilePicture: null,
-    latitude: 0,
-    longitude: 0,
+    latitude: undefined,
+    longitude: undefined,
     maxRadiusKm: 50,
   });
 
@@ -87,7 +87,7 @@ const CreateUser = () => {
         return;
       }
 
-      if (!formData.latitude || !formData.longitude) {
+      if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
         alert("Please allow location access");
         setCurrentStep(6);
         return;
@@ -116,7 +116,7 @@ const CreateUser = () => {
       formDataToSend.append('longitude', formData.longitude.toString());
       
       // Handle maxRadiusKm
-      if (formData.maxRadiusKm !== undefined && formData.maxRadiusKm !== null) {
+      if (formData.maxRadiusKm !== undefined && formData.maxRadiusKm !== null && formData.maxRadiusKm > 0) {
         formDataToSend.append('maxRadiusKm', formData.maxRadiusKm.toString());
       }
       formDataToSend.append('hobbies', formData.hobbies.join(','));

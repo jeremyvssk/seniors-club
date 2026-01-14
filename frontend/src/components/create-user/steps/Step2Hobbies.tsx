@@ -1,6 +1,8 @@
+import { set } from 'react-hook-form';
 import { UserFormData } from '../../../types/User';
 import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
+import { use, useState } from 'react';
 
 interface Step2Props {
   data: UserFormData;
@@ -25,6 +27,8 @@ const hobbiesOptions = [
 ];
 
 const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
+  const [error, setError] = useState<string>('');
+
   const toggleHobby = (hobby: string) => {
     const currentHobbies = data.hobbies;
     if (currentHobbies.includes(hobby)) {
@@ -32,16 +36,18 @@ const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
     } else {
       updateData({ hobbies: [...currentHobbies, hobby] });
     }
+    if (error) setError('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (data.hobbies.length === 0) {
-      alert('Please select at least one hobby'); 
-      return;
-    }
-    
+      setError('Please select at least one hobby.');
+      return; 
+    } 
+
+    setError('');
     onNext();
   };
 
@@ -72,19 +78,20 @@ const Step2Hobbies = ({ data, updateData, onNext, onBack }: Step2Props) => {
             ))}
           </div>
 
-          {/* Error message if no hobbies selected */}
-          {data.hobbies.length === 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-              <p className="text-red-800 text-sm font-medium"> Please select at least one hobby</p>
-            </div>
-          )}
-
+  
           {/* Selected Hobbies Count */}
           {data.hobbies.length > 0 && (
             <div className="text-center">
               <p className="text-xs md:text-sm text-slate-600">
                 {data.hobbies.length} {data.hobbies.length === 1 ? 'hobby' : 'hobbies'} selected
               </p>
+            </div>
+          )}
+
+           {/* Error Message */}
+           {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm md:text-base text-center">
+              {error}
             </div>
           )}
 
