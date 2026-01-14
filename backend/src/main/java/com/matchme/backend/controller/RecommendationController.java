@@ -15,7 +15,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api/me/profile")
 public class RecommendationController {
     
 

@@ -75,9 +75,6 @@ public class UserProfile {
     public String getProfilePictureUrl() {return profilePictureUrl;}
     public void setProfilePictureUrl(String profilePictureUrl) {this.profilePictureUrl = profilePictureUrl;}
 
-    public boolean getProfileCompleted() {return profileCompleted;}
-    public void setProfileCompleted(boolean profileCompleted) {this.profileCompleted = profileCompleted;}
-
     public Double getLatitude() { return latitude; }
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     
@@ -86,5 +83,8 @@ public class UserProfile {
     
     public Integer getMaxRadiusKm() { return maxRadiusKm; }
     public void setMaxRadiusKm(Integer maxRadiusKm) { this.maxRadiusKm = maxRadiusKm; }
+
+    public boolean getProfileCompleted() {return profileCompleted;}
+    public void setProfileCompleted(boolean profileCompleted) {this.profileCompleted = profileCompleted;}
 }
 
