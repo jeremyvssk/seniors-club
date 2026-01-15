@@ -169,4 +169,8 @@ public class ProfileService {
         r.maxRadiusKm = p.getMaxRadiusKm();
         return r;
     }
+
+    public UserProfile getProfileByUser(User user) {
+        return profileRepo.findByUser(user).orElse(null);
+    }
 }

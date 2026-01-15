@@ -72,11 +72,21 @@ public class ProfileController {
     }
     
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@AuthenticationPrincipal String email) {
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        ProfileResponse profile = profileService.getProfile(user);
-        return ResponseEntity.ok(profile);
+        UserProfile profile = profileService.getProfileByUser(user);
+        if (profile == null || !profile.getProfileCompleted()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        // Return only "about me" info
+        AboutMeResponse response = new AboutMeResponse();
+        response.setId(user.getId());
+        response.setBio(profile.getBio());
+        response.setAge(profile.getAge());
+        
+        return ResponseEntity.ok(response);
     }
 }
