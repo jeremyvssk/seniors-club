@@ -20,7 +20,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173") // Allow requests from Vite frontend
-public class UserController {
+public class AuthController {
     
     @Autowired
     private UserService userService;
