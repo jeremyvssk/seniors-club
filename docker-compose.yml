@@ -36,6 +36,8 @@ services:
       CORS_ALLOWED_ORIGINS: http://localhost:5173
       # Enable DevTools hot reload
       SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      # uncomment the line below to automatically seed 100 users w docker compose up
+      # SPRING_PROFILES_ACTIVE: seed
     volumes:
       - ./backend/uploads:/app/uploads
       # Mount source code for hot reload
