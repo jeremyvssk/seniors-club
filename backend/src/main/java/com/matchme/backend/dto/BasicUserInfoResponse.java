@@ -1,5 +1,8 @@
 package com.matchme.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.ALWAYS) // Include null fields
 public class BasicUserInfoResponse {
     private Long id;
     private String name;

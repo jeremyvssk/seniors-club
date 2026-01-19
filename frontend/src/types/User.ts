@@ -7,7 +7,7 @@ export interface UserFormData {
   gender: Gender;
   hobbies: string[];
   lookingFor: LookingFor;
-  genderPreference: Gender[];
+  lookingForGender: Gender[];
   bio: string;
   profilePicture?: File | null;
   latitude?: number;

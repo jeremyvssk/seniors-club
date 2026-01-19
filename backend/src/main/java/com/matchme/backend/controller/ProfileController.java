@@ -1,7 +1,9 @@
 package com.matchme.backend.controller;
 
 import com.matchme.backend.dto.ProfileRequest;
+import com.matchme.backend.dto.UserBioResponse;
 import com.matchme.backend.dto.AboutMeResponse;
+import com.matchme.backend.dto.BasicUserInfoResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
@@ -75,6 +77,26 @@ public class ProfileController {
         }
     }
     
+    // Shortcut to /api/users/{id} for authenticated user
+    @GetMapping("")
+    public ResponseEntity<?> getMe(@AuthenticationPrincipal String email) {
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        UserProfile profile = profileService.getProfileByUser(user);
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        BasicUserInfoResponse response = new BasicUserInfoResponse();
+        response.setId(user.getId());
+        response.setName(profile.getName());
+        // Always set profilePictureUrl, even if null
+        response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : null);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
@@ -91,6 +113,30 @@ public class ProfileController {
         response.setBio(profile.getBio());
         response.setAge(profile.getAge());
         
+        return ResponseEntity.ok(response);
+    }
+
+    // Get MY biographical data
+    @GetMapping("/bio")
+    public ResponseEntity<?> getMyBio(@AuthenticationPrincipal String email) {
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        UserProfile profile = profileService.getProfileByUser(user);
+        if (profile == null || !profile.getProfileCompleted()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        UserBioResponse response = new UserBioResponse();
+        response.setId(user.getId());
+        response.setGender(profile.getGender());
+        response.setHobbies(profile.getHobbies());
+        response.setLookingFor(profile.getLookingFor());
+        response.setLookingForGender(profile.getLookingForGender());
+        response.setLatitude(profile.getLatitude());
+        response.setLongitude(profile.getLongitude());
+        response.setMaxRadiusKm(profile.getMaxRadiusKm());
+
         return ResponseEntity.ok(response);
     }
 }

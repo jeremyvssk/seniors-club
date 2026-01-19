@@ -22,7 +22,7 @@ const CreateUser = () => {
     gender: "" as any,
     hobbies: [],
     lookingFor: "love",
-    genderPreference: [],
+    lookingForGender: [],
     bio: "",
     profilePicture: null,
     latitude: undefined,
@@ -84,7 +84,7 @@ const CreateUser = () => {
         return;
       }
 
-      if (!formData.genderPreference || formData.genderPreference.length === 0) {
+      if (!formData.lookingForGender || formData.lookingForGender.length === 0) {
         alert("Please select at least one gender preference");
         setCurrentStep(3);
         return;
@@ -115,7 +115,7 @@ const CreateUser = () => {
       formDataToSend.append('age', formData.age);
       formDataToSend.append('gender', formData.gender);
       formDataToSend.append('lookingFor', formData.lookingFor);
-      formDataToSend.append('lookingForGender', formData.genderPreference.join(','));
+      formDataToSend.append('lookingForGender', formData.lookingForGender.join(','));
       formDataToSend.append('bio', formData.bio || '');
       formDataToSend.append('latitude', formData.latitude.toString());
       formDataToSend.append('longitude', formData.longitude.toString());
@@ -286,7 +286,7 @@ const CreateUser = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-t from-blue-500 to-slate-50 py-4 md:py-8">
+    <div className="min-h-screen flex flex-col bg-linear-to-t from-blue-500 to-slate-50 py-4 md:py-8">
       {/* Fixed height container for step indicator */}
       <div className="w-full max-w-2xl mx-auto px-4 mb-4 md:mb-8">
         <StepProgress currentStep={currentStep} totalSteps={totalSteps} />

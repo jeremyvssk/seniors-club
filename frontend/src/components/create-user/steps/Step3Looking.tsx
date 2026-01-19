@@ -48,11 +48,11 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
   const [error, setError] = useState<string> ("");
 
   const toggleGenderPreference = (gender: Gender) => {
-    const currentPreferences = data.genderPreference || [];
+    const currentPreferences = data.lookingForGender || [];
     const newPreferences = currentPreferences.includes(gender)
       ? currentPreferences.filter((g) => g !== gender)
       : [...currentPreferences, gender];
-    updateData({ genderPreference: newPreferences });
+    updateData({ lookingForGender: newPreferences });
 
     if (error) setError("");
   };
@@ -60,7 +60,7 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!data.genderPreference || data.genderPreference.length === 0) {
+    if (!data.lookingForGender || data.lookingForGender.length === 0) {
       setError("Please select at least one gender preference");
       return;
     }
@@ -85,7 +85,7 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
               <button
                 key={option.value}
                 type="button"
-                className={`w-full min-h-[4.5rem] md:h-24 p-3 md:p-4 rounded-lg text-left transition-all border-2 ${
+                className={`w-full min-h-18 md:h-24 p-3 md:p-4 rounded-lg text-left transition-all border-2 ${
                   data.lookingFor === option.value
                     ? "bg-blue-600 text-white shadow-lg border-blue-600"
                     : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
@@ -141,7 +141,7 @@ const Step3Looking = ({ data, updateData, onNext, onBack }: Step3Props) => {
 
             <div className="grid grid-cols-3 gap-2 md:gap-3">
               {genderOptions.map((option) => {
-                const isSelected = (data.genderPreference || []).includes(
+                const isSelected = (data.lookingForGender || []).includes(
                   option.value
                 );
                 return (
