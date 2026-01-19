@@ -1,4 +1,4 @@
-//info thats being sent back to the user
+/* //info thats being sent back to the user
 
 package com.matchme.backend.dto;
 
@@ -19,3 +19,4 @@ public class ProfileResponse {
     public Double longitude;
     public Integer maxRadiusKm;
 }
+*/

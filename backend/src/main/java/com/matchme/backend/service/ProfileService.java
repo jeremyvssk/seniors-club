@@ -5,7 +5,6 @@
 package com.matchme.backend.service;
 
 import com.matchme.backend.dto.ProfileRequest;
-import com.matchme.backend.dto.ProfileResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.UserProfileRepository;
@@ -28,13 +27,6 @@ public class ProfileService {
 
     public ProfileService(UserProfileRepository profileRepo) {
         this.profileRepo = profileRepo;
-    }
-
-    // get the profile, nothing else
-    public ProfileResponse getProfile(User user) {
-        return profileRepo.findByUser(user)
-                .map(this::toResponse)
-                .orElse(null);
     }
 
     // find existing profile or create new one
@@ -150,7 +142,7 @@ public class ProfileService {
         profile.setProfileCompleted(isProfileComplete(profile));
         return profileRepo.save(profile);
     }
-
+    /*
     // convert to response DTO
     private ProfileResponse toResponse(UserProfile p) {
         ProfileResponse r = new ProfileResponse();
@@ -168,5 +160,9 @@ public class ProfileService {
         r.longitude = p.getLongitude();
         r.maxRadiusKm = p.getMaxRadiusKm();
         return r;
+    }
+    */
+    public UserProfile getProfileByUser(User user) {
+        return profileRepo.findByUser(user).orElse(null);
     }
 }

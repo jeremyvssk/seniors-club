@@ -1,7 +1,7 @@
 package com.matchme.backend.controller;
 
 import com.matchme.backend.dto.ProfileRequest;
-import com.matchme.backend.dto.ProfileResponse;
+import com.matchme.backend.dto.AboutMeResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/me")
@@ -60,9 +62,11 @@ public class ProfileController {
             // Step 6: Save to database
             profileService.saveProfile(profile);
             
-            // Step 7: Return response
-            ProfileResponse response = profileService.getProfile(user);
-            return ResponseEntity.ok(response);
+            // Return simple success message and user id
+            return ResponseEntity.ok(Map.of(
+                "message", "Profile created successfully",
+                "userId", user.getId()
+            ));
             
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -72,11 +76,21 @@ public class ProfileController {
     }
     
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@AuthenticationPrincipal String email) {
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        ProfileResponse profile = profileService.getProfile(user);
-        return ResponseEntity.ok(profile);
+        UserProfile profile = profileService.getProfileByUser(user);
+        if (profile == null || !profile.getProfileCompleted()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        // Return only "about me" info
+        AboutMeResponse response = new AboutMeResponse();
+        response.setId(user.getId());
+        response.setBio(profile.getBio());
+        response.setAge(profile.getAge());
+        
+        return ResponseEntity.ok(response);
     }
 }
