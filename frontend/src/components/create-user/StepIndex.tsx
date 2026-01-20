@@ -7,6 +7,7 @@ import Step3Looking from "./steps/Step3Looking";
 import Step4AboutMe from "./steps/Step4AboutMe";
 import Step5ProfilePic from "./steps/Step5ProfilePic";
 import Step6Location from "./steps/Step6Location";
+import ProfileSuccess from "./ProfileSuccess";
 import { UserFormData } from "../../types/User";
 import api from "../../api/axios";
 import LogOutButton from "../buttons/LogOutButton";
@@ -14,13 +15,15 @@ import LogOutButton from "../buttons/LogOutButton";
 const CreateUser = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     age: "",
     gender: "" as any,
     hobbies: [],
     lookingFor: "love",
-    genderPreference: [],
+    lookingForGender: [],
     bio: "",
     profilePicture: null,
     latitude: undefined,
@@ -82,7 +85,7 @@ const CreateUser = () => {
         return;
       }
 
-      if (!formData.genderPreference || formData.genderPreference.length === 0) {
+      if (!formData.lookingForGender || formData.lookingForGender.length === 0) {
         alert("Please select at least one gender preference");
         setCurrentStep(3);
         return;
@@ -104,6 +107,8 @@ const CreateUser = () => {
         return;
       }
 
+      setIsSubmitting(true);
+
       const formDataToSend = new FormData();
     
       // Add all text fields
@@ -111,7 +116,7 @@ const CreateUser = () => {
       formDataToSend.append('age', formData.age);
       formDataToSend.append('gender', formData.gender);
       formDataToSend.append('lookingFor', formData.lookingFor);
-      formDataToSend.append('lookingForGender', formData.genderPreference.join(','));
+      formDataToSend.append('lookingForGender', formData.lookingForGender.join(','));
       formDataToSend.append('bio', formData.bio || '');
       formDataToSend.append('latitude', formData.latitude.toString());
       formDataToSend.append('longitude', formData.longitude.toString());
@@ -151,10 +156,20 @@ const CreateUser = () => {
       });
 
       console.log("Profile created successfully:", response.data);
-      alert("Profile created successfully!");
-      navigate("/explore");
+      // wait 2 seconds to show success state, then navigate
+
+      // Only show success screen after successful response
+      setIsSubmitting(false);
+      setIsSuccess(true);
+
+      setTimeout(() => {
+        navigate("/explore");
+      }, 1800);
 
     } catch (error: any) {
+      // Reset loading state on error
+      setIsSubmitting(false);
+      setIsSuccess(false);
       console.error("Error creating profile:", error);
 
       if (error.response) {
@@ -204,6 +219,10 @@ const CreateUser = () => {
       }
     }
   };
+  // how success component only after successful API call
+  if (isSuccess) {
+    return <ProfileSuccess userName={formData.name} />;
+  }
 
   const renderStep = () => {
     switch (currentStep) {

@@ -2,8 +2,7 @@ package com.matchme.backend.controller;
 
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.RecommendationService;
@@ -12,10 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api")
 public class RecommendationController {
     
 
@@ -31,23 +31,23 @@ public class RecommendationController {
     }
 
 
-    //get recommendations
-
+    // Return only IDs
     @GetMapping("/recommendations")
-    public ResponseEntity<List<UserProfile>> getRecommendations(@AuthenticationPrincipal String email) {
+    public ResponseEntity<List<Long>> getRecommendations(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
-        .orElseThrow(() -> new RuntimeException("User not found"));
-
-
-
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<UserProfile> profiles = recommendationService.getRecommendations(user);
-        return ResponseEntity.ok(profiles);
-
-
+        
+        // Extract only the IDs
+        List<Long> profileIds = profiles.stream()
+            .map(UserProfile::getId)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(profileIds);
     }
-    //record likes
 
+    //record likes
     @PostMapping("/{id}/like")
     public ResponseEntity<?> likeProfile(
         @AuthenticationPrincipal String email,
@@ -55,21 +55,20 @@ public class RecommendationController {
             User user = userService.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        recommendationService.likeProfile(user, id);
-        return ResponseEntity.ok().build();
+            recommendationService.likeProfile(user, id);
+            return ResponseEntity.ok().build();
         }
 
     //record skips
-
-     @PostMapping("/{id}/skip")
+    @PostMapping("/{id}/skip")
     public ResponseEntity<?> skipProfile(
         @AuthenticationPrincipal String email,
         @PathVariable Long id) {
             User user = userService.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        recommendationService.skipProfile(user, id);
-        return ResponseEntity.ok().build();
+            recommendationService.skipProfile(user, id);
+            return ResponseEntity.ok().build();
         }
 
 

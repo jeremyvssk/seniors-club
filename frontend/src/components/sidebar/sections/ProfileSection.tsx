@@ -41,40 +41,7 @@ export const ProfileSection: React.FC = () => {
     );
   }
 
-
-
-
-
-
-
-
-
-
-
-
-//commenting out the hardcoded profile for now
-// export const ProfileSection: React.FC = () => {
-//   const profile: UserFormData = {
-//     name: "Sarah Johnson",
-//     age: "28",
-//     gender: "female",
-//     location: "New York, NY",
-//     hobbies: ["Photography", "Hiking", "Cooking", "Reading"],
-//     lookingFor: "Love",
-//     bio: "I'm a passionate photographer who loves exploring nature and trying new recipes. On weekends, you'll find me hiking mountain trails or browsing through bookstores. I believe in kindness, authenticity, and making the most of every moment.",
-//     profilePicture: null
-//   };
-
-
-
-
-
-
-
-
-
-
-
+//location needs to be changed to coordinates below 
 
 
   return (
