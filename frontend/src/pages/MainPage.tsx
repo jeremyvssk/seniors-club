@@ -11,7 +11,7 @@ import { UserFormData } from '../types/User';
 const MainPage: React.FC = () => {
     const navigate = useNavigate();
     const [recommendations, setRecommendations] = useState<number[]>([]);
-    const [currentProfile, setCurrentProfile] = useState<UserFormData | null>(null);
+    const [currentProfile, setCurrentProfile] = useState<(UserFormData & { userId: number }) | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +58,7 @@ const MainPage: React.FC = () => {
 
             // Combine the data into UserFormData format
             const combinedProfile: UserFormData = {
+                userId: userId,
                 name: userResponse.data.name,
                 age: profileResponse.data.age.toString(),
                 gender: bioResponse.data.gender,
@@ -247,10 +248,18 @@ const MainPage: React.FC = () => {
                             {/* Action Buttons */}
                             <div className="flex gap-4 sm:gap-6 md:gap-8 justify-center mt-2 mb-4 sm:mb-6">
                                 <SkipButton onClick={handleSkip} />
-                                <LikeButton
-                                    isLiked={false}
-                                    onClick={handleLike}
-                                />
+                                
+                                <LikeButton 
+                                    userId={currentProfile?.userId || 0}  // Pass the user ID
+                                    isLiked={false}  // You can check this from API if needed
+                                    onLikeSuccess={(isMatch) => {
+                                        if (isMatch) {
+                                        // Handle match - maybe refresh matches list
+                                        console.log('It\'s a match!');
+                                        }
+                                        handleSkip();
+                                    }}
+                                    />
                             </div>
                         </div>
                     </div>

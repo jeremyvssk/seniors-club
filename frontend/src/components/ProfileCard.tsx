@@ -3,7 +3,7 @@ import { User } from 'lucide-react';
 import { UserFormData } from '../types/User';
 
 interface ProfileCardProps {
-  profile: UserFormData;
+  profile: UserFormData & { userId?: number };
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
