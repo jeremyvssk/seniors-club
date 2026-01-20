@@ -10,6 +10,7 @@ import Step6Location from "./steps/Step6Location";
 import ProfileSuccess from "./ProfileSuccess";
 import { UserFormData } from "../../types/User";
 import api from "../../api/axios";
+import LogOutButton from "../buttons/LogOutButton";
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -286,7 +287,12 @@ const CreateUser = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-t from-blue-500 to-slate-50 py-4 md:py-8">
+    <div className="min-h-screen flex flex-col bg-gradient-to-t from-blue-500 to-slate-50 py-4 md:py-8">
+      
+      <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
+                <LogOutButton onClick={() => console.log('Logout clicked')} />
+            </div>    
+      
       {/* Fixed height container for step indicator */}
       <div className="w-full max-w-2xl mx-auto px-4 mb-4 md:mb-8">
         <StepProgress currentStep={currentStep} totalSteps={totalSteps} />

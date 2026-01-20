@@ -219,7 +219,7 @@ const MainPage: React.FC = () => {
             
             {/* Logout Button - Top Right - Always visible */}
             <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
-                <LogOutButton onClick={handleLogout} />
+                <LogOutButton  />
             </div>    
           
             <div className="flex h-screen">
