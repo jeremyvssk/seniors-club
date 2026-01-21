@@ -8,6 +8,7 @@ interface ProfileCardProps {
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
   const [showBio, setShowBio] = useState(false);
+  const [expandHobbies, setExpandHobbies] = useState(false);
   
   const {
     name,
@@ -18,23 +19,30 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
     lookingFor,
   } = profile;
 
+  const visibleHobbies = expandHobbies ? hobbies : hobbies.slice(0, 3);
+  const remainingCount = hobbies.length - 3;
+
   return (
-    <div 
-      onClick={() => setShowBio(!showBio)}
-      className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[420px] 
-                 h-[420px] sm:h-[480px] md:h-[540px] lg:h-[580px]
-                 bg-white border-2 border-gray-300 rounded-xl shadow-xl 
-                 overflow-hidden hover:shadow-2xl hover:scale-[1.02] 
-                 transition-all duration-300 cursor-pointer"
-    >
-      {/* Profile Picture OR Bio Section */}
-      <div className="relative h-[200px] sm:h-[240px] md:h-[280px] lg:h-[300px] bg-gray-200 flex items-center justify-center">
+    <div className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[520px] lg:max-w-[600px] 
+                    h-[580px] sm:h-[640px] md:h-[700px] lg:h-[740px]
+                    bg-white rounded-2xl shadow-2xl 
+                    overflow-hidden hover:shadow-3xl transition-shadow duration-300 
+                    flex flex-col">
+      
+      {/* Image/Bio Section - FIXED HEIGHT */}
+      <div 
+        onClick={() => setShowBio(!showBio)}
+        className="relative h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px]
+                   bg-gradient-to-br from-gray-100 to-gray-200 
+                   flex items-center justify-center flex-shrink-0 cursor-pointer
+                   group"
+      >
         {showBio ? (
-          <div className="absolute inset-0 p-3 sm:p-4 md:p-5 flex items-center justify-center overflow-y-auto"
-                    style={{
-                        background: "linear-gradient(to top,rgba(59, 131, 246, 0.35),rgba(248, 250, 252, 0.52) )"
-                    }}>
-            <p className="text-gray-700 text-xs sm:text-sm md:text-base lg:text-lg font-medium text-center leading-relaxed">
+          <div className="absolute inset-0 p-6 sm:p-8 md:p-10 
+                         flex items-center justify-center overflow-y-auto
+                         bg-gradient-to-br from-blue-50 to-purple-50">
+            <p className="text-gray-800 text-base sm:text-lg md:text-xl 
+                         font-medium text-center leading-relaxed">
               {bio || 'No bio available'}
             </p>
           </div>
@@ -47,69 +55,86 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-400" />
+              <User className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 text-gray-400" />
             )}
           </>
         )}
+        
+        {/* Hover hint - hide on mobile */}
+        <div className="hidden sm:block absolute bottom-4 right-4 
+                       bg-black/60 text-white text-xs sm:text-sm 
+                       px-3 py-1.5 rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity">
+          {showBio ? 'View photo' : 'View bio'}
+        </div>
       </div>
 
-      {/* Profile Info Section */}
-      <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-2.5 md:space-y-3">
-        <div>
-          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 truncate">
-            {name} 
+      {/* Info Section - FIXED HEIGHT */}
+      <div className="h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px] 
+                      p-5 sm:p-6 md:p-7 lg:p-8 
+                      flex flex-col flex-shrink-0">
+        
+        {/* Name & Age - FIXED HEIGHT */}
+        <div className="h-[60px] sm:h-[65px] md:h-[70px] flex-shrink-0 mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 truncate leading-tight">
+            {name}
           </h2>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-medium text-gray-600">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 font-medium">
             {age} years old
           </p>
         </div>
 
-        {/* Hobbies */}
-        {hobbies.length > 0 && (
-          <div>
-            <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium mb-1.5 sm:mb-2">
-              Hobbies:
+        {/* Hobbies Section - FIXED HEIGHT */}
+        <div className="h-[110px] sm:h-[115px] md:h-[120px] flex-shrink-0 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 font-semibold">
+              Hobbies
             </p>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
-              {hobbies.slice(0, 3).map((hobby, index) => (
+            {/* Expand/Collapse button - TOP RIGHT */}
+            {hobbies.length > 3 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandHobbies(!expandHobbies);
+                }}
+                className="text-xs sm:text-sm md:text-base text-blue-600 hover:text-blue-700 
+                         font-medium transition-colors flex-shrink-0"
+              >
+                {expandHobbies ? 'Show less' : `+${remainingCount} more`}
+              </button>
+            )}
+          </div>
+          
+          {/* Fixed height container - hide scrollbar on mobile */}
+          <div className="h-[80px] sm:h-[85px] md:h-[90px] overflow-y-auto pr-1
+                         scrollbar-none sm:scrollbar-thin">
+            <div className="flex flex-wrap gap-2">
+              {visibleHobbies.map((hobby, index) => (
                 <span 
                   key={index}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 md:px-3 md:py-1 
-                           bg-blue-100 text-blue-700 
-                           text-xs sm:text-sm md:text-base 
-                           rounded-full font-medium"
+                  className="inline-block px-3 py-1.5 bg-blue-100 text-blue-700 
+                           text-xs sm:text-sm md:text-base lg:text-lg font-medium rounded-full
+                           border border-blue-200 flex-shrink-0 whitespace-nowrap"
                 >
                   {hobby}
                 </span>
               ))}
-              {hobbies.length > 3 && (
-                <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 text-gray-500 text-xs sm:text-sm">
-                  +{hobbies.length - 3} more
-                </span>
-              )}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Looking for */}
-        {lookingFor && (
-          <div>
-            <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium mb-1.5 sm:mb-2">
-              Looking for:
-            </p>
-            <span className="inline-block px-2 py-0.5 sm:px-2.5 sm:py-1 md:px-3 md:py-1 
-                           bg-purple-100 text-purple-700 
-                           text-xs sm:text-sm md:text-base 
-                           rounded-full font-medium capitalize">
-              {lookingFor}
-            </span>
-          </div>
-        )}
-
-        <p className="absolute bottom-2 right-2 sm:bottom-2.5 sm:right-3 md:bottom-3 md:right-4 
-                     text-[10px] sm:text-xs md:text-sm text-gray-400 italic">
-          Click to {showBio ? 'view picture' : 'read bio'}
-        </p>
+        {/* Looking For - FIXED HEIGHT, always visible */}
+        <div className="h-[70px] sm:h-[75px] md:h-[80px] flex-shrink-0">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 font-semibold mb-2">
+            Looking for
+          </p>
+          <span className="inline-block px-3 py-1.5 
+                         bg-purple-100 text-purple-700 
+                         text-xs sm:text-sm md:text-base lg:text-lg font-medium rounded-full
+                         border border-purple-200 capitalize">
+            {lookingFor}
+          </span>
+        </div>
       </div>
     </div>
   );
