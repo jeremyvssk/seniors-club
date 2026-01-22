@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/chats';
+const API_URL = 'http://localhost:3001/api/chats';
 
 export interface ChatResponse {
   chatId: number;

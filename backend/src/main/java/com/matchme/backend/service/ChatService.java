@@ -36,8 +36,8 @@ public class ChatService {
     @Autowired
     private UserProfileRepository userProfileRepository;
 
-    /*@Autowired
-    private MatchService matchService;*/
+    @Autowired
+    private MatchService matchService;
 
     // Get all chats for a user (ordered by most recent)
     public List<ChatResponse> getUserChats(Long userId) {
@@ -52,9 +52,9 @@ public class ChatService {
     @Transactional
     public Chat getOrCreateChat(Long user1Id, Long user2Id) {
         // Check if users are matched
-        /*if (!matchService.areUsersMatched(user1Id, user2Id)) {
+        if (!matchService.areUsersMatched(user1Id, user2Id)) {
             throw new IllegalArgumentException("Users must be matched to start a chat");
-        }*/
+        }
 
         return chatRepository.findByUserIds(user1Id, user2Id)
                 .orElseGet(() -> {

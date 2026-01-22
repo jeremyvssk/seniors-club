@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/matches';
+const API_URL = 'http://localhost:3001/api/matches';
 
 interface LikeResponse {
   message: string;

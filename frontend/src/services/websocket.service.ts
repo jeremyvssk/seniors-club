@@ -8,7 +8,7 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
       this.client = new Client({
         // Use native WebSocket instead of SockJS
-        brokerURL: 'ws://localhost:8080/ws',
+        brokerURL: 'ws://localhost:3001/ws',
         connectHeaders: {
           Authorization: `Bearer ${token}`,
         },
