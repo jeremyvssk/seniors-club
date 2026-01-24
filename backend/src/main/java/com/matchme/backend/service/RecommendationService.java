@@ -36,8 +36,8 @@ public class RecommendationService {
         }
         //get profiles that were already liked or skipped
         List<UserInteraction> myInteractions = interactionRepository.findByUser(currentUser);
-                List<Long> interactedProfileIds = myInteractions.stream()
-                .map(interaction -> interaction.getTargetProfile().getId())
+                List<Long> interactedUserIds = myInteractions.stream()
+                .map(interaction -> interaction.getTargetProfile().getUser().getId()) // get USER ID
                 .collect(Collectors.toList());
 
 
@@ -47,26 +47,25 @@ public class RecommendationService {
         return allProfiles.stream()
         .filter(profile -> !profile.getUser().getId().equals(currentUser.getId())) //excludes urself
         .filter(profile -> profile.getProfileCompleted()) // Only show completed profiles
-        .filter(profile -> !interactedProfileIds.contains(profile.getId())) // Exclude already swiped
+        .filter(profile -> !interactedUserIds.contains(profile.getUser().getId()))  // Filter already swiped by USER ID
                 .limit(10) // Limit to 10 profiles at a time
                 .collect(Collectors.toList());
         }
 
-        //Record the likes action
-        public void likeProfile(User currentUser, Long targetProfileId) {
-                UserProfile targetProfile = profileRepository.findById(targetProfileId)
-                .orElseThrow(() -> new RuntimeException("Profile not founds"));
-        //save likes
+        // Record the like action - now receives USER ID, not profile ID
+        public void likeProfile(User currentUser, Long targetUserId) {
+                UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+                
                 UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.LIKE);
                 interactionRepository.save(interaction);
-
         }
 
-        //Records skip action
-        public void skipProfile(User currentUser, Long targetProfileId) {
-                UserProfile targetProfile = profileRepository.findById(targetProfileId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
-                //save skips
+        // Record skip action - now receives USER ID, not profile ID
+        public void skipProfile(User currentUser, Long targetUserId) {
+                UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+                
                 UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
                 interactionRepository.save(interaction);
         }

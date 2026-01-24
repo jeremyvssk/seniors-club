@@ -6,19 +6,16 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* MAIN PAGE PROFILE CARD ANIMATIONS */
-
-/* Hide scrollbar completely on mobile */
+/* Scrollbar styles */
 .scrollbar-none {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scrollbar-none::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
 }
 
-/* Custom scrollbar for desktop */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
@@ -36,7 +33,6 @@ body {
   background: #9ca3af;
 }
 
-/* Firefox scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
@@ -44,41 +40,65 @@ body {
 
 /* Slide out LEFT (skip) */
 @keyframes slide-out-left {
-  from {
-    transform: translateX(0) scale(1);
+  0% {
+    transform: translateX(0) rotate(0deg);
     opacity: 1;
   }
-  to {
-    transform: translateX(-120%) scale(0.8);
+  100% {
+    transform: translateX(-120%) rotate(-15deg);
     opacity: 0;
   }
 }
 
 /* Slide out RIGHT (like) */
 @keyframes slide-out-right {
-  from {
-    transform: translateX(0) scale(1);
+  0% {
+    transform: translateX(0) rotate(0deg);
     opacity: 1;
   }
-  to {
-    transform: translateX(120%) scale(0.8);
+  100% {
+    transform: translateX(120%) rotate(15deg);
     opacity: 0;
   }
 }
 
-/* Fade IN (new card) */
-@keyframes fade-in {
-  from {
-    transform: scale(0.9);
+/* Slide in FROM LEFT (after skip - new card comes from left) */
+@keyframes slide-in-from-left {
+  0% {
+    transform: translateX(-80%) rotate(-10deg);
     opacity: 0;
   }
-  to {
+  100% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Slide in FROM RIGHT (after like - new card comes from right) */
+@keyframes slide-in-from-right {
+  0% {
+    transform: translateX(80%) rotate(10deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Default fade in (initial load) */
+@keyframes fade-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
     transform: scale(1);
     opacity: 1;
   }
 }
 
-/* Error toast slide up */
+/* Error toast */
 @keyframes slide-up {
   from {
     transform: translate(-50%, 100px);
@@ -91,11 +111,19 @@ body {
 }
 
 .animate-slide-out-left {
-  animation: slide-out-left 0.3s ease-in-out forwards;
+  animation: slide-out-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-slide-out-right {
-  animation: slide-out-right 0.3s ease-in-out forwards;
+  animation: slide-out-right 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-in-from-left {
+  animation: slide-in-from-left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-slide-in-from-right {
+  animation: slide-in-from-right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-fade-in {

@@ -33,14 +33,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
       <div 
         onClick={() => setShowBio(!showBio)}
         className="relative h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px]
-                   bg-gradient-to-br from-gray-100 to-gray-200 
-                   flex items-center justify-center flex-shrink-0 cursor-pointer
+                   bg-linear-to-br from-gray-100 to-gray-200 
+                   flex items-center justify-center shrink-0 cursor-pointer
                    group"
       >
         {showBio ? (
           <div className="absolute inset-0 p-6 sm:p-8 md:p-10 
                          flex items-center justify-center overflow-y-auto
-                         bg-gradient-to-br from-blue-50 to-purple-50">
+                         bg-linear-to-br from-blue-50 to-purple-50">
             <p className="text-gray-800 text-base sm:text-lg md:text-xl 
                          font-medium text-center leading-relaxed">
               {bio || 'No bio available'}
@@ -70,9 +70,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
       </div>
 
       {/* Info Section - FIXED HEIGHT */}
-      <div className="h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px] 
+      <div className="h-[280px] sm:h-[300px] md:h-80 lg:h-[340px] 
                       p-5 sm:p-6 md:p-7 lg:p-8 
-                      flex flex-col flex-shrink-0">
+                      flex flex-col shrink-0">
         
         {/* Name & Age - FIXED HEIGHT */}
         <div className="h-[60px] sm:h-[65px] md:h-[70px] flex-shrink-0 mb-3">
