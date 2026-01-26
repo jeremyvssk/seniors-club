@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   CircleUser,
   HeartHandshake,
@@ -10,6 +10,7 @@ import { MessagesSection } from "./sections/MessageSection";
 import ProfileSection from "./sections/ProfileSection";
 import MatchesSection from "./sections/MatchesSection";
 import RequestsSection from "./sections/RequestsSection";
+import { matchService } from "../../services/match.service";
 
 interface SidebarProps {
   className?: string;
@@ -30,6 +31,32 @@ const items: SidebarItem[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const [activeSection, setActiveSection] = React.useState<string | null>(null);
+  const [hasNewRequests, setHasNewRequests] = useState(false);
+
+  // Check for pending requests
+  useEffect(() => {
+    const checkRequests = async () => {
+      try {
+        const requests = await matchService.getPendingRequests();
+        setHasNewRequests(requests.length > 0);
+      } catch (error) {
+        console.error('Failed to check requests:', error);
+      }
+    };
+
+    checkRequests();
+
+    // Poll every 30 seconds for new requests
+    const interval = setInterval(checkRequests, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Clear notification when requests section is opened
+  useEffect(() => {
+    if (activeSection === 'requests') {
+      setHasNewRequests(false);
+    }
+  }, [activeSection]);
 
   const handleToggle = (id: string) => {
     setActiveSection(activeSection === id ? null : id);
@@ -57,6 +84,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                ${activeSection === id ? 'scale-110 text-blue-500' : 'text-gray-700'}`} 
               />
               
+              {/* 🔴 Only show when sidebar is closed */}
+              {id === 'requests' && hasNewRequests && !activeSection && (
+                <span className="absolute top-2 right-2 md:top-3 md:right-3 
+                               w-2 h-2 md:w-2.5 md:h-2.5 
+                               bg-red-500 rounded-full" />
+              )}
               {/* Tooltip */}
               <span className="absolute left-full ml-2 whitespace-nowrap rounded-lg 
                              bg-black/70 px-2 md:px-3 py-1 md:py-1.5 
@@ -82,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         >
           {activeSection && (
             <div className="h-full flex flex-col">
+              
               {/* Header with Close Button */}
               <div className="flex-shrink-0 flex items-center justify-between 
                             p-3 md:p-4 lg:p-5 pb-2 md:pb-3 
@@ -128,6 +162,15 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                  transition-transform 
                                  ${activeSection === id ? 'scale-110' : ''}`} 
                 />
+
+                  {/* 🔴 Only show when section is closed */}
+                  {id === 'requests' && hasNewRequests && activeSection !== 'requests' && (
+                  <span className="absolute top-3 right-7 sm:top-1.5 sm:right-1.5 
+                                 w-2 h-2 sm:w-2.5 sm:h-2.5 
+                                 bg-red-500 rounded-full 
+                                 border border-white" />
+                )}
+
                 <span className="text-[10px] sm:text-xs font-medium">{label}</span>
               </button>
             ))}

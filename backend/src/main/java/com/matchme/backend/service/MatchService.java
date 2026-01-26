@@ -1,5 +1,6 @@
 package com.matchme.backend.service;
 
+import com.matchme.backend.dto.ConnectionRequestResponse;
 import com.matchme.backend.dto.MatchedUserResponse;
 import com.matchme.backend.model.Match;
 import com.matchme.backend.model.User;
@@ -28,89 +29,143 @@ public class MatchService {
     @Autowired
     private UserProfileRepository userProfileRepository;
 
-    // Like a user
+    // Send connection request (like a user)
     @Transactional
-    public Match likeUser(Long userId, Long likedUserId) {
-        // Can't like yourself
+    public Match sendConnectionRequest(Long userId, Long likedUserId) {
         if (userId.equals(likedUserId)) {
-            throw new IllegalArgumentException("You cannot like yourself");
+            throw new IllegalArgumentException("You cannot send a connection request to yourself");
         }
 
-        // Check if already liked
-        Optional<Match> existingLike = matchRepository.findByUserIdAndLikedUserId(userId, likedUserId);
-        if (existingLike.isPresent()) {
-            return existingLike.get(); // Already liked
+        // Check if already sent a request
+        Optional<Match> existingRequest = matchRepository.findByUserIdAndLikedUserId(userId, likedUserId);
+        if (existingRequest.isPresent()) {
+            Match existing = existingRequest.get();
+            if (existing.getStatus() == Match.MatchStatus.PENDING) {
+                return existing; // Already sent
+            } else if (existing.getStatus() == Match.MatchStatus.DECLINED) {
+                // Allow re-sending after decline
+                existing.setStatus(Match.MatchStatus.PENDING);
+                existing.setCreatedAt(LocalDateTime.now());
+                return matchRepository.save(existing);
+            }
         }
 
-        // Check if the other user already liked this user (mutual match)
-        Optional<Match> reverseLike = matchRepository.findByUserIdAndLikedUserId(likedUserId, userId);
-        
-        // Create the like
+        // Create new connection request
         Match match = new Match();
         match.setUserId(userId);
         match.setLikedUserId(likedUserId);
-        
-        if (reverseLike.isPresent()) {
-            // It's a mutual match!
-            match.setIsMatch(true);
-            match.setMatchedAt(LocalDateTime.now());
-            
-            // Update the reverse like to also be a match
-            Match reverseMatch = reverseLike.get();
-            reverseMatch.setIsMatch(true);
-            reverseMatch.setMatchedAt(LocalDateTime.now());
-            matchRepository.save(reverseMatch);
-        } else {
-            match.setIsMatch(false);
-        }
+        match.setStatus(Match.MatchStatus.PENDING);
 
         return matchRepository.save(match);
     }
 
-    // Unlike a user
+    // Accept connection request
     @Transactional
-    public void unlikeUser(Long userId, Long likedUserId) {
-        Optional<Match> match = matchRepository.findByUserIdAndLikedUserId(userId, likedUserId);
-        
-        if (match.isPresent()) {
-            Match m = match.get();
-            
-            // If it was a mutual match, update the other user's match status
-            if (m.getIsMatch()) {
-                Optional<Match> reverseMatch = matchRepository.findByUserIdAndLikedUserId(likedUserId, userId);
-                if (reverseMatch.isPresent()) {
-                    Match rm = reverseMatch.get();
-                    rm.setIsMatch(false);
-                    rm.setMatchedAt(null);
-                    matchRepository.save(rm);
-                }
-            }
-            
-            // Delete the like
-            matchRepository.delete(m);
+    public Match acceptConnectionRequest(Long requestId, Long currentUserId) {
+        Match request = matchRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Connection request not found"));
+
+        // Verify the request is for this user
+        if (!request.getLikedUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("You cannot accept this request");
         }
+
+        // Verify it's still pending
+        if (request.getStatus() != Match.MatchStatus.PENDING) {
+            throw new IllegalArgumentException("Request is no longer pending");
+        }
+
+        // Accept the request
+        request.setStatus(Match.MatchStatus.MATCHED);
+        request.setMatchedAt(LocalDateTime.now());
+        matchRepository.save(request);
+
+        // Create reverse match (so both users have the connection)
+        Optional<Match> reverseMatch = matchRepository.findByUserIdAndLikedUserId(currentUserId, request.getUserId());
+        if (reverseMatch.isEmpty()) {
+            Match reverse = new Match();
+            reverse.setUserId(currentUserId);
+            reverse.setLikedUserId(request.getUserId());
+            reverse.setStatus(Match.MatchStatus.MATCHED);
+            reverse.setMatchedAt(LocalDateTime.now());
+            matchRepository.save(reverse);
+        } else {
+            Match reverse = reverseMatch.get();
+            reverse.setStatus(Match.MatchStatus.MATCHED);
+            reverse.setMatchedAt(LocalDateTime.now());
+            matchRepository.save(reverse);
+        }
+
+        return request;
     }
 
-    // Check if user has liked another user
-    public boolean hasUserLiked(Long userId, Long likedUserId) {
-        return matchRepository.findByUserIdAndLikedUserId(userId, likedUserId).isPresent();
+    // Decline connection request
+    @Transactional
+    public void declineConnectionRequest(Long requestId, Long currentUserId) {
+        Match request = matchRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Connection request not found"));
+
+        // Verify the request is for this user
+        if (!request.getLikedUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("You cannot decline this request");
+        }
+
+        // Delete the request
+        matchRepository.delete(request);
+    }
+
+    // Get pending connection requests
+    public List<ConnectionRequestResponse> getPendingRequests(Long userId) {
+        List<Match> requests = matchRepository.findPendingRequestsForUser(userId);
+
+        return requests.stream()
+                .map(request -> {
+                    Long requesterId = request.getUserId();
+                    
+                    UserProfile requesterProfile = userProfileRepository.findByUserId(requesterId)
+                            .orElseThrow(() -> new RuntimeException("Profile not found"));
+                    
+                    return new ConnectionRequestResponse(
+                        request.getId(),
+                        requesterId,
+                        requesterProfile.getName(),
+                        requesterProfile.getAge(),
+                        requesterProfile.getProfilePictureUrl(),
+                        requesterProfile.getBio(),
+                        requesterProfile.getHobbies(), 
+                        requesterProfile.getLookingFor(), 
+                        requesterProfile.getGender(),
+                        request.getCreatedAt()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    // Disconnect (remove match)
+    @Transactional
+    public void disconnect(Long userId, Long otherUserId) {
+        // Find and delete all matches between these users
+        Optional<Match> match1 = matchRepository.findByUserIdAndLikedUserId(userId, otherUserId);
+        Optional<Match> match2 = matchRepository.findByUserIdAndLikedUserId(otherUserId, userId);
+
+        match1.ifPresent(matchRepository::delete);
+        match2.ifPresent(matchRepository::delete);
     }
 
     // Check if users are matched
     public boolean areUsersMatched(Long user1Id, Long user2Id) {
-        return matchRepository.existsByUser1IdAndUser2IdAndIsMatch(user1Id, user2Id, true);
+        return matchRepository.areUsersMatched(user1Id, user2Id);
     }
 
-    // Get all matches for a user
+    // Get all accepted matches
     public List<MatchedUserResponse> getUserMatches(Long userId) {
         List<Match> matches = matchRepository.findAllMatchesByUserId(userId);
-        
+
         return matches.stream()
                 .map(match -> {
-                    Long matchedUserId = match.getLikedUserId();
-                    
-                    User matchedUser = userRepository.findById(matchedUserId)
-                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    Long matchedUserId = match.getUserId().equals(userId) 
+                        ? match.getLikedUserId() 
+                        : match.getUserId();
                     
                     UserProfile matchedProfile = userProfileRepository.findByUserId(matchedUserId)
                             .orElseThrow(() -> new RuntimeException("Profile not found"));
@@ -121,17 +176,18 @@ public class MatchService {
                         matchedProfile.getAge(),
                         matchedProfile.getProfilePictureUrl(),
                         matchedProfile.getBio(),
+                        matchedProfile.getHobbies(),
+                        matchedProfile.getLookingFor(),
+                        matchedProfile.getGender(),
                         match.getMatchedAt()
                     );
                 })
                 .collect(Collectors.toList());
     }
 
-    // Get pending likes (users who liked the current user but not matched yet)
-    public List<Long> getPendingLikes(Long userId) {
-        return matchRepository.findPendingLikesForUser(userId)
-                .stream()
-                .map(Match::getUserId)
-                .collect(Collectors.toList());
+    // Check if user has sent a request
+    public boolean hasUserLiked(Long userId, Long likedUserId) {
+        Optional<Match> match = matchRepository.findByUserIdAndLikedUserId(userId, likedUserId);
+        return match.isPresent() && match.get().getStatus() == Match.MatchStatus.PENDING;
     }
 }

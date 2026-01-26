@@ -57,7 +57,7 @@ const MainPage: React.FC = () => {
             ]);
 
             // Combine the data into UserFormData format
-            const combinedProfile: UserFormData = {
+            const combinedProfile: UserFormData & { userId: number } = {
                 userId: userId,
                 name: userResponse.data.name,
                 age: profileResponse.data.age.toString(),

@@ -123,7 +123,7 @@ public class ChatService {
     }
 
     // Helper method to build ChatResponse
-    private ChatResponse buildChatResponse(Chat chat, Long currentUserId) {
+    public ChatResponse buildChatResponse(Chat chat, Long currentUserId) {
         Long otherUserId = chat.getOtherUserId(currentUserId);
         
         User otherUser = userRepository.findById(otherUserId)

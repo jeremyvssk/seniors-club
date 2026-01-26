@@ -10,7 +10,7 @@ export interface UserFormData {
   lookingFor: LookingFor;
   lookingForGender: Gender[];
   bio: string;
-  profilePicture?: File | null;
+  profilePicture?: File | null | string;
   latitude?: number;
   longitude?: number;
   maxRadiusKm?: number;

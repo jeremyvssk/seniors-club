@@ -3,6 +3,7 @@ package com.matchme.backend.controller;
 import com.matchme.backend.dto.ChatResponse;
 import com.matchme.backend.dto.MessageResponse;
 import com.matchme.backend.dto.SendMessageRequest;
+import com.matchme.backend.model.Chat;
 import com.matchme.backend.model.Message;
 import com.matchme.backend.model.User;
 import com.matchme.backend.service.ChatService;
@@ -42,6 +43,27 @@ public class ChatController {
         List<ChatResponse> chats = chatService.getUserChats(user.getId());
         return ResponseEntity.ok(chats);
     }
+
+    @GetMapping("/with/{otherUserId}")
+    public ResponseEntity<ChatResponse> getOrCreateChatWithUser(
+        @AuthenticationPrincipal String email,
+        @PathVariable Long otherUserId) {
+    
+    System.out.println("🔵 Get/Create chat: " + email + " with user " + otherUserId);
+    
+    User currentUser = userService.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    
+    // Get or create chat
+    Chat chat = chatService.getOrCreateChat(currentUser.getId(), otherUserId);
+    
+    // Build response
+    ChatResponse response = chatService.buildChatResponse(chat, currentUser.getId());
+    
+    System.out.println("✅ Chat ID: " + response.getChatId());
+    
+    return ResponseEntity.ok(response);
+        }
 
     // Get messages for a specific chat (paginated)
     @GetMapping("/{chatId}/messages")

@@ -63,4 +63,14 @@ export const chatService = {
   markMessagesAsRead: async (chatId: number): Promise<void> => {
     await axios.post(`${API_URL}/${chatId}/read`, {}, getAuthHeaders());
   },
+
+  getOrCreateChatWithUser: async (otherUserId: number): Promise<ChatResponse> => {
+    console.log('🔵 Getting/creating chat with user:', otherUserId);
+    const response = await axios.get(
+      `${API_URL}/with/${otherUserId}`,
+      getAuthHeaders()
+    );
+    console.log('✅ Chat response:', response.data);
+    return response.data;
+  },
 };

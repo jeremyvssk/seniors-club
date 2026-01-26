@@ -14,6 +14,7 @@ interface ChatContextType {
   loadMoreMessages: () => Promise<void>;
   hasMoreMessages: boolean;
   refreshChats: () => Promise<void>;
+  openChatWithUser: (userId: number) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -135,6 +136,32 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
     }
   };
+  const openChatWithUser = async (userId: number) => {
+    try {
+      console.log('🔵 Opening chat with user:', userId);
+      
+      // Get or create chat
+      const chat = await chatService.getOrCreateChatWithUser(userId);
+      
+      console.log('✅ Chat obtained:', chat);
+      
+      // Add to chats list if not already there
+      setChats((prev) => {
+        const exists = prev.find((c) => c.chatId === chat.chatId);
+        if (!exists) {
+          return [chat, ...prev];
+        }
+        return prev;
+      });
+      
+      // Set as active chat
+      setActiveChat(chat);
+      
+    } catch (error) {
+      console.error('❌ Failed to open chat:', error);
+      alert('Failed to start conversation. Please try again.');
+    }
+  };
 
   return (
     <ChatContext.Provider
@@ -149,6 +176,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadMoreMessages,
         hasMoreMessages,
         refreshChats,
+        openChatWithUser,
       }}
     >
       {children}
