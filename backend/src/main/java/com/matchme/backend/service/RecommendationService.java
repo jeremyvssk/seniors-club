@@ -34,54 +34,55 @@ public class RecommendationService {
             // Return empty list if profile not completed
             return new ArrayList<>();
         }
+
         //get profiles that were already liked or skipped
         List<UserInteraction> myInteractions = interactionRepository.findByUser(currentUser);
-                List<Long> interactedUserIds = myInteractions.stream()
-                .map(interaction -> interaction.getTargetProfile().getUser().getId()) // get USER ID
+        
+        List<Long> interactedUserIds = myInteractions.stream()
+                .map(interaction -> interaction.getTargetProfile().getUser().getId())
                 .collect(Collectors.toList());
-
 
         //find profiles that match preferences
         List<UserProfile> allProfiles = profileRepository.findAll();
 
         return allProfiles.stream()
-        .filter(profile -> !profile.getUser().getId().equals(currentUser.getId())) //excludes urself
-        .filter(profile -> profile.getProfileCompleted()) // Only show completed profiles
-        .filter(profile -> !interactedUserIds.contains(profile.getUser().getId()))  // Filter already swiped by USER ID
+                .filter(profile -> !profile.getUser().getId().equals(currentUser.getId())) //excludes urself
+                .filter(profile -> profile.getProfileCompleted()) // Only show completed profiles
+                .filter(profile -> !interactedUserIds.contains(profile.getUser().getId())) // Filter already interacted
                 .limit(10) // Limit to 10 profiles at a time
                 .collect(Collectors.toList());
-        }
+    }
 
-        // Record the like action - now receives USER ID, not profile ID
-        public void likeProfile(User currentUser, Long targetUserId) {
-                UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
-                .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
-                
-                UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.LIKE);
-                interactionRepository.save(interaction);
-        }
+    // Record the like action - now receives USER ID, not profile ID
+    public void likeProfile(User currentUser, Long targetUserId) {
+            UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+            
+            UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.LIKE);
+            interactionRepository.save(interaction);
+    }
 
-        // Record skip action - now receives USER ID, not profile ID
-        public void skipProfile(User currentUser, Long targetUserId) {
-                UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
-                .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
-                
-                UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
-                interactionRepository.save(interaction);
-        }
+    // Record skip action - now receives USER ID, not profile ID
+    public void skipProfile(User currentUser, Long targetUserId) {
+            UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+            
+            UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
+            interactionRepository.save(interaction);
+    }
 
-                //here should add whether gender preferences match, 
+            //here should add whether gender preferences match, 
 
-                //here should add whether users liked eachother
+            //here should add whether users liked eachother
 
-                //here should add whether its a match or not
+            //here should add whether its a match or not
 
-                //save the match to database 
+            //save the match to database 
 
-                //notification to both users
+            //notification to both users
 
-                //enable chat
+            //enable chat
 
 
-        
-        }
+    
+}

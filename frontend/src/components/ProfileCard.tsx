@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { User } from 'lucide-react';
+import { User, MapPin } from 'lucide-react';
 import { UserFormData } from '../types/User';
 
 interface ProfileCardProps {
   profile: UserFormData;
+  distanceKm?: number;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
   const [showBio, setShowBio] = useState(false);
-  const [expandHobbies, setExpandHobbies] = useState(false);
   
   const {
     name,
@@ -19,29 +19,26 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
     lookingFor,
   } = profile;
 
-  const visibleHobbies = expandHobbies ? hobbies : hobbies.slice(0, 3);
-  const remainingCount = hobbies.length - 3;
-
   return (
-    <div className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[520px] lg:max-w-[600px] 
-                    h-[580px] sm:h-[640px] md:h-[700px] lg:h-[740px]
+    <div className="w-[340px] sm:w-[380px] md:w-[420px]
+                    min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
                     bg-white rounded-2xl shadow-2xl 
-                    overflow-hidden hover:shadow-3xl transition-shadow duration-300 
-                    flex flex-col">
+                    overflow-hidden flex flex-col
+                    transform-gpu">
       
-      {/* Image/Bio Section - FIXED HEIGHT */}
+      {/* Image/Bio Section - Fixed height */}
       <div 
         onClick={() => setShowBio(!showBio)}
-        className="relative h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px]
-                   bg-linear-to-br from-gray-100 to-gray-200 
+        className="relative h-[280px] sm:h-[300px] md:h-[320px]
+                   bg-gradient-to-br from-gray-100 to-gray-200 
                    flex items-center justify-center shrink-0 cursor-pointer
                    group"
       >
         {showBio ? (
-          <div className="absolute inset-0 p-6 sm:p-8 md:p-10 
+          <div className="absolute inset-0 p-5 sm:p-6 
                          flex items-center justify-center overflow-y-auto
-                         bg-linear-to-br from-blue-50 to-purple-50">
-            <p className="text-gray-800 text-base sm:text-lg md:text-xl 
+                         bg-gradient-to-br from-blue-50 to-purple-50">
+            <p className="text-gray-800 text-sm sm:text-base md:text-lg 
                          font-medium text-center leading-relaxed">
               {bio || 'No bio available'}
             </p>
@@ -55,83 +52,78 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 text-gray-400" />
+              <User className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
             )}
           </>
         )}
         
-        {/* Hover hint - hide on mobile */}
-        <div className="hidden sm:block absolute bottom-4 right-4 
-                       bg-black/60 text-white text-xs sm:text-sm 
-                       px-3 py-1.5 rounded-full 
-                       opacity-0 group-hover:opacity-100 transition-opacity">
-          {showBio ? 'View photo' : 'View bio'}
+        {/* Tap hint overlay */}
+        <div className="absolute bottom-3 right-3 
+                       bg-black/50 text-white text-xs 
+                       px-2.5 py-1 rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity
+                       pointer-events-none">
+          {showBio ? 'Tap for photo' : 'Tap for bio'}
         </div>
       </div>
 
-      {/* Info Section - FIXED HEIGHT */}
-      <div className="h-[280px] sm:h-[300px] md:h-80 lg:h-[340px] 
-                      p-5 sm:p-6 md:p-7 lg:p-8 
-                      flex flex-col shrink-0">
+      {/* Info Section */}
+      <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
         
-        {/* Name & Age - FIXED HEIGHT */}
-        <div className="h-[60px] sm:h-[65px] md:h-[70px] flex-shrink-0 mb-3">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 truncate leading-tight">
-            {name}
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 font-medium">
-            {age} years old
-          </p>
-        </div>
-
-        {/* Hobbies Section - FIXED HEIGHT */}
-        <div className="h-[110px] sm:h-[115px] md:h-[120px] flex-shrink-0 mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 font-semibold">
-              Hobbies
-            </p>
-            {/* Expand/Collapse button - TOP RIGHT */}
-            {hobbies.length > 3 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandHobbies(!expandHobbies);
-                }}
-                className="text-xs sm:text-sm md:text-base text-blue-600 hover:text-blue-700 
-                         font-medium transition-colors flex-shrink-0"
-              >
-                {expandHobbies ? 'Show less' : `+${remainingCount} more`}
-              </button>
-            )}
+        {/* Name, Age & Distance */}
+        <div>
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {name}
+            </h2>
+            <span className="text-lg sm:text-xl text-gray-600 font-medium shrink-0">
+              {age}
+            </span>
           </div>
           
-          {/* Fixed height container - hide scrollbar on mobile */}
-          <div className="h-[80px] sm:h-[85px] md:h-[90px] overflow-y-auto pr-1
-                         scrollbar-none sm:scrollbar-thin">
-            <div className="flex flex-wrap gap-2">
-              {visibleHobbies.map((hobby, index) => (
-                <span 
-                  key={index}
-                  className="inline-block px-3 py-1.5 bg-blue-100 text-blue-700 
-                           text-xs sm:text-sm md:text-base lg:text-lg font-medium rounded-full
-                           border border-blue-200 flex-shrink-0 whitespace-nowrap"
-                >
-                  {hobby}
-                </span>
-              ))}
-            </div>
+          {/* Distance */}
+          <div className="flex items-center gap-1 mt-1 text-gray-500">
+            <MapPin className="w-3.5 h-3.5" />
+            <span className="text-xs sm:text-sm">
+              {distanceKm !== undefined ? `${distanceKm} km away` : 'Distance unknown'}
+            </span>
           </div>
         </div>
 
-        {/* Looking For - FIXED HEIGHT, always visible */}
-        <div className="h-[70px] sm:h-[75px] md:h-[80px] flex-shrink-0">
-          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 font-semibold mb-2">
+        {/* Hobbies Section */}
+        <div>
+          <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">
+            Hobbies
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {hobbies.map((hobby, index) => (
+              <span 
+                key={index}
+                className="inline-block px-2 py-1 bg-blue-50 text-blue-600 
+                         text-xs font-medium rounded-full
+                         border border-blue-100"
+              >
+                {hobby}
+              </span>
+            ))}
+            {hobbies.length === 0 && (
+              <span className="text-xs text-gray-400 italic">No hobbies listed</span>
+            )}
+          </div>
+        </div>
+
+        {/* Spacer - pushes Looking For to bottom */}
+        <div className="flex-1" />
+
+        {/* Looking For - always at bottom */}
+        <div>
+          <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-1.5">
             Looking for
           </p>
-          <span className="inline-block px-3 py-1.5 
-                         bg-purple-100 text-purple-700 
-                         text-xs sm:text-sm md:text-base lg:text-lg font-medium rounded-full
-                         border border-purple-200 capitalize">
+          <span className="inline-block px-2 py-1 
+                         bg-purple-50 text-purple-600 
+                         text-xs font-medium rounded-full
+                         border border-purple-100 capitalize">
             {lookingFor}
           </span>
         </div>

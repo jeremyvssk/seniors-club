@@ -8,10 +8,20 @@ import LogOutButton from '../components/buttons/LogOutButton';
 import api from '../api/axios';
 import { UserFormData } from '../types/User';
 
+/* 
+    Animation states for the profile card
+    'out-left' = card sliding out to the left (skip)
+    'out-right' = card sliding out to the right (like)
+    'in-left' = new card coming in from the left
+    'in-right' = new card coming in from the right
+    'fade-in' = new card fading in (initial load)
+    null = no animation
+*/
 type AnimationState = 'out-left' | 'out-right' | 'in-left' | 'in-right' | 'fade-in' | null;
 
 interface ProfileWithId extends UserFormData {
     userId: number;
+    distanceKm?: number;
 }
 
 const MainPage: React.FC = () => {
@@ -20,12 +30,19 @@ const MainPage: React.FC = () => {
     const [currentProfile, setCurrentProfile] = useState<ProfileWithId | null>(null);
     const [nextProfile, setNextProfile] = useState<ProfileWithId | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    // True when backend returns empty array (no more users to show)
     const [noMoreProfiles, setNoMoreProfiles] = useState(false);
     const [animationState, setAnimationState] = useState<AnimationState>(null);
     const [error, setError] = useState<string | null>(null);
-    
+    // Queue of user IDs - IDs we haven't loaded yet
     const queue = useRef<number[]>([]);
 
+    /*
+        Fetch all profile data for a user
+        "async" = this function will wait for network requests
+        "await" = pause here until the request finishes
+        "Promise.all" = run all 3 requests at the same time, wait for all to finish (faster than doing them one by one)          
+    */
     const fetchProfile = async (userId: number): Promise<ProfileWithId> => {
         const [user, profile, bio] = await Promise.all([
             api.get(`/users/${userId}`),
@@ -48,7 +65,10 @@ const MainPage: React.FC = () => {
             profilePicture: user.data.profilePictureUrl || null
         };
     };
-
+    /*
+        Fetch more user IDs from backend and add to queue
+        Returns true if we got new IDs, false if no more users
+    */
     const fetchMoreIds = async (): Promise<boolean> => {
         const response = await api.get<number[]>('/recommendations');
         if (response.data.length > 0) {
@@ -58,80 +78,92 @@ const MainPage: React.FC = () => {
         return false;
     };
 
-    const loadNext = async (animateFrom?: 'left' | 'right') => {
+    // Take next ID from queue and load it as nextProfile
+    const preloadNext = async () => {
+        // Get more IDs if needed
         if (queue.current.length === 0) {
-            const hasMore = await fetchMoreIds();
-            if (!hasMore) {
-                setNoMoreProfiles(true);
-                setCurrentProfile(null);
-                setIsLoading(false);
-                return;
-            }
+            await fetchMoreIds();
         }
-
-        const userId = queue.current.shift()!;
-        const profile = await fetchProfile(userId);
         
-        setAnimationState(animateFrom ? (animateFrom === 'right' ? 'in-right' : 'in-left') : 'fade-in');
-        setCurrentProfile(profile);
-        setIsLoading(false);
-        
-        // Preload next
-        if (queue.current.length === 0) await fetchMoreIds();
+        // Take from queue (remove it) and preload
         if (queue.current.length > 0) {
-            const next = await fetchProfile(queue.current[0]);
+            const nextId = queue.current.shift()!; // Remove from queue
+            const next = await fetchProfile(nextId);
             setNextProfile(next);
         } else {
             setNextProfile(null);
         }
+    };
+    // Load initial profile
+    const loadInitial = async () => {
+        // Get IDs
+        const hasMore = await fetchMoreIds();
+        if (!hasMore) {
+            setNoMoreProfiles(true);
+            setIsLoading(false);
+            return;
+        }
+
+        // Load first profile
+        const firstId = queue.current.shift()!;
+        const first = await fetchProfile(firstId);
+        
+        setAnimationState('fade-in');
+        setCurrentProfile(first);
+        setIsLoading(false);
+        
+        // Preload next
+        await preloadNext();
         
         setTimeout(() => setAnimationState(null), 400);
     };
 
-    useEffect(() => {
-        loadNext();
-    }, []);
 
+    useEffect(() => {
+        loadInitial();
+    }, []);
+    // Handle like or skip
     const handleAction = async (actionType: 'like' | 'skip') => {
         if (!currentProfile || animationState?.startsWith('out')) return;
 
         const direction = actionType === 'like' ? 'right' : 'left';
         
         try {
+            // Start exit animation
             setAnimationState(direction === 'right' ? 'out-right' : 'out-left');
             
-            // Record the interaction
+            // Tell backend about the interaction
             await api.post(`/${currentProfile.userId}/${actionType}`);
             
+            // Wait for animation, then show next
             setTimeout(async () => {
                 if (nextProfile) {
+                    // We have a preloaded profile - use it
                     setCurrentProfile(nextProfile);
                     setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
-                    queue.current.shift();
                     
-                    // Preload next
-                    if (queue.current.length === 0) await fetchMoreIds();
-                    if (queue.current.length > 0) {
-                        queue.current.shift(); // Remove the one we just showed
-                        if (queue.current.length > 0) {
-                            const next = await fetchProfile(queue.current[0]);
-                            setNextProfile(next);
-                        } else {
-                            await fetchMoreIds();
-                            if (queue.current.length > 0) {
-                                const next = await fetchProfile(queue.current[0]);
-                                setNextProfile(next);
-                            } else {
-                                setNextProfile(null);
-                            }
-                        }
-                    } else {
-                        setNextProfile(null);
-                    }
+                    // Preload the next one
+                    await preloadNext();
                     
                     setTimeout(() => setAnimationState(null), 400);
                 } else {
-                    await loadNext(direction);
+                    // No preloaded profile - check if there are more
+                    const hasMore = await fetchMoreIds();
+                    if (hasMore) {
+                        const nextId = queue.current.shift()!;
+                        const next = await fetchProfile(nextId);
+                        
+                        setCurrentProfile(next);
+                        setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
+                        
+                        await preloadNext();
+                        
+                        setTimeout(() => setAnimationState(null), 400);
+                    } else {
+                        // No more profiles
+                        setCurrentProfile(null);
+                        setNoMoreProfiles(true);
+                    }
                 }
             }, 350);
         } catch (err) {
@@ -146,7 +178,7 @@ const MainPage: React.FC = () => {
         localStorage.removeItem('user');
         navigate('/login');
     };
-
+    // Convert animation state to CSS class name
     const getAnimationClass = () => {
         switch (animationState) {
             case 'out-left': return 'animate-slide-out-left';
@@ -161,7 +193,7 @@ const MainPage: React.FC = () => {
     return (
         <div className="h-screen overflow-hidden pb-16 md:pb-0"
             style={{ background: "linear-gradient(to top, #3b82f6, #f8fafc)" }}>
-            
+            {/* Logout button - fixed in top right corner */}
             <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
                 <LogOutButton onClick={handleLogout} />
             </div>    
@@ -169,68 +201,89 @@ const MainPage: React.FC = () => {
             <div className="flex h-screen">
                 <Sidebar />
 
-                <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                    <div className="w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl">
-                        <div className="mb-6 md:mb-8">
-                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 text-center">
-                                Explore Profiles
-                            </h1>
-                        </div>
+                {/* Changed: use flex-col to stack title, card, buttons vertically with justify-center */}
+                <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                    
+                    {/* Title */}
+                    <div className="mb-4 md:mb-6 shrink-0">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 text-center">
+                            Explore Profiles
+                        </h1>
+                    </div>
 
-                        <div className="flex flex-col items-center gap-6">
-                            <div className="relative w-full flex justify-center min-h-[580px] sm:min-h-[640px] md:min-h-[700px] lg:min-h-[740px]">
-                                {isLoading ? (
-                                    <div className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[520px] lg:max-w-[600px] 
-                                                h-[580px] sm:h-[640px] md:h-[700px] lg:h-[740px]
-                                                bg-white border-2 border-gray-300 rounded-2xl shadow-2xl 
-                                                animate-pulse flex flex-col">
-                                        <div className="h-[300px] sm:h-[340px] md:h-[380px] lg:h-[400px] bg-gray-200 rounded-t-2xl"></div>
-                                        <div className="flex-1 p-5 sm:p-6 md:p-7 lg:p-8 space-y-4">
-                                            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                                            <div className="h-5 bg-gray-200 rounded w-1/2"></div>
-                                            <div className="space-y-3">
-                                                <div className="h-10 bg-gray-200 rounded"></div>
-                                                <div className="h-10 bg-gray-200 rounded"></div>
-                                            </div>
-                                        </div>
+                    {/* 
+                      Card container - FIXED HEIGHT so buttons don't move
+                      Height must be >= card min-height to prevent overlap
+                    */}
+                    <div className="h-[560px] sm:h-[600px] md:h-[640px] flex items-start justify-center shrink-0">
+                        {/* 
+                          - If loading, show skeleton
+                          - Else if we have a profile, show the card
+                          - Else if no more profiles, show empty state
+                          - Else show nothing
+                        */}
+                        {isLoading ? (
+                            <div className="w-[340px] sm:w-[380px] md:w-[420px]
+                                        min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
+                                        bg-white rounded-2xl shadow-2xl 
+                                        animate-pulse flex flex-col">
+                                <div className="h-[280px] sm:h-[300px] md:h-[320px] bg-gray-200 rounded-t-2xl"></div>
+                                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col">
+                                    <div className="h-7 bg-gray-200 rounded w-3/4"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                                        <div className="h-6 bg-gray-200 rounded-full w-14"></div>
                                     </div>
-                                ) : currentProfile ? (
-                                    <div className={getAnimationClass()}>
-                                        <ProfileCard profile={currentProfile} />
-                                    </div>
-                                ) : noMoreProfiles ? (
-                                    <div className="text-center flex flex-col items-center justify-center max-w-md px-6">
-                                        <div className="w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                                            <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                        </div>
-                                        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
-                                            No more profiles nearby
-                                        </h2>
-                                        <p className="text-sm md:text-base text-gray-500">
-                                            Try expanding your distance or check back later
-                                        </p>
-                                    </div>
-                                ) : null}
-                            </div>
-                             
-                            {currentProfile && !isLoading && (
-                                <div className="flex gap-6 sm:gap-8 md:gap-12 justify-center">
-                                    <SkipButton onClick={() => handleAction('skip')} />
-                                    <LikeButton isLiked={false} onClick={() => handleAction('like')} />
+                                    <div className="flex-1"></div>
+                                    <div className="h-6 bg-gray-200 rounded-full w-24"></div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : currentProfile ? (
+                            <div className={getAnimationClass()}>
+                                <ProfileCard 
+                                    profile={currentProfile} 
+                                    distanceKm={currentProfile.distanceKm}
+                                />
+                            </div>
+                        ) : noMoreProfiles ? (
+                            <div className="text-center flex flex-col items-center justify-center max-w-md px-6 h-full">
+                                <div className="w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
+                                    No more profiles nearby
+                                </h2>
+                                <p className="text-sm md:text-base text-gray-500">
+                                    Try expanding your distance or check back later
+                                </p>
+                            </div>
+                        ) : null}
+                    </div>
 
-                        {error && (
-                            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 
-                                          bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg
-                                          animate-slide-up z-50">
-                                {error}
+                    {/* 
+                      Like/Skip buttons - FIXED HEIGHT container so position never changes
+                      Buttons only visible when we have a currentProfile and not loading
+                    */}
+                    <div className="h-20 flex items-center justify-center shrink-0 mt-4 sm:mt-6">
+                        {currentProfile && !isLoading && (
+                            <div className="flex gap-6 sm:gap-8 md:gap-12">
+                                <SkipButton onClick={() => handleAction('skip')} />
+                                <LikeButton isLiked={false} onClick={() => handleAction('like')} />
                             </div>
                         )}
                     </div>
+
+                    {error && (
+                        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 
+                                      bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg
+                                      animate-slide-up z-50">
+                            {error}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
