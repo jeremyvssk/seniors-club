@@ -6,8 +6,11 @@ import com.matchme.backend.dto.SendMessageRequest;
 import com.matchme.backend.model.Chat;
 import com.matchme.backend.model.Message;
 import com.matchme.backend.model.User;
+import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ChatService;
 import com.matchme.backend.service.UserService;
+import com.matchme.backend.model.UserProfile;
+import com.matchme.backend.repo.UserProfileRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +33,9 @@ public class ChatController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -94,36 +100,52 @@ public class ChatController {
     }
 
     // WebSocket: Send message
-    @MessageMapping("/chat.send")
-    public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
-        String email = principal.getName();
-        User sender = userService.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Save message to database
-        Message message = chatService.sendMessage(sender.getId(), request.getRecipientId(), request.getContent());
-
-        // Build response
-        MessageResponse response = new MessageResponse();
-        response.setId(message.getId());
-        response.setChatId(message.getChatId());
-        response.setSenderId(message.getSenderId());
-        response.setContent(message.getContent());
-        response.setCreatedAt(message.getCreatedAt());
-        response.setIsRead(false);
-
-        // Send to recipient via WebSocket
-        messagingTemplate.convertAndSendToUser(
-                request.getRecipientId().toString(),
-                "/queue/messages",
-                response
-        );
-
-        // Also send back to sender for confirmation
-        messagingTemplate.convertAndSendToUser(
-                sender.getId().toString(),
-                "/queue/messages",
-                response
-        );
+@MessageMapping("/chat.send")
+public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
+    System.out.println("🔵 WebSocket message received!");
+    
+    if (principal == null) {
+        System.out.println("❌ Principal is null");
+        return;
     }
+    
+    String email = principal.getName();
+    System.out.println("📧 Email: " + email);
+    
+    User sender = userService.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    System.out.println("👤 Sender ID: " + sender.getId());
+    System.out.println("📤 Recipient ID: " + request.getRecipientId());
+    System.out.println("💬 Content: " + request.getContent());
+
+    // Save message to database
+    Message message = chatService.sendMessage(sender.getId(), request.getRecipientId(), request.getContent());
+    System.out.println("✅ Message saved with ID: " + message.getId());
+
+    // Get sender profile for name
+    UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
+            .orElse(null);
+
+    // Build response
+    MessageResponse response = new MessageResponse();
+    response.setId(message.getId());
+    response.setChatId(message.getChatId());
+    response.setSenderId(sender.getId());
+    response.setSenderName(senderProfile != null ? senderProfile.getName() : "Unknown");
+    response.setContent(message.getContent());
+    response.setCreatedAt(message.getCreatedAt());
+    response.setIsRead(false);
+
+    // ✅ Send to recipient via topic (NOT convertAndSendToUser)
+    String recipientDestination = "/topic/messages/" + request.getRecipientId();
+    messagingTemplate.convertAndSend(recipientDestination, response);
+    System.out.println("📤 Sent to recipient: " + recipientDestination);
+
+    // ✅ Also send back to sender for confirmation
+    String senderDestination = "/topic/messages/" + sender.getId();
+    messagingTemplate.convertAndSend(senderDestination, response);
+    System.out.println("📤 Sent to sender: " + senderDestination);
+        
+}
 }

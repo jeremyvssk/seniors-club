@@ -28,6 +28,7 @@ export interface PagedMessages {
   totalElements: number;
   number: number;
   size: number;
+  last: boolean;
 }
 
 const getAuthHeaders = () => {
