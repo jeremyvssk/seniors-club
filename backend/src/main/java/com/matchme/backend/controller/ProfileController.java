@@ -156,9 +156,9 @@ public class ProfileController {
                 "id", user.getId(),
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
-                "gender", profile.getGender() != null ? profile.getGender().name() : "",
+                "gender", profile.getGender() != null ? profile.getGender() : "",
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),
-                "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor().name() : "",
+                "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor() : "",
                 "lookingForGender",
                 profile.getLookingForGender() != null ? profile.getLookingForGender() : java.util.List.of(),
                 "bio", profile.getBio() != null ? profile.getBio() : "",
@@ -218,7 +218,6 @@ public class ProfileController {
         }
     }
 
-
     // Update only provided fields
 
     @PutMapping("/profile")
@@ -263,4 +262,3 @@ public class ProfileController {
         }
     }
 }
-
