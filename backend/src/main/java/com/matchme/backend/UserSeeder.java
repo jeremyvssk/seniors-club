@@ -52,6 +52,7 @@ public class UserSeeder implements CommandLineRunner {
             profile.setUser(user);
 
             profile.setName(randomFullName());
+            profile.setBio(randomBio());
             profile.setAge(randomAge());
             profile.setGender(randomGender());
             profile.setHobbies(randomHobbies());
@@ -95,6 +96,26 @@ public class UserSeeder implements CommandLineRunner {
         String last = LAST_NAMES[RANDOM.nextInt(LAST_NAMES.length)];
         return first + " " + last;
     }
+
+    private static final String[] BIO_WORDS = {
+        "Hello", "yes", "when", "words", "big",
+        "I", "very", "like", "to", "and", "flabbergasted",
+        "often", "running", "love", "am", "thanks",
+        "enjoy", "happy", "life", "adventure", "fun",
+        "friendly", "kind", "creative", "curious", "excited"
+    };
+
+      private static String randomBio() {
+        StringBuilder bio = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            bio.append(BIO_WORDS[RANDOM.nextInt(BIO_WORDS.length)]);
+            if (i < 9) {
+                bio.append(" ");
+            }
+        }
+        return bio.toString();
+    }
+
 
     // generate age
 
