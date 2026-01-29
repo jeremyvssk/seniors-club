@@ -2,13 +2,13 @@ package com.matchme.backend.controller;
 
 import com.matchme.backend.dto.ProfileRequest;
 import com.matchme.backend.dto.UserBioResponse;
-import com.matchme.backend.dto.AboutMeResponse;
 import com.matchme.backend.dto.BasicUserInfoResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
 import com.matchme.backend.dto.ProfileUpdateRequest;
+import com.matchme.backend.dto.AboutMeResponse;  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -111,8 +112,12 @@ public class ProfileController {
         // Return only "about me" info
         AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
-        response.setBio(profile.getBio());
-        response.setAge(profile.getAge());
+        response.setName(profile.getName() != null ? profile.getName() : "");
+        response.setAge(profile.getAge() != null ? profile.getAge() : 0);
+        response.setBio(profile.getBio() != null ? profile.getBio() : "");
+        response.setHobbies(profile.getHobbies() != null ? profile.getHobbies() : new ArrayList<>());
+        response.setLookingFor(profile.getLookingFor() != null ? profile.getLookingFor() : "");
+        response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : "");
 
         return ResponseEntity.ok(response);
     }

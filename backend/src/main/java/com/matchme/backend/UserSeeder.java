@@ -75,15 +75,19 @@ public class UserSeeder implements CommandLineRunner {
 
     // generate random names:
 
-    private static final String[] FIRST_NAMES = {
+   private static final String[] FIRST_NAMES = {
             "Alex", "Sam", "Chris", "Jamie", "Taylor",
             "Mark", "Daniel", "Karl", "Martin", "Robert",
-            "Laura", "Anna", "Maria", "Eva", "Katrin"
+            "Laura", "Anna", "Maria", "Eva", "Katrin",
+            "Liisa", "Kristjan", "Jaan", "Piret", "Toomas",
+            "Marika", "Andres", "Karin", "Peeter", "Helen"
     };
 
     private static final String[] LAST_NAMES = {
             "Tamm", "Saar", "Sepp", "Mägi", "Kask",
-            "Kallas", "Ilves", "Põder", "Rebane", "Lepp"
+            "Kallas", "Ilves", "Põder", "Rebane", "Lepp",
+            "Kukk", "Pärn", "Lill", "Rand", "Järv",
+            "Koppel", "Ots", "Paju", "Vaher", "Nurm"
     };
 
     private static String randomFullName() {
