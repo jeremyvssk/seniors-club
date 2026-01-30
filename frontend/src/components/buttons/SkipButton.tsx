@@ -2,13 +2,15 @@ import React from 'react';
 import { X } from 'lucide-react';
 
 interface SkipButtonProps {
-  onClick: () => void;
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
 }
 
-const SkipButton: React.FC<SkipButtonProps> = ({ onClick }) => {
+const SkipButton: React.FC<SkipButtonProps> = ({ onClick, disabled = false }) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled} // Apply disabled prop
       className="flex items-center justify-center 
                  border-2 border-gray-400 
                  p-2 sm:p-2.5 md:p-3 lg:p-4

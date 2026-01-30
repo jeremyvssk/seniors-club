@@ -3,13 +3,15 @@ import { Heart } from 'lucide-react';
 
 interface LikeButtonProps {
   isLiked: boolean;
-  onClick: () => void;
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean; 
 }
 
-const LikeButton: React.FC<LikeButtonProps> = ({ isLiked, onClick }) => {
+const LikeButton: React.FC<LikeButtonProps> = ({ isLiked, onClick, disabled = false }) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled} // Apply disabled prop
       className={`flex items-center justify-center 
                   border-2 border-gray-400 
                   p-2 sm:p-2.5 md:p-3 lg:p-4

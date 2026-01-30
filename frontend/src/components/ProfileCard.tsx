@@ -9,6 +9,7 @@ interface ProfileCardProps {
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
   const [showBio, setShowBio] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const {
     name,
@@ -18,6 +19,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
     hobbies = [],
     lookingFor,
   } = profile;
+
+  // Debug: log what profilePicture we received
+  console.log('ProfileCard received profilePicture:', profilePicture);
+
+  // Temporary debug - show URL as text
+  if (profilePicture) {
+    console.log('Trying to load image from:', profilePicture);
+  }
 
   return (
     <div className="w-[340px] sm:w-[380px] md:w-[420px]
@@ -45,11 +54,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
           </div>
         ) : (
           <>
-            {profilePicture ? (
+            {profilePicture && !imageError ? (
               <img 
                 src={profilePicture.toString()}
                 alt={`${name}'s profile`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Image failed to load:', profilePicture);
+                  console.error('Error event:', e);
+                  setImageError(true);
+                }}
+                onLoad={() => console.log('Image loaded successfully:', profilePicture)}
               />
             ) : (
               <User className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />

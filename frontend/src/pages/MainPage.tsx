@@ -33,10 +33,14 @@ const MainPage: React.FC = () => {
     // True when backend returns empty array (no more users to show)
     const [noMoreProfiles, setNoMoreProfiles] = useState(false);
     const [animationState, setAnimationState] = useState<AnimationState>(null);
+    const [isActionInProgress, setIsActionInProgress] = useState(false);
     const [error, setError] = useState<string | null>(null);
     // Queue of user IDs - IDs we haven't loaded yet
     const queue = useRef<number[]>([]);
-
+    // Track IDs we've already seen (to prevent duplicates from backend)
+    const seenIds = useRef<Set<number>>(new Set());
+    // Ref to prevent multiple actions (synchronous check)
+    const isActionInProgressRef = useRef(false);
     /*
         Fetch all profile data for a user
         "async" = this function will wait for network requests
@@ -72,8 +76,14 @@ const MainPage: React.FC = () => {
     const fetchMoreIds = async (): Promise<boolean> => {
         const response = await api.get<number[]>('/recommendations');
         if (response.data.length > 0) {
-            queue.current.push(...response.data);
-            return true;
+            // Filter out IDs we've already seen or have in queue
+            const newIds = response.data.filter(id => 
+                !seenIds.current.has(id) && !queue.current.includes(id)
+            );
+            // Only add to queue, not to seenIds yet!
+            queue.current.push(...newIds);
+
+            return queue.current.length > 0;
         }
         return false;
     };
@@ -124,7 +134,10 @@ const MainPage: React.FC = () => {
     }, []);
     // Handle like or skip
     const handleAction = async (actionType: 'like' | 'skip') => {
-        if (!currentProfile || animationState?.startsWith('out')) return;
+        if (!currentProfile || animationState?.startsWith('out') || isActionInProgress) return;
+
+        isActionInProgressRef.current = true; // Lock actions synchronously
+        setIsActionInProgress(true); // Lock actions
 
         const direction = actionType === 'like' ? 'right' : 'left';
         
@@ -134,7 +147,9 @@ const MainPage: React.FC = () => {
             
             // Tell backend about the interaction
             await api.post(`/${currentProfile.userId}/${actionType}`);
-            
+
+            // Mark as seen only after interaction
+            seenIds.current.add(currentProfile.userId);
             // Wait for animation, then show next
             setTimeout(async () => {
                 if (nextProfile) {
@@ -145,7 +160,11 @@ const MainPage: React.FC = () => {
                     // Preload the next one
                     await preloadNext();
                     
-                    setTimeout(() => setAnimationState(null), 400);
+                    setTimeout(() => {
+                        setAnimationState(null);
+                        isActionInProgressRef.current = false; // Unlock after everything is done
+                        setIsActionInProgress(false);
+                    }, 400);
                 } else {
                     // No preloaded profile - check if there are more
                     const hasMore = await fetchMoreIds();
@@ -158,11 +177,17 @@ const MainPage: React.FC = () => {
                         
                         await preloadNext();
                         
-                        setTimeout(() => setAnimationState(null), 400);
+                        setTimeout(() => {
+                            setAnimationState(null);
+                            isActionInProgressRef.current = false; // Unlock after everything is done
+                            setIsActionInProgress(false);
+                        }, 400);
                     } else {
                         // No more profiles
                         setCurrentProfile(null);
                         setNoMoreProfiles(true);
+                        isActionInProgressRef.current = false; // Unlock even if no more
+                        setIsActionInProgress(false);
                     }
                 }
             }, 350);
@@ -170,6 +195,8 @@ const MainPage: React.FC = () => {
             console.error(`Failed to ${actionType}:`, err);
             setError(`Failed to ${actionType} profile`);
             setAnimationState(null);
+            isActionInProgressRef.current = false; // Unlock on error
+            setIsActionInProgress(false); // Update UI State
         }
     };
 
@@ -269,10 +296,17 @@ const MainPage: React.FC = () => {
                       Buttons only visible when we have a currentProfile and not loading
                     */}
                     <div className="h-20 flex items-center justify-center shrink-0 mt-4 sm:mt-6">
-                        {currentProfile && !isLoading && (
+                        {currentProfile && !isLoading && !noMoreProfiles &&(
                             <div className="flex gap-6 sm:gap-8 md:gap-12">
-                                <SkipButton onClick={() => handleAction('skip')} />
-                                <LikeButton isLiked={false} onClick={() => handleAction('like')} />
+                                <SkipButton 
+                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('skip'); }} 
+                                    disabled={isActionInProgress} 
+                                />
+                                <LikeButton 
+                                isLiked={false} 
+                                onClick={() => { if (!isActionInProgressRef.current) handleAction('like'); }}
+                                disabled={isActionInProgress}  
+                                />
                             </div>
                         )}
                     </div>
