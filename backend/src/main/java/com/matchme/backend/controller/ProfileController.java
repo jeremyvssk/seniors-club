@@ -158,10 +158,9 @@ public class ProfileController {
 
         // Return all editable fields
         return ResponseEntity.ok(Map.of(
-                "id", user.getId(),
+
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
-                "gender", profile.getGender() != null ? profile.getGender() : "",
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),
                 "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor() : "",
                 "lookingForGender",

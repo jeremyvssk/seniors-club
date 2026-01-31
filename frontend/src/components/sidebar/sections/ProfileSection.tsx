@@ -2,14 +2,19 @@ import React, { useState, useEffect } from "react";
 import { User, Edit } from "lucide-react";
 import { UserFormData } from "../../../types/User";
 import api from "../../../api/axios";
+import EditHobbies from "../../../components/edit-profile/EditHobbies";
+
+
 
 export const ProfileSection: React.FC = () => {
   const [profile, setProfile] = useState<UserFormData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [radius, setRadius] = useState(50);
+  const [editingHobbies, setEditingHobbies] = useState(false);
 
-useEffect(() => {
+
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await api.get("/me/profile");
@@ -25,15 +30,13 @@ useEffect(() => {
       }
     };
 
-    
-
     fetchProfile();
   }, []);
 
-    const handleRadiusChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRadiusChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     setRadius(value);
-    
+
     // Auto-save to backend whenever the slider is moved
     try {
       await api.put("/me/profile", { maxRadiusKm: value });
@@ -57,7 +60,6 @@ useEffect(() => {
       </div>
     );
   }
-
 
   return (
     <div className="w-full">
@@ -113,7 +115,10 @@ useEffect(() => {
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
                 Hobbies
               </h2>
-              <button className="text-gray-400 hover:text-blue-600 transition-colors">
+              <button
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                onClick={() => setEditingHobbies(true)}
+              >
                 <Edit className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
               </button>
             </div>
@@ -122,9 +127,9 @@ useEffect(() => {
                 <span
                   key={index}
                   className="px-2 py-0.5 sm:px-2.5 sm:py-1 md:px-3 md:py-1.5
-                           bg-blue-100 text-blue-700 
-                           rounded-full text-xs sm:text-sm md:text-base 
-                           font-medium"
+                   bg-blue-100 text-blue-700 
+                   rounded-full text-xs sm:text-sm md:text-base 
+                   font-medium"
                 >
                   {hobby}
                 </span>
@@ -132,6 +137,23 @@ useEffect(() => {
             </div>
           </div>
         )}
+  {/* ✅ Overlay goes HERE, right after hobbies section */}
+  {editingHobbies && (
+    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+      <div
+        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+      >
+        <EditHobbies
+          data={profile}
+          updateData={(updated) => setProfile({ ...profile, ...updated })}
+          onNext={() => setEditingHobbies(false)}
+          onBack={() => setEditingHobbies(false)}
+        />
+      </div>
+    </div>
+  )}
+
 
         {/* Looking For Section */}
         {profile.lookingFor && (
@@ -192,52 +214,46 @@ useEffect(() => {
           </div>
         )}
 
+        {/* Radius Slider Section */}
+        <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-gray-200">
+          {/* Slider Label and Current Value */}
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <label className="block text-base md:text-lg font-medium text-slate-700">
+              Match Radius
+            </label>
+            <span className="text-blue-600 font-bold text-xl md:text-2xl">
+              {radius} km
+            </span>
+          </div>
 
-              {/* Radius Slider Section */}
-              <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-gray-200">
-                {/* Slider Label and Current Value */}
-                <div className="flex items-center justify-between mb-2 md:mb-3">
-                  <label className="block text-base md:text-lg font-medium text-slate-700">
-                    Match Radius
-                  </label>
-                    <span className="text-blue-600 font-bold text-xl md:text-2xl">
-                      {radius} km
-                    </span>
-                </div>
+          {/* Range Slider Input */}
+          <input
+            type="range"
+            min="1"
+            max="300"
+            value={radius}
+            onChange={handleRadiusChange}
+            className="w-full h-2 md:h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+            style={{
+              // Dynamic gradient to show filled portion of slider
+              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(radius / 300) * 100}%, #e2e8f0 ${(radius / 300) * 100}%, #e2e8f0 100%)`,
+            }}
+          />
 
-                {/* Range Slider Input */}
-                <input
-                  type="range"
-                  min="1"
-                  max="300"
-                  value={radius}
-                  onChange={handleRadiusChange}
-                  className="w-full h-2 md:h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    // Dynamic gradient to show filled portion of slider
-                    background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(radius / 300) * 100}%, #e2e8f0 ${(radius / 300) * 100}%, #e2e8f0 100%)`
-                  }}
-                />
+          {/* Slider Range Labels */}
+          <div className="flex justify-between text-xs text-slate-500 mt-1 md:mt-2">
+            <span>1 km</span>
+            <span>150 km</span>
+            <span>300 km</span>
+          </div>
 
-                {/* Slider Range Labels */}
-                <div className="flex justify-between text-xs text-slate-500 mt-1 md:mt-2">
-                  <span>1 km</span>
-                  <span>150 km</span>
-                  <span>300 km</span>
-                </div>
-
-                {/* Helper Text */}
-                <p className="text-xs md:text-sm text-slate-600 text-center mt-2 md:mt-3">
-                  {radius >= 300 
-                    ? 'Match with everyone!' 
-                    : `Show matches within ${radius} km`
-                  }
-                </p>
-              </div>
-
-
-
-
+          {/* Helper Text */}
+          <p className="text-xs md:text-sm text-slate-600 text-center mt-2 md:mt-3">
+            {radius >= 300
+              ? "Match with everyone!"
+              : `Show matches within ${radius} km`}
+          </p>
+        </div>
       </div>
     </div>
   );
