@@ -11,7 +11,7 @@ public class AboutMeResponse {
     private List<String> hobbies;
     private String lookingFor;
     private String profilePictureUrl;
-
+    private Integer maxRadiusKm;
     
      public AboutMeResponse() {
         this.hobbies = new ArrayList<>();
@@ -38,4 +38,7 @@ public class AboutMeResponse {
 
     public String getProfilePictureUrl() { return this.profilePictureUrl; }
     public void setProfilePictureUrl(String url) { this.profilePictureUrl = url;}
+
+    public Integer getMaxRadiusKm() { return maxRadiusKm; }
+    public void setMaxRadiusKm(Integer maxRadiusKm) { this.maxRadiusKm = maxRadiusKm; }
 }

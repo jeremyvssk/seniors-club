@@ -8,7 +8,7 @@ import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
 import com.matchme.backend.dto.ProfileUpdateRequest;
-import com.matchme.backend.dto.AboutMeResponse;  
+import com.matchme.backend.dto.AboutMeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -118,7 +118,7 @@ public class ProfileController {
         response.setHobbies(profile.getHobbies() != null ? profile.getHobbies() : new ArrayList<>());
         response.setLookingFor(profile.getLookingFor() != null ? profile.getLookingFor() : "");
         response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : "");
-
+        response.setMaxRadiusKm(profile.getMaxRadiusKm() != null ? profile.getMaxRadiusKm() : 50);
         return ResponseEntity.ok(response);
     }
 
