@@ -32,7 +32,7 @@ const SeniorsClubLogIn: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       // checks if there is a profile
-      if (response.data.user.profileComplete) {
+     if (response.data.user.profileComplete) {
         navigate("/explore"); // if there is, go to main page
       } else {
         navigate("/complete-profile"); // if not, set profile up
@@ -41,9 +41,15 @@ const SeniorsClubLogIn: React.FC = () => {
       // Axios error handling
       if (error.response) {
         // Server responded with error
-        setError("root", {
-          message: error.response.data.message || "Login failed",
-        });
+        if (error.response.status === 401) {
+          setError("root", { 
+            message: "Invalid email or password" 
+          });
+        } else {
+          setError("root", {
+            message: "An error occurred",
+          });
+        }
       } else if (error.request) {
         // Request made but no response
         setError("root", {
