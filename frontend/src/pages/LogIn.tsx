@@ -133,7 +133,7 @@ const SeniorsClubLogIn: React.FC = () => {
             </div>
 
             <LogInButton
-              onClick={handleSubmit(onSubmit)}
+              type="submit"
               disabled={isSubmitting}
               className="py-4 text-xl"
             />
