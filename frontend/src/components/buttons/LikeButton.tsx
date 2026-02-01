@@ -18,6 +18,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ isLiked, onClick, disabled = fa
                   rounded-full 
                   shadow-lg hover:shadow-xl
                   transition-all duration-300 
+                  disabled:opacity-50 disabled:cursor-not-allowed
                   ${isLiked ? 'bg-green-100 text-green-600' : 'bg-white text-green-500 hover:bg-green-50'}`}
       aria-label={isLiked ? 'Unlike' : 'Like'}
     >

@@ -39,6 +39,8 @@ const MainPage: React.FC = () => {
     const queue = useRef<number[]>([]);
     // Track IDs we've already seen (to prevent duplicates from backend)
     const seenIds = useRef<Set<number>>(new Set());
+    const queuedIds = useRef<Set<number>>(new Set()); // IDs currently queued/reserved locally
+    const isFetchingIdsRef = useRef(false); // prevent concurrent fetches
     // Ref to prevent multiple actions (synchronous check)
     const isActionInProgressRef = useRef(false);
     /*
@@ -48,6 +50,8 @@ const MainPage: React.FC = () => {
         "Promise.all" = run all 3 requests at the same time, wait for all to finish (faster than doing them one by one)          
     */
     const fetchProfile = async (userId: number): Promise<ProfileWithId> => {
+        seenIds.current.add(userId);
+
         const [user, profile, bio] = await Promise.all([
             api.get(`/users/${userId}`),
             api.get(`/users/${userId}/profile`),
@@ -72,20 +76,33 @@ const MainPage: React.FC = () => {
     /*
         Fetch more user IDs from backend and add to queue
         Returns true if we got new IDs, false if no more users
+        - Prevents concurrent fetches
+        - Immediately reserves returned IDs in queuedIds to avoid duplicates
     */
     const fetchMoreIds = async (): Promise<boolean> => {
-        const response = await api.get<number[]>('/recommendations');
-        if (response.data.length > 0) {
-            // Filter out IDs we've already seen or have in queue
-            const newIds = response.data.filter(id => 
-                !seenIds.current.has(id) && !queue.current.includes(id)
-            );
-            // Only add to queue, not to seenIds yet!
-            queue.current.push(...newIds);
-
+        if (isFetchingIdsRef.current) {
             return queue.current.length > 0;
         }
-        return false;
+        isFetchingIdsRef.current = true;
+        try {
+            const response = await api.get<number[]>('/recommendations');
+            if (response.data.length > 0) {
+                // Filter out IDs we've already interacted with or already queued/reserved
+                const newIds = response.data.filter(id =>
+                    !seenIds.current.has(id) && !queuedIds.current.has(id)
+                );
+                // Reserve them immediately and push to queue
+                newIds.forEach(id => {
+                    queuedIds.current.add(id);
+                    queue.current.push(id);
+                });
+
+                return queue.current.length > 0;
+            }
+            return false;
+        } finally {
+            isFetchingIdsRef.current = false;
+        }
     };
 
     // Take next ID from queue and load it as nextProfile
@@ -98,6 +115,8 @@ const MainPage: React.FC = () => {
         // Take from queue (remove it) and preload
         if (queue.current.length > 0) {
             const nextId = queue.current.shift()!; // Remove from queue
+            // un-reserve: we're loading it now
+            queuedIds.current.delete(nextId);
             const next = await fetchProfile(nextId);
             setNextProfile(next);
         } else {
@@ -116,6 +135,7 @@ const MainPage: React.FC = () => {
 
         // Load first profile
         const firstId = queue.current.shift()!;
+        queuedIds.current.delete(firstId);
         const first = await fetchProfile(firstId);
         
         setAnimationState('fade-in');
@@ -132,7 +152,7 @@ const MainPage: React.FC = () => {
     useEffect(() => {
         loadInitial();
     }, []);
-    // Handle like or skip
+    // Handles like/skip, updates backend, animates, and loads next profile.
     const handleAction = async (actionType: 'like' | 'skip') => {
         if (!currentProfile || animationState?.startsWith('out') || isActionInProgress) return;
 
@@ -150,6 +170,9 @@ const MainPage: React.FC = () => {
 
             // Mark as seen only after interaction
             seenIds.current.add(currentProfile.userId);
+            // Also ensure it's not reserved anymore
+            queuedIds.current.delete(currentProfile.userId);
+
             // Wait for animation, then show next
             setTimeout(async () => {
                 if (nextProfile) {
@@ -170,6 +193,7 @@ const MainPage: React.FC = () => {
                     const hasMore = await fetchMoreIds();
                     if (hasMore) {
                         const nextId = queue.current.shift()!;
+                        queuedIds.current.delete(nextId);
                         const next = await fetchProfile(nextId);
                         
                         setCurrentProfile(next);
@@ -216,6 +240,8 @@ const MainPage: React.FC = () => {
             default: return '';
         }
     };
+
+    const buttonsDisabled = isLoading || isActionInProgress || Boolean(animationState && animationState.startsWith('out'));
 
     return (
         <div className="h-screen overflow-hidden pb-16 md:pb-0"
@@ -296,16 +322,16 @@ const MainPage: React.FC = () => {
                       Buttons only visible when we have a currentProfile and not loading
                     */}
                     <div className="h-20 flex items-center justify-center shrink-0 mt-4 sm:mt-6">
-                        {currentProfile && !isLoading && !noMoreProfiles &&(
+                        {currentProfile && !isLoading && (
                             <div className="flex gap-6 sm:gap-8 md:gap-12">
                                 <SkipButton 
                                     onClick={() => { if (!isActionInProgressRef.current) handleAction('skip'); }} 
-                                    disabled={isActionInProgress} 
+                                    disabled={buttonsDisabled} 
                                 />
                                 <LikeButton 
-                                isLiked={false} 
-                                onClick={() => { if (!isActionInProgressRef.current) handleAction('like'); }}
-                                disabled={isActionInProgress}  
+                                    isLiked={false} 
+                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('like'); }}
+                                    disabled={buttonsDisabled}  
                                 />
                             </div>
                         )}
