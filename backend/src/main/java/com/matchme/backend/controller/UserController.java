@@ -28,7 +28,6 @@ public class UserController {
 
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserBasicInfo(@PathVariable Long id) {
-        // TODO: Add permission check (can only view if recommended/connected)
         Optional<User> userOpt = userService.findById(id);
         if (userOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -52,7 +51,6 @@ public class UserController {
 
     @GetMapping("/users/{id}/profile")
     public ResponseEntity<?> getUserProfile(@PathVariable Long id) {
-        // TODO: Add permission check
         Optional<User> userOpt = userService.findById(id);
         if (userOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -76,7 +74,6 @@ public class UserController {
 
     @GetMapping("/users/{id}/bio")
     public ResponseEntity<?> getUserBio(@PathVariable Long id) {
-        // TODO: Add permission check
         Optional<User> userOpt = userService.findById(id);
         if (userOpt.isEmpty()) {
             return ResponseEntity.notFound().build();

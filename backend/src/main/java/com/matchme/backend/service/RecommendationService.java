@@ -18,10 +18,12 @@ import java.util.stream.Collectors;
 public class RecommendationService {
     private final UserProfileRepository profileRepository;
     private final UserInteractionRepository interactionRepository;
+    private final MatchingAlgorithmService matchingAlgorithmService;
 
-    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository){
+    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository, MatchingAlgorithmService matchingAlgorithmService){
         this.profileRepository = profileRepository;
         this.interactionRepository = interactionRepository;
+        this.matchingAlgorithmService = matchingAlgorithmService;
     }
 
     //Get recommendedprofiles
@@ -35,22 +37,39 @@ public class RecommendationService {
             return new ArrayList<>();
         }
 
-        //get profiles that were already liked or skipped
+        // Get profiles that were already liked or skipped
         List<UserInteraction> myInteractions = interactionRepository.findByUser(currentUser);
         
         List<Long> interactedUserIds = myInteractions.stream()
-                .map(interaction -> interaction.getTargetProfile().getUser().getId())
-                .collect(Collectors.toList());
+            .map(interaction -> interaction.getTargetProfile().getUser().getId())
+            .collect(Collectors.toList());
 
-        //find profiles that match preferences
-        List<UserProfile> allProfiles = profileRepository.findAll();
-
-        return allProfiles.stream()
-                .filter(profile -> !profile.getUser().getId().equals(currentUser.getId())) //excludes urself
-                .filter(profile -> profile.getProfileCompleted()) // Only show completed profiles
-                .filter(profile -> !interactedUserIds.contains(profile.getUser().getId())) // Filter already interacted
-                .limit(10) // Limit to 10 profiles at a time
+        // Use custom database query to filter early
+        List<UserProfile> candidateProfiles;
+        if (interactedUserIds.isEmpty()) {
+            // Avoid SQL error with empty IN clause
+            candidateProfiles = profileRepository.findAll().stream()
+                .filter(profile -> profile.getProfileCompleted())
+                .filter(profile -> !profile.getUser().getId().equals(currentUser.getId()))
                 .collect(Collectors.toList());
+        } else {
+            candidateProfiles = profileRepository.findCandidateProfiles(
+                currentUser.getId(),
+                interactedUserIds
+            );
+        }
+
+        // Apply matching algorithm (gender → distance → scoring)
+        // The algorithm internally applies filters in optimal order (cheapest first)
+        List<UserProfile> scoredProfiles = matchingAlgorithmService.filterAndScoreProfiles(
+            myProfile,
+            candidateProfiles
+        );
+
+        // Return top 10 matches
+        return scoredProfiles.stream()
+            .limit(10)
+            .collect(Collectors.toList());
     }
 
     // Record the like action - now receives USER ID, not profile ID

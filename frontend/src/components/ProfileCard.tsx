@@ -38,15 +38,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
       {/* Image/Bio Section - Fixed height */}
       <div 
         onClick={() => setShowBio(!showBio)}
-        className="relative h-[280px] sm:h-[300px] md:h-[320px]
-                   bg-gradient-to-br from-gray-100 to-gray-200 
+        className="relative h-[280px] sm:h-[300px] md:h-80
+                   bg-linear-to-br from-gray-100 to-gray-200 
                    flex items-center justify-center shrink-0 cursor-pointer
                    group"
       >
         {showBio ? (
           <div className="absolute inset-0 p-5 sm:p-6 
                          flex items-center justify-center overflow-y-auto
-                         bg-gradient-to-br from-blue-50 to-purple-50">
+                         bg-linear-to-br from-blue-50 to-purple-50">
             <p className="text-gray-800 text-sm sm:text-base md:text-lg 
                          font-medium text-center leading-relaxed">
               {bio || 'No bio available'}

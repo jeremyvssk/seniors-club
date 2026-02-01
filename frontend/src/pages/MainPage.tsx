@@ -280,7 +280,7 @@ const MainPage: React.FC = () => {
                                         min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
                                         bg-white rounded-2xl shadow-2xl 
                                         animate-pulse flex flex-col">
-                                <div className="h-[280px] sm:h-[300px] md:h-[320px] bg-gray-200 rounded-t-2xl"></div>
+                                <div className="h-[280px] sm:h-[300px] md:h-80 bg-gray-200 rounded-t-2xl"></div>
                                 <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col">
                                     <div className="h-7 bg-gray-200 rounded w-3/4"></div>
                                     <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -302,7 +302,7 @@ const MainPage: React.FC = () => {
                             </div>
                         ) : noMoreProfiles ? (
                             <div className="text-center flex flex-col items-center justify-center max-w-md px-6 h-full">
-                                <div className="w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                                <div className="w-20 h-20 mb-5 rounded-full bg-linear-to-br from-purple-100 to-pink-100 flex items-center justify-center">
                                     <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                     </svg>
