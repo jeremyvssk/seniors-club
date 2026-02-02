@@ -24,28 +24,26 @@ public class MatchingAlgorithmService {
         
         return EARTH_RADIUS_KM * c;
     }
+
+    // Calculate distance between two profiles (convenience method)
+    public Double calculateDistanceBetweenProfiles(UserProfile profile1, UserProfile profile2) {        
+        return calculateDistance(
+            profile1.getLatitude(),
+            profile1.getLongitude(),
+            profile2.getLatitude(),
+            profile2.getLongitude()
+        );
+    }
     
     // Check if target profile matches current user's gender preferences
     public boolean matchesGenderPreference(UserProfile currentUser, UserProfile targetUser) {
-        // Check if target's gender is in current user's looking-for list
-        boolean currentWantsTarget = currentUser.getLookingForGender()
-            .contains(targetUser.getGender());
-        
-        // Check if current user's gender is in target's looking-for list
-        boolean targetWantsCurrent = targetUser.getLookingForGender()
-            .contains(currentUser.getGender());
-        
-        // Both must match for a valid recommendation
-        return currentWantsTarget && targetWantsCurrent;
+        // Check if target's and user's gender is in current looking-for list
+        return currentUser.getLookingForGender().contains(targetUser.getGender()) &&
+            targetUser.getLookingForGender().contains(currentUser.getGender());
     }
     
     // Check if target profile is within distance range
     public boolean isWithinDistance(UserProfile currentUser, UserProfile targetUser) {
-        if (currentUser.getLatitude() == null || currentUser.getLongitude() == null ||
-            targetUser.getLatitude() == null || targetUser.getLongitude() == null ||
-            currentUser.getMaxRadiusKm() == null) {
-            return false;
-        }
         
         double distance = calculateDistance(
             currentUser.getLatitude(),
@@ -63,40 +61,23 @@ public class MatchingAlgorithmService {
     // This avoids expensive Haversine calculations for obviously far-away users
     // A bounding box is a rectangle around the user - much faster to check than exact distance
     public boolean isWithinBoundingBox(UserProfile currentUser, UserProfile targetUser) {
-        if (currentUser.getLatitude() == null || currentUser.getLongitude() == null ||
-            targetUser.getLatitude() == null || targetUser.getLongitude() == null ||
-            currentUser.getMaxRadiusKm() == null) {
-            return false;
-        }
-        
-        // Use the larger of the two radius preferences for the bounding box
-        double maxRadius = currentUser.getMaxRadiusKm();
-        if (targetUser.getMaxRadiusKm() != null && targetUser.getMaxRadiusKm() > maxRadius) {
-            maxRadius = targetUser.getMaxRadiusKm();
-        }
-        
+        // Use the larger of the two radius preferences
+        double maxRadius = Math.max(currentUser.getMaxRadiusKm(), targetUser.getMaxRadiusKm());
         // Rough approximation: 1 degree latitude ≈ 111 km
         double latDelta = maxRadius / 111.0;
-        
         // Longitude varies by latitude (closer to poles = smaller distance per degree)
         // Use cosine of latitude to adjust
         double lonDelta = maxRadius / (111.0 * Math.cos(Math.toRadians(currentUser.getLatitude())));
-        
-        // Calculate actual differences
+        // Check if within bounding box
         double latDiff = Math.abs(currentUser.getLatitude() - targetUser.getLatitude());
         double lonDiff = Math.abs(currentUser.getLongitude() - targetUser.getLongitude());
-        
         // If both differences are within the bounding box, return true
         return latDiff <= latDelta && lonDiff <= lonDelta;
     }
     
     // Calculate age gap score - IMPROVED with more granular scoring
     // Returns -300 if age gap is too large (>30 years), otherwise returns points
-    public int calculateAgeScore(UserProfile currentUser, UserProfile targetUser) {
-        if (currentUser.getAge() == null || targetUser.getAge() == null) {
-            return 0;
-        }
-        
+    public int calculateAgeScore(UserProfile currentUser, UserProfile targetUser) {       
         int ageGap = Math.abs(currentUser.getAge() - targetUser.getAge());
         
         if (ageGap > 30) {
@@ -114,10 +95,6 @@ public class MatchingAlgorithmService {
     
     // Calculate hobby match score
     public int calculateHobbyScore(UserProfile currentUser, UserProfile targetUser) {
-        if (currentUser.getHobbies() == null || targetUser.getHobbies() == null) {
-            return 0;
-        }
-        
         long matchingHobbies = currentUser.getHobbies().stream()
             .filter(hobby -> targetUser.getHobbies().contains(hobby))
             .count();
@@ -133,17 +110,12 @@ public class MatchingAlgorithmService {
         }
     }
     
-    // Calculate lookingFor match score
-    public int calculateLookingForScore(UserProfile currentUser, UserProfile targetUser) {
-        if (currentUser.getLookingFor() == null || targetUser.getLookingFor() == null) {
-            return 0;
-        }
-        
+    public int calculateLookingForScore(UserProfile currentUser, UserProfile targetUser) {        
         // High score if both looking for the same thing
         if (currentUser.getLookingFor().equals(targetUser.getLookingFor())) {
             return 150; // Same as 3+ hobby matches
         }
-        
+        // if looking for doesn't match don't give boost to this match
         return 0;
     }
     
@@ -178,10 +150,20 @@ public class MatchingAlgorithmService {
             // STEP 3: Apply expensive filter second (distance - requires calculation)
             // Only runs on candidates that passed gender and bounding box filters
             .filter(candidate -> isWithinDistance(currentUser, candidate))
-            
-            // STEP 4: Calculate scores (only for candidates that passed both filters)
-            .map(candidate -> new ScoredProfile(candidate, calculateTotalScore(currentUser, candidate)))
-            
+
+            // STEP 4: Calculate score AND distance, wrap in ScoredProfile
+            .map(candidate -> {
+                int score = calculateTotalScore(currentUser, candidate);
+                double distance = calculateDistance(
+                    currentUser.getLatitude(),
+                    currentUser.getLongitude(),
+                    candidate.getLatitude(),
+                    candidate.getLongitude()
+                );
+                candidate.setDistanceKm(distance);  // Store it
+                return new ScoredProfile(candidate, score);
+            })
+                        
             // STEP 5: Filter out negative scores (age incompatible, score <= 0)
             .filter(scored -> scored.score > 0)
             

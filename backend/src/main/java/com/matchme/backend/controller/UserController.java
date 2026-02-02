@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,8 +25,6 @@ public class UserController {
     @Autowired
     private ProfileService profileService;
 
-    // ====== /users/{id} endpoints ======
-
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserBasicInfo(@PathVariable Long id) {
         Optional<User> userOpt = userService.findById(id);
@@ -36,7 +35,6 @@ public class UserController {
         User user = userOpt.get();
         UserProfile profile = profileService.getProfileByUser(user);
         
-        // Return 404 if profile doesn't exist
         if (profile == null) {
             return ResponseEntity.notFound().build();
         }
@@ -59,7 +57,6 @@ public class UserController {
         User user = userOpt.get();
         UserProfile profile = profileService.getProfileByUser(user);
         
-        // Return 404 if profile not completed
         if (profile == null || !profile.getProfileCompleted()) {
             return ResponseEntity.notFound().build();
         }
@@ -67,35 +64,37 @@ public class UserController {
         AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
         response.setBio(profile.getBio());
-        response.setAge(profile.getAge());
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/users/{id}/bio")
-    public ResponseEntity<?> getUserBio(@PathVariable Long id) {
-        Optional<User> userOpt = userService.findById(id);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> getUserBio(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String email) {
+        
+        // Get viewer (authenticated user)
+        User viewer = null;
+        if (email != null) {
+            viewer = userService.findByEmail(email).orElse(null);
         }
+
+        // Delegate to service layer (business logic)
+        UserProfile profile = userService.getUserBioWithDistance(id, viewer);
         
-        User user = userOpt.get();
-        UserProfile profile = profileService.getProfileByUser(user);
-        
-        // Return 404 if profile not completed
-        if (profile == null || !profile.getProfileCompleted()) {
+        if (profile == null) {
             return ResponseEntity.notFound().build();
         }
 
+        // Map to DTO (controller responsibility)
         UserBioResponse response = new UserBioResponse();
-        response.setId(user.getId());
+        response.setId(profile.getUser().getId());
+        response.setAge(profile.getAge());
         response.setGender(profile.getGender());
         response.setHobbies(profile.getHobbies());
         response.setLookingFor(profile.getLookingFor());
         response.setLookingForGender(profile.getLookingForGender());
-        response.setLatitude(profile.getLatitude());
-        response.setLongitude(profile.getLongitude());
-        response.setMaxRadiusKm(profile.getMaxRadiusKm());
+        response.setDistanceKm(profile.getDistanceKm());
 
         return ResponseEntity.ok(response);
     }

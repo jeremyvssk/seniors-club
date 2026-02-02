@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { User, MapPin } from 'lucide-react';
-import { UserFormData } from '../types/User';
+import { ViewableProfile } from '../types/User';
 
 interface ProfileCardProps {
-  profile: UserFormData;
+  profile: ViewableProfile;
   distanceKm?: number;
 }
 
@@ -96,11 +96,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
             </span>
           </div>
           
-          {/* Distance */}
+          {/* Distance - FIX: Round the number properly */}
           <div className="flex items-center gap-1 mt-1 text-gray-500">
             <MapPin className="w-3.5 h-3.5" />
             <span className="text-xs sm:text-sm">
-              {distanceKm !== undefined ? `${distanceKm} km away` : 'Distance unknown'}
+              {distanceKm !== undefined && distanceKm !== null 
+                ? `${Math.round(distanceKm)} km away` 
+                : 'Distance unknown'}
             </span>
           </div>
         </div>

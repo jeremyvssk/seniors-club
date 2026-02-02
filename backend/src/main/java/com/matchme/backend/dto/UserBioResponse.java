@@ -5,12 +5,11 @@ import java.util.List;
 public class UserBioResponse {
     private Long id;
     private String gender;
+    private Integer age;
     private List<String> hobbies;
     private String lookingFor;
     private List<String> lookingForGender;
-    private Double latitude;
-    private Double longitude;
-    private Integer maxRadiusKm;
+    private Double distanceKm;
     
     // Getters and setters
     public Long getId() { return id; }
@@ -18,6 +17,9 @@ public class UserBioResponse {
     
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
     
     public List<String> getHobbies() { return hobbies; }
     public void setHobbies(List<String> hobbies) { this.hobbies = hobbies; }
@@ -29,15 +31,6 @@ public class UserBioResponse {
     public void setLookingForGender(List<String> lookingForGender) { 
         this.lookingForGender = lookingForGender; 
     }
-    
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
-    
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
-    
-    public Integer getMaxRadiusKm() { return maxRadiusKm; }
-    public void setMaxRadiusKm(Integer maxRadiusKm) { 
-        this.maxRadiusKm = maxRadiusKm; 
-    }
+    public Double getDistanceKm() { return distanceKm; }
+    public void setDistanceKm(Double distanceKm) { this.distanceKm = distanceKm; }
 }

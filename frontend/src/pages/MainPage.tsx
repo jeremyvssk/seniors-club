@@ -6,7 +6,7 @@ import LikeButton from '../components/buttons/LikeButton';
 import SkipButton from '../components/buttons/SkipButton';
 import LogOutButton from '../components/buttons/LogOutButton';
 import api from '../api/axios';
-import { UserFormData } from '../types/User';
+import { ViewableProfile } from '../types/User';
 
 /* 
     Animation states for the profile card
@@ -19,9 +19,8 @@ import { UserFormData } from '../types/User';
 */
 type AnimationState = 'out-left' | 'out-right' | 'in-left' | 'in-right' | 'fade-in' | null;
 
-interface ProfileWithId extends UserFormData {
+interface ProfileWithId extends ViewableProfile {
     userId: number;
-    distanceKm?: number;
 }
 
 const MainPage: React.FC = () => {
@@ -30,19 +29,15 @@ const MainPage: React.FC = () => {
     const [currentProfile, setCurrentProfile] = useState<ProfileWithId | null>(null);
     const [nextProfile, setNextProfile] = useState<ProfileWithId | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    // True when backend returns empty array (no more users to show)
-    const [noMoreProfiles, setNoMoreProfiles] = useState(false);
+    const [noMoreProfiles, setNoMoreProfiles] = useState(false); // True when backend returns empty array (no more users to show)
     const [animationState, setAnimationState] = useState<AnimationState>(null);
     const [isActionInProgress, setIsActionInProgress] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    // Queue of user IDs - IDs we haven't loaded yet
-    const queue = useRef<number[]>([]);
-    // Track IDs we've already seen (to prevent duplicates from backend)
-    const seenIds = useRef<Set<number>>(new Set());
+    const queue = useRef<number[]>([]); // Queue of user IDs - IDs we haven't loaded yet
+    const seenIds = useRef<Set<number>>(new Set()); // Track IDs we've already seen (to prevent duplicates from backend)
     const queuedIds = useRef<Set<number>>(new Set()); // IDs currently queued/reserved locally
     const isFetchingIdsRef = useRef(false); // prevent concurrent fetches
-    // Ref to prevent multiple actions (synchronous check)
-    const isActionInProgressRef = useRef(false);
+    const isActionInProgressRef = useRef(false); // Ref to prevent multiple actions (synchronous check)
     /*
         Fetch all profile data for a user
         "async" = this function will wait for network requests
@@ -61,16 +56,14 @@ const MainPage: React.FC = () => {
         return {
             userId,
             name: user.data.name,
-            age: profile.data.age.toString(),
+            age: bio.data.age.toString(),
             gender: bio.data.gender,
             bio: profile.data.bio,
             hobbies: bio.data.hobbies,
             lookingFor: bio.data.lookingFor,
             lookingForGender: bio.data.lookingForGender,
-            latitude: bio.data.latitude,
-            longitude: bio.data.longitude,
-            maxRadiusKm: bio.data.maxRadiusKm,
-            profilePicture: user.data.profilePictureUrl || null
+            profilePicture: user.data.profilePictureUrl || null,
+            distanceKm: bio.data.distanceKm 
         };
     };
     /*
