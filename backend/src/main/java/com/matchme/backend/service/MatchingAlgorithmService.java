@@ -81,15 +81,15 @@ public class MatchingAlgorithmService {
         int ageGap = Math.abs(currentUser.getAge() - targetUser.getAge());
         
         if (ageGap > 30) {
-            return -300; // Strong negative: filter out completely
-        } else if (ageGap < 5) {
-            return 100; // Ideal: less than 5 years
-        } else if (ageGap < 10) {
-            return 50; // Good: 5-10 years
-        } else if (ageGap < 15) {
-            return 20; // Fair: 10-15 years
+            return -300; // too large age gap: filter out completely
+        } else if (ageGap <= 5) {
+            return 100; // Ideal: 0-5 years
+        } else if (ageGap <= 10) {
+            return 50; // Good: 6-10 years
+        } else if (ageGap <= 15) {
+            return 20; // Fair: 11-15 years
         } else {
-            return 0; // Poor: 15-30 years (neutral, no boost)
+            return 0; // Poor: 16-30 years (neutral, no boost)
         }
     }
     

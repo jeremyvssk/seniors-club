@@ -28,6 +28,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
     console.log('Trying to load image from:', profilePicture);
   }
 
+  // Helper function to format distance nicely
+  const formatDistance = (km: number | undefined | null): string => {
+    if (km === undefined || km === null) return 'Distance unknown';
+    if (km < 1) return 'Less than a kilometer away';
+    return `${Math.round(km)} km away`;
+  };
+
   return (
     <div className="w-[340px] sm:w-[380px] md:w-[420px]
                     min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
@@ -96,13 +103,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
             </span>
           </div>
           
-          {/* Distance - FIX: Round the number properly */}
+          {/* Distance */}
           <div className="flex items-center gap-1 mt-1 text-gray-500">
             <MapPin className="w-3.5 h-3.5" />
             <span className="text-xs sm:text-sm">
-              {distanceKm !== undefined && distanceKm !== null 
-                ? `${Math.round(distanceKm)} km away` 
-                : 'Distance unknown'}
+              {formatDistance(distanceKm)}
             </span>
           </div>
         </div>
