@@ -8,11 +8,14 @@ import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.UserService;
 import com.matchme.backend.service.ProfileService;
 
+
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api")
@@ -23,6 +26,7 @@ public class UserController {
 
     @Autowired
     private ProfileService profileService;
+
 
     // ====== /users/{id} endpoints ======
 
@@ -102,4 +106,6 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
+
+    
 }

@@ -5,9 +5,7 @@ import api from "../../../api/axios";
 import EditHobbies from "../../../components/edit-profile/EditHobbies";
 import EditBio from "../../edit-profile/EditBio";
 import EditLookingFor from "../../edit-profile/EditLookingFor";
-
-
-
+import EditProfilePic from "../../edit-profile/EditProfilePic";
 
 export const ProfileSection: React.FC = () => {
   const [profile, setProfile] = useState<UserFormData | null>(null);
@@ -17,7 +15,7 @@ export const ProfileSection: React.FC = () => {
   const [editingHobbies, setEditingHobbies] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [editingLookingFor, setEditingLookingFor] = useState(false);
-
+  const [editingProfilePic, setEditingProfilePic] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,6 +35,32 @@ export const ProfileSection: React.FC = () => {
 
     fetchProfile();
   }, []);
+
+  const handleProfilePicUpdate = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+
+      const response = await api.put("/me/profile/picture", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Update local state with new URL
+      if (response.data.profilePictureUrl) {
+        setProfile({
+          ...profile!,
+          profilePicture: response.data.profilePictureUrl,
+        });
+      }
+
+      setEditingProfilePic(false);
+    } catch (err) {
+      console.error("Failed to update profile picture", err);
+      alert("Failed to update profile picture");
+    }
+  };
 
   const handleRadiusChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
@@ -90,6 +114,7 @@ export const ProfileSection: React.FC = () => {
             </div>
 
             <button
+              onClick={() => setEditingProfilePic(true)}
               className="bg-gray-100 rounded-full 
                              px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2
                              shadow-md text-gray-600 hover:text-blue-700 hover:bg-gray-200 
@@ -102,6 +127,30 @@ export const ProfileSection: React.FC = () => {
             </button>
           </div>
 
+          {/* ✅ Overlay goes HERE */}
+          {editingProfilePic && (
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+              <div
+                className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+                onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+              >
+                <EditProfilePic
+                  data={profile}
+                  updateData={async (updated) => {
+                    if (updated.profilePicture) {
+                      // Upload immediately when file is selected
+                      await handleProfilePicUpdate(
+                        updated.profilePicture as File,
+                      );
+                    }
+                  }}
+                  onNext={() => setEditingProfilePic(false)}
+                  onBack={() => setEditingProfilePic(false)}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Name and Age and Email */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-0.5 sm:mb-1">
@@ -109,11 +158,9 @@ export const ProfileSection: React.FC = () => {
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-600">
               {profile.age} years old
-              
             </p>
             <p className="text-base sm:text-xl md:text-2xl text-gray-600">
               {profile.email}
-              
             </p>
           </div>
         </div>
@@ -147,23 +194,22 @@ export const ProfileSection: React.FC = () => {
             </div>
           </div>
         )}
-  {/* ✅ Overlay goes HERE, right after hobbies section */}
-  {editingHobbies && (
-    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
-      <div
-        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
-      >
-        <EditHobbies
-          data={profile}
-          updateData={(updated) => setProfile({ ...profile, ...updated })}
-          onNext={() => setEditingHobbies(false)}
-          onBack={() => setEditingHobbies(false)}
-        />
-      </div>
-    </div>
-  )}
-
+        {/* ✅ Overlay goes HERE, right after hobbies section */}
+        {editingHobbies && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+            <div
+              className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+            >
+              <EditHobbies
+                data={profile}
+                updateData={(updated) => setProfile({ ...profile, ...updated })}
+                onNext={() => setEditingHobbies(false)}
+                onBack={() => setEditingHobbies(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Looking For Section */}
         {profile.lookingFor && (
@@ -172,7 +218,7 @@ export const ProfileSection: React.FC = () => {
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
                 Looking For
               </h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-blue-600 transition-colors"
                 onClick={() => setEditingLookingFor(true)}
               >
@@ -190,23 +236,21 @@ export const ProfileSection: React.FC = () => {
           </div>
         )}
 
-  {editingLookingFor && (
-    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
-      <div
-        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
-      >
-        <EditLookingFor
-          data={profile}
-          updateData={(updated) => setProfile({ ...profile, ...updated })}
-          onNext={() => setEditingLookingFor(false)}
-          onBack={() => setEditingLookingFor(false)}
-        />
-      </div>
-    </div>
-  )}
-
-
+        {editingLookingFor && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+            <div
+              className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+            >
+              <EditLookingFor
+                data={profile}
+                updateData={(updated) => setProfile({ ...profile, ...updated })}
+                onNext={() => setEditingLookingFor(false)}
+                onBack={() => setEditingLookingFor(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Gender Section */}
         {profile.gender && (
@@ -225,50 +269,50 @@ export const ProfileSection: React.FC = () => {
           </div>
         )}
 
-        {/* Bio Section */}
-        {profile.bio && (
-          <div>
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2 md:mb-3">
-              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
-                About Me
-              </h2>
-              <button 
-                className="text-gray-400 hover:text-blue-600 transition-colors"
-                onClick={() => setEditingBio(true)}
-              >
-                <Edit className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
-              </button>
-            </div>
-            <p
-              className="text-gray-700 leading-5 sm:leading-6 md:leading-7 
-                        text-xs sm:text-sm md:text-base lg:text-lg text-left 
-                        break-words overflow-wrap-anywhere max-w-full"
+{/* Bio Section */}
+<div className="mb-3 sm:mb-4 md:mb-5">
+  <div className="flex items-center justify-between mb-1.5 sm:mb-2 md:mb-3">
+    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
+      About Me
+    </h2>
+    <button 
+      className="text-gray-400 hover:text-blue-600 transition-colors"
+      onClick={() => setEditingBio(true)}
+    >
+      <Edit className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
+    </button>
+  </div>
+  {profile.bio ? (
+    <p
+      className="text-gray-700 leading-5 sm:leading-6 md:leading-7 
+                text-xs sm:text-sm md:text-base lg:text-lg text-left 
+                break-words overflow-wrap-anywhere max-w-full"
+    >
+      {profile.bio}
+    </p>
+  ) : (
+    <p className="text-gray-400 text-sm italic">
+      No bio added yet. Click the edit button to add one!
+    </p>
+  )}
+</div>
+
+        {/* ✅ Bio overlay */}
+        {editingBio && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+            <div
+              className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
             >
-              {profile.bio}
-            </p>
+              <EditBio
+                data={profile}
+                updateData={(updated) => setProfile({ ...profile, ...updated })}
+                onNext={() => setEditingBio(false)}
+                onBack={() => setEditingBio(false)}
+              />
+            </div>
           </div>
         )}
-
-
-
-          {/* ✅ Overlay goes HERE, right after hobbies section */}
-  {editingBio && (
-    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
-      <div
-        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
-      >
-        <EditBio
-          data={profile}
-          updateData={(updated) => setProfile({ ...profile, ...updated })}
-          onNext={() => setEditingBio(false)}
-          onBack={() => setEditingBio(false)}
-        />
-      </div>
-    </div>
-  )}
-
-
 
         {/* Radius Slider Section */}
         <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-gray-200">

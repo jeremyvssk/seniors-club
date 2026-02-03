@@ -8,10 +8,10 @@ public class ProfileUpdateRequest {
     @Size(min = 1, message = "Name cannot be empty")
     private String name;
     
-    @Size(max = 500, message = "Bio cannot exceed 500 characters")
+    @Size(max = 150, message = "Bio cannot exceed 150 characters")
     private String bio;
     
-    @Size(min = 3, message = "Please select at least 3 hobbies")
+    @Size(min = 1, message = "Please select at least 1 hobbies")
     private List<String> hobbies;
     
     @Pattern(

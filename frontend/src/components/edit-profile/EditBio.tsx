@@ -68,16 +68,9 @@ const EditBio = ({ data, updateData, onNext, onBack }: EditBioProps) => {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
             {saving ? "Saving..." : "Save"}
-          </button>
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-          >
-            Cancel
           </button>
         </div>
       </form>
