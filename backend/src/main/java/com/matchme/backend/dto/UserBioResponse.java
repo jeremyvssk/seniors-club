@@ -11,8 +11,7 @@ public class UserBioResponse {
     private Double latitude;
     private Double longitude;
     private Integer maxRadiusKm;
-
-    private String email;
+    private String bio;
     
     // Getters and setters
     public Long getId() { return id; }
@@ -20,6 +19,9 @@ public class UserBioResponse {
     
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
+
+    public String getBio() { return bio; }
+    public void setBio (String bio) { this.bio = bio; }
     
     public List<String> getHobbies() { return hobbies; }
     public void setHobbies(List<String> hobbies) { this.hobbies = hobbies; }

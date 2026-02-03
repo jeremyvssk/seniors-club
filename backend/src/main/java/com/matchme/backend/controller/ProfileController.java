@@ -137,6 +137,7 @@ public class ProfileController {
         UserBioResponse response = new UserBioResponse();
         response.setId(user.getId());
         response.setGender(profile.getGender());
+        response.setBio(profile.getBio());
         response.setHobbies(profile.getHobbies());
         response.setLookingFor(profile.getLookingFor());
         response.setLookingForGender(profile.getLookingForGender());
@@ -162,6 +163,7 @@ public class ProfileController {
 
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
+                "bio", profile.getBio() !=null? profile.getBio() : 0,
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),
                 "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor() : "",
                 "lookingForGender",

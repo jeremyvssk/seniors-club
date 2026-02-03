@@ -3,6 +3,7 @@ import { User, Edit } from "lucide-react";
 import { UserFormData } from "../../../types/User";
 import api from "../../../api/axios";
 import EditHobbies from "../../../components/edit-profile/EditHobbies";
+import EditBio from "../../edit-profile/EditBio";
 
 
 
@@ -12,6 +13,7 @@ export const ProfileSection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [radius, setRadius] = useState(50);
   const [editingHobbies, setEditingHobbies] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
 
 
   useEffect(() => {
@@ -206,18 +208,43 @@ export const ProfileSection: React.FC = () => {
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
                 About Me
               </h2>
-              <button className="text-gray-400 hover:text-blue-600 transition-colors">
+              <button 
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                onClick={() => setEditingBio(true)}
+              >
                 <Edit className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
               </button>
             </div>
             <p
               className="text-gray-700 leading-5 sm:leading-6 md:leading-7 
-                        text-xs sm:text-sm md:text-base lg:text-lg text-left"
+                        text-xs sm:text-sm md:text-base lg:text-lg text-left 
+                        break-words overflow-wrap-anywhere max-w-full"
             >
               {profile.bio}
             </p>
           </div>
         )}
+
+
+
+          {/* ✅ Overlay goes HERE, right after hobbies section */}
+  {editingBio && (
+    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+      <div
+        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+      >
+        <EditBio
+          data={profile}
+          updateData={(updated) => setProfile({ ...profile, ...updated })}
+          onNext={() => setEditingBio(false)}
+          onBack={() => setEditingBio(false)}
+        />
+      </div>
+    </div>
+  )}
+
+
 
         {/* Radius Slider Section */}
         <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-gray-200">
