@@ -10,6 +10,7 @@ public class AboutMeResponse {
     private String name;
     private List<String> hobbies;
     private String lookingFor;
+    private String lookingForGender;
     private String profilePictureUrl;
     private Integer maxRadiusKm;
     private String email;
@@ -38,6 +39,9 @@ public class AboutMeResponse {
 
     public String getLookingFor() { return this.lookingFor; }
     public void setLookingFor(String lookingFor) { this.lookingFor = lookingFor;} 
+
+     public String getLookingForGender() { return this.lookingForGender; }
+    public void setLookingForGender(String lookingForGender) { this.lookingForGender = lookingForGender;} 
 
     public String getProfilePictureUrl() { return this.profilePictureUrl; }
     public void setProfilePictureUrl(String url) { this.profilePictureUrl = url;}

@@ -4,6 +4,8 @@ import { UserFormData } from "../../../types/User";
 import api from "../../../api/axios";
 import EditHobbies from "../../../components/edit-profile/EditHobbies";
 import EditBio from "../../edit-profile/EditBio";
+import EditLookingFor from "../../edit-profile/EditLookingFor";
+
 
 
 
@@ -14,6 +16,7 @@ export const ProfileSection: React.FC = () => {
   const [radius, setRadius] = useState(50);
   const [editingHobbies, setEditingHobbies] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
+  const [editingLookingFor, setEditingLookingFor] = useState(false);
 
 
   useEffect(() => {
@@ -169,7 +172,10 @@ export const ProfileSection: React.FC = () => {
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900">
                 Looking For
               </h2>
-              <button className="text-gray-400 hover:text-blue-600 transition-colors">
+              <button 
+                className="text-gray-400 hover:text-blue-600 transition-colors"
+                onClick={() => setEditingLookingFor(true)}
+              >
                 <Edit className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
               </button>
             </div>
@@ -183,6 +189,24 @@ export const ProfileSection: React.FC = () => {
             </span>
           </div>
         )}
+
+  {editingLookingFor && (
+    <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+      <div
+        className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
+        onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+      >
+        <EditLookingFor
+          data={profile}
+          updateData={(updated) => setProfile({ ...profile, ...updated })}
+          onNext={() => setEditingLookingFor(false)}
+          onBack={() => setEditingLookingFor(false)}
+        />
+      </div>
+    </div>
+  )}
+
+
 
         {/* Gender Section */}
         {profile.gender && (
