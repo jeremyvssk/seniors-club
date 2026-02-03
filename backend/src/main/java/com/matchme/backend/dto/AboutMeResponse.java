@@ -12,7 +12,7 @@ public class AboutMeResponse {
     private String lookingFor;
     private String profilePictureUrl;
     private Integer maxRadiusKm;
-    
+    private String email;
      public AboutMeResponse() {
         this.hobbies = new ArrayList<>();
     }
@@ -23,6 +23,9 @@ public class AboutMeResponse {
 
     public String getName() { return this.name; }
     public void setName(String name) { this.name = name;}
+
+    public String getEmail() { return email;}
+    public void setEmail(String email) { this.email = email;}
 
     public List<String> getHobbies() { return this.hobbies; }
     public void setHobbies(List<String> hobbies) { this.hobbies = hobbies;}

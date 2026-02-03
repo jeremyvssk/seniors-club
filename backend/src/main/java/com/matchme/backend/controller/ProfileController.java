@@ -112,6 +112,7 @@ public class ProfileController {
         // Return only "about me" info
         AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
+        response.setEmail(user.getEmail());
         response.setName(profile.getName() != null ? profile.getName() : "");
         response.setAge(profile.getAge() != null ? profile.getAge() : 0);
         response.setBio(profile.getBio() != null ? profile.getBio() : "");

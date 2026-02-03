@@ -97,13 +97,18 @@ export const ProfileSection: React.FC = () => {
             </button>
           </div>
 
-          {/* Name and Age */}
+          {/* Name and Age and Email */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-0.5 sm:mb-1">
               {profile.name}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-600">
               {profile.age} years old
+              
+            </p>
+            <p className="text-base sm:text-xl md:text-2xl text-gray-600">
+              {profile.email}
+              
             </p>
           </div>
         </div>

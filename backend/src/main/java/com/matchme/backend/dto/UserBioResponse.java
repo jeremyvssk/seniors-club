@@ -11,6 +11,8 @@ public class UserBioResponse {
     private Double latitude;
     private Double longitude;
     private Integer maxRadiusKm;
+
+    private String email;
     
     // Getters and setters
     public Long getId() { return id; }
@@ -39,5 +41,7 @@ public class UserBioResponse {
     public Integer getMaxRadiusKm() { return maxRadiusKm; }
     public void setMaxRadiusKm(Integer maxRadiusKm) { 
         this.maxRadiusKm = maxRadiusKm; 
+
+
     }
 }

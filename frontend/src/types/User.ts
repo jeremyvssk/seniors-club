@@ -13,4 +13,5 @@ export interface UserFormData {
   latitude?: number;
   longitude?: number;
   maxRadiusKm?: number;
+  email: string;
 }
