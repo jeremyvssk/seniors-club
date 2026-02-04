@@ -45,6 +45,9 @@ public class UserProfile {
     private String lookingFor;
     private String profilePictureUrl;
     private boolean profileCompleted = false;
+
+    @Transient  // Not stored in database, just computed
+    private Double distanceKm;
     // getters/setters
     public Long getId() {return id;}
 
@@ -86,5 +89,8 @@ public class UserProfile {
 
     public boolean getProfileCompleted() {return profileCompleted;}
     public void setProfileCompleted(boolean profileCompleted) {this.profileCompleted = profileCompleted;}
+
+    public Double getDistanceKm() { return distanceKm; }
+    public void setDistanceKm(Double distanceKm) { this.distanceKm = distanceKm; }
 }
 

@@ -111,7 +111,6 @@ public class ProfileController {
         AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
         response.setBio(profile.getBio());
-        response.setAge(profile.getAge());
         
         return ResponseEntity.ok(response);
     }
@@ -133,9 +132,8 @@ public class ProfileController {
         response.setHobbies(profile.getHobbies());
         response.setLookingFor(profile.getLookingFor());
         response.setLookingForGender(profile.getLookingForGender());
-        response.setLatitude(profile.getLatitude());
-        response.setLongitude(profile.getLongitude());
-        response.setMaxRadiusKm(profile.getMaxRadiusKm());
+        response.setAge(profile.getAge());
+        
 
         return ResponseEntity.ok(response);
     }

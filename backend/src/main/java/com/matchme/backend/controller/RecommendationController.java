@@ -30,8 +30,7 @@ public class RecommendationController {
         this.userService = userService;
     }
 
-
-    // Return only IDs
+    // Return only User IDs (not Profile IDs)
     @GetMapping("/recommendations")
     public ResponseEntity<List<Long>> getRecommendations(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
@@ -39,12 +38,12 @@ public class RecommendationController {
 
         List<UserProfile> profiles = recommendationService.getRecommendations(user);
         
-        // Extract only the IDs
-        List<Long> profileIds = profiles.stream()
-            .map(UserProfile::getId)
+        // Extract USER IDs (the owner of each profile)
+        List<Long> userIds = profiles.stream()
+            .map(profile -> profile.getUser().getId())  // Changed: get User ID
             .collect(Collectors.toList());
         
-        return ResponseEntity.ok(profileIds);
+        return ResponseEntity.ok(userIds);
     }
 
     //record likes

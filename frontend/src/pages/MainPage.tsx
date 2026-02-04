@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/sidebar/MainSidebar';
 import ProfileCard from '../components/ProfileCard';
@@ -6,254 +6,337 @@ import LikeButton from '../components/buttons/LikeButton';
 import SkipButton from '../components/buttons/SkipButton';
 import LogOutButton from '../components/buttons/LogOutButton';
 import api from '../api/axios';
-import { UserFormData } from '../types/User';
+import { ViewableProfile } from '../types/User';
+
+/* 
+    Animation states for the profile card
+    'out-left' = card sliding out to the left (skip)
+    'out-right' = card sliding out to the right (like)
+    'in-left' = new card coming in from the left
+    'in-right' = new card coming in from the right
+    'fade-in' = new card fading in (initial load)
+    null = no animation
+*/
+type AnimationState = 'out-left' | 'out-right' | 'in-left' | 'in-right' | 'fade-in' | null;
+
+interface ProfileWithId extends ViewableProfile {
+    userId: number;
+}
 
 const MainPage: React.FC = () => {
     const navigate = useNavigate();
-    const [recommendations, setRecommendations] = useState<number[]>([]);
-    const [currentProfile, setCurrentProfile] = useState<UserFormData | null>(null);
-    const [loading, setLoading] = useState(true);
+    
+    const [currentProfile, setCurrentProfile] = useState<ProfileWithId | null>(null);
+    const [nextProfile, setNextProfile] = useState<ProfileWithId | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [noMoreProfiles, setNoMoreProfiles] = useState(false); // True when backend returns empty array (no more users to show)
+    const [animationState, setAnimationState] = useState<AnimationState>(null);
+    const [isActionInProgress, setIsActionInProgress] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const queue = useRef<number[]>([]); // Queue of user IDs - IDs we haven't loaded yet
+    const seenIds = useRef<Set<number>>(new Set()); // Track IDs we've already seen (to prevent duplicates from backend)
+    const queuedIds = useRef<Set<number>>(new Set()); // IDs currently queued/reserved locally
+    const isFetchingIdsRef = useRef(false); // prevent concurrent fetches
+    const isActionInProgressRef = useRef(false); // Ref to prevent multiple actions (synchronous check)
+    /*
+        Fetch all profile data for a user
+        "async" = this function will wait for network requests
+        "await" = pause here until the request finishes
+        "Promise.all" = run all 3 requests at the same time, wait for all to finish (faster than doing them one by one)          
+    */
+    const fetchProfile = async (userId: number): Promise<ProfileWithId> => {
+        seenIds.current.add(userId);
 
-    // Fetch recommendations on component mount
-    useEffect(() => {
-        fetchRecommendations();
-    }, []);
+        const [user, profile, bio] = await Promise.all([
+            api.get(`/users/${userId}`),
+            api.get(`/users/${userId}/profile`),
+            api.get(`/users/${userId}/bio`)
+        ]);
 
-    // Fetch current profile details when recommendations change
-    useEffect(() => {
-        if (recommendations.length > 0) {
-            fetchCurrentProfile(recommendations[0]);
-        } else {
-            setCurrentProfile(null);
-            setLoading(false);
+        return {
+            userId,
+            name: user.data.name,
+            age: bio.data.age.toString(),
+            gender: bio.data.gender,
+            bio: profile.data.bio,
+            hobbies: bio.data.hobbies,
+            lookingFor: bio.data.lookingFor,
+            lookingForGender: bio.data.lookingForGender,
+            profilePicture: user.data.profilePictureUrl || null,
+            distanceKm: bio.data.distanceKm 
+        };
+    };
+    /*
+        Fetch more user IDs from backend and add to queue
+        Returns true if we got new IDs, false if no more users
+        - Prevents concurrent fetches
+        - Immediately reserves returned IDs in queuedIds to avoid duplicates
+    */
+    const fetchMoreIds = async (): Promise<boolean> => {
+        if (isFetchingIdsRef.current) {
+            return queue.current.length > 0;
         }
-    }, [recommendations]);
-
-    // 1. Get list of recommendation IDs
-    const fetchRecommendations = async () => {
+        isFetchingIdsRef.current = true;
         try {
-            setLoading(true);
-            setError(null);
             const response = await api.get<number[]>('/recommendations');
-            setRecommendations(response.data);
-        } catch (err: any) {
-            console.error('Failed to fetch recommendations:', err);
-            setError('Failed to load recommendations');
-            setLoading(false);
+            if (response.data.length > 0) {
+                // Filter out IDs we've already interacted with or already queued/reserved
+                const newIds = response.data.filter(id =>
+                    !seenIds.current.has(id) && !queuedIds.current.has(id)
+                );
+                // Reserve them immediately and push to queue
+                newIds.forEach(id => {
+                    queuedIds.current.add(id);
+                    queue.current.push(id);
+                });
+
+                return queue.current.length > 0;
+            }
+            return false;
+        } finally {
+            isFetchingIdsRef.current = false;
         }
     };
 
-    // 2. Fetch full profile data for a specific user ID
-    const fetchCurrentProfile = async (userId: number) => {
-        try {
-            setLoading(true);
-            
-            // Fetch all three endpoints in parallel
-            const [userResponse, profileResponse, bioResponse] = await Promise.all([
-                api.get(`/users/${userId}`),
-                api.get(`/users/${userId}/profile`),
-                api.get(`/users/${userId}/bio`)
-            ]);
-
-            // Combine the data into UserFormData format
-            const combinedProfile: UserFormData = {
-                name: userResponse.data.name,
-                age: profileResponse.data.age.toString(),
-                gender: bioResponse.data.gender,
-                bio: profileResponse.data.bio,
-                hobbies: bioResponse.data.hobbies,
-                lookingFor: bioResponse.data.lookingFor,
-                lookingForGender: bioResponse.data.lookingForGender,
-                latitude: bioResponse.data.latitude,
-                longitude: bioResponse.data.longitude,
-                maxRadiusKm: bioResponse.data.maxRadiusKm,
-                profilePicture: userResponse.data.profilePictureUrl || null
-            };
-
-            setCurrentProfile(combinedProfile);
-            setLoading(false);
-        } catch (err: any) {
-            console.error('Failed to fetch profile:', err);
-            setError('Failed to load profile details');
-            setLoading(false);
+    // Take next ID from queue and load it as nextProfile
+    const preloadNext = async () => {
+        // Get more IDs if needed
+        if (queue.current.length === 0) {
+            await fetchMoreIds();
+        }
+        
+        // Take from queue (remove it) and preload
+        if (queue.current.length > 0) {
+            const nextId = queue.current.shift()!; // Remove from queue
+            // un-reserve: we're loading it now
+            queuedIds.current.delete(nextId);
+            const next = await fetchProfile(nextId);
+            setNextProfile(next);
+        } else {
+            setNextProfile(null);
         }
     };
+    // Load initial profile
+    const loadInitial = async () => {
+        // Get IDs
+        const hasMore = await fetchMoreIds();
+        if (!hasMore) {
+            setNoMoreProfiles(true);
+            setIsLoading(false);
+            return;
+        }
 
-    // 3. Handle Like action
-    const handleLike = async () => {
-        if (recommendations.length === 0) return;
+        // Load first profile
+        const firstId = queue.current.shift()!;
+        queuedIds.current.delete(firstId);
+        const first = await fetchProfile(firstId);
+        
+        setAnimationState('fade-in');
+        setCurrentProfile(first);
+        setIsLoading(false);
+        
+        // Preload next
+        await preloadNext();
+        
+        setTimeout(() => setAnimationState(null), 400);
+    };
 
-        const currentUserId = recommendations[0];
+
+    useEffect(() => {
+        loadInitial();
+    }, []);
+    // Handles like/skip, updates backend, animates, and loads next profile.
+    const handleAction = async (actionType: 'like' | 'skip') => {
+        if (!currentProfile || animationState?.startsWith('out') || isActionInProgress) return;
+
+        isActionInProgressRef.current = true; // Lock actions synchronously
+        setIsActionInProgress(true); // Lock actions
+
+        const direction = actionType === 'like' ? 'right' : 'left';
         
         try {
-            // Send like to backend
-            await api.post(`/${currentUserId}/like`);
+            // Start exit animation
+            setAnimationState(direction === 'right' ? 'out-right' : 'out-left');
             
-            // Remove current user from recommendations and show next
-            const newRecommendations = recommendations.slice(1);
-            setRecommendations(newRecommendations);
-            
-            console.log('Liked user:', currentUserId);
+            // Tell backend about the interaction
+            await api.post(`/${currentProfile.userId}/${actionType}`);
+
+            // Mark as seen only after interaction
+            seenIds.current.add(currentProfile.userId);
+            // Also ensure it's not reserved anymore
+            queuedIds.current.delete(currentProfile.userId);
+
+            // Wait for animation, then show next
+            setTimeout(async () => {
+                if (nextProfile) {
+                    // We have a preloaded profile - use it
+                    setCurrentProfile(nextProfile);
+                    setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
+                    
+                    // Preload the next one
+                    await preloadNext();
+                    
+                    setTimeout(() => {
+                        setAnimationState(null);
+                        isActionInProgressRef.current = false; // Unlock after everything is done
+                        setIsActionInProgress(false);
+                    }, 400);
+                } else {
+                    // No preloaded profile - check if there are more
+                    const hasMore = await fetchMoreIds();
+                    if (hasMore) {
+                        const nextId = queue.current.shift()!;
+                        queuedIds.current.delete(nextId);
+                        const next = await fetchProfile(nextId);
+                        
+                        setCurrentProfile(next);
+                        setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
+                        
+                        await preloadNext();
+                        
+                        setTimeout(() => {
+                            setAnimationState(null);
+                            isActionInProgressRef.current = false; // Unlock after everything is done
+                            setIsActionInProgress(false);
+                        }, 400);
+                    } else {
+                        // No more profiles
+                        setCurrentProfile(null);
+                        setNoMoreProfiles(true);
+                        isActionInProgressRef.current = false; // Unlock even if no more
+                        setIsActionInProgress(false);
+                    }
+                }
+            }, 350);
         } catch (err) {
-            console.error('Failed to like profile:', err);
-            setError('Failed to like profile');
+            console.error(`Failed to ${actionType}:`, err);
+            setError(`Failed to ${actionType} profile`);
+            setAnimationState(null);
+            isActionInProgressRef.current = false; // Unlock on error
+            setIsActionInProgress(false); // Update UI State
         }
     };
 
-    // 4. Handle Skip action
-    const handleSkip = async () => {
-        if (recommendations.length === 0) return;
-
-        const currentUserId = recommendations[0];
-        
-        try {
-            // Send skip to backend
-            await api.post(`/${currentUserId}/skip`);
-            
-            // Remove current user from recommendations and show next
-            const newRecommendations = recommendations.slice(1);
-            setRecommendations(newRecommendations);
-            
-            console.log('Skipped user:', currentUserId);
-        } catch (err) {
-            console.error('Failed to skip profile:', err);
-            setError('Failed to skip profile');
-        }
-    };
-
-    // 5. Handle Logout
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
     };
+    // Convert animation state to CSS class name
+    const getAnimationClass = () => {
+        switch (animationState) {
+            case 'out-left': return 'animate-slide-out-left';
+            case 'out-right': return 'animate-slide-out-right';
+            case 'in-left': return 'animate-slide-in-from-left';
+            case 'in-right': return 'animate-slide-in-from-right';
+            case 'fade-in': return 'animate-fade-in';
+            default: return '';
+        }
+    };
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className="h-screen overflow-hidden pb-16 md:pb-0"
-                style={{
-                    background: "linear-gradient(to top, #3b82f6, #f8fafc )"
-                }}>
-                <div className="flex h-screen items-center justify-center">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                        <p className="mt-4 text-gray-700 text-lg">Loading recommendations...</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // No recommendations state
-    if (!currentProfile && recommendations.length === 0) {
-        return (
-            <div className="h-screen overflow-hidden pb-16 md:pb-0"
-                style={{
-                    background: "linear-gradient(to top, #3b82f6, #f8fafc )"
-                }}>
-                {/* Logout Button */}
-                <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
-                    <LogOutButton onClick={handleLogout} />
-                </div>
-
-                <div className="flex h-screen">
-                    <Sidebar />
-                    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                        <div className="text-center max-w-md">
-                            <div className="text-6xl mb-4">😔</div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                                No More Recommendations
-                            </h2>
-                            <p className="text-gray-600 mb-6">
-                                Check back later for new matches!
-                            </p>
-                            <button
-                                onClick={fetchRecommendations}
-                                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                                Refresh Recommendations
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Error state
-    if (error) {
-        return (
-            <div className="h-screen overflow-hidden pb-16 md:pb-0"
-                style={{
-                    background: "linear-gradient(to top, #3b82f6, #f8fafc )"
-                }}>
-                <div className="flex h-screen items-center justify-center">
-                    <div className="text-center max-w-md">
-                        <div className="text-6xl mb-4">⚠️</div>
-                        <h2 className="text-2xl font-bold text-red-600 mb-2">
-                            Error
-                        </h2>
-                        <p className="text-gray-700 mb-6">{error}</p>
-                        <button
-                            onClick={() => {
-                                setError(null);
-                                fetchRecommendations();
-                            }}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const buttonsDisabled = isLoading || isActionInProgress || Boolean(animationState && animationState.startsWith('out'));
 
     return (
         <div className="h-screen overflow-hidden pb-16 md:pb-0"
-            style={{
-                background: "linear-gradient(to top, #3b82f6, #f8fafc )"
-            }}>
-            
-            {/* Logout Button - Top Right - Always visible */}
+            style={{ background: "linear-gradient(to top, #3b82f6, #f8fafc)" }}>
+            {/* Logout button - fixed in top right corner */}
             <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
-                <LogOutButton  />
+                <LogOutButton onClick={handleLogout} />
             </div>    
           
             <div className="flex h-screen">
-                {/* Sidebar */}
                 <Sidebar />
 
-                {/* Main content - centered */}
-                <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                    <div className="w-full max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-3xl">
-                        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 md:mb-6 text-gray-800 text-center mt-12 sm:mt-14 md:mt-0">
+                {/* Changed: use flex-col to stack title, card, buttons vertically with justify-center */}
+                <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                    
+                    {/* Title */}
+                    <div className="mb-4 md:mb-6 shrink-0">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 text-center">
                             Explore Profiles
                         </h1>
-                        
-                        {/* Recommendations counter */}
-                        <p className="text-center text-gray-600 text-sm mb-4">
-                            {recommendations.length} {recommendations.length === 1 ? 'profile' : 'profiles'} remaining
-                        </p>
+                    </div>
 
-                        <div className="flex flex-col items-center gap-3 sm:gap-4">
-                            {/* Profile Card */}
-                            {currentProfile && (
-                                <ProfileCard profile={currentProfile} />
-                            )}
-                             
-                            {/* Action Buttons */}
-                            <div className="flex gap-4 sm:gap-6 md:gap-8 justify-center mt-2 mb-4 sm:mb-6">
-                                <SkipButton onClick={handleSkip} />
-                                <LikeButton
-                                    isLiked={false}
-                                    onClick={handleLike}
+                    {/* 
+                      Card container - FIXED HEIGHT so buttons don't move
+                      Height must be >= card min-height to prevent overlap
+                    */}
+                    <div className="h-[560px] sm:h-[600px] md:h-[640px] flex items-start justify-center shrink-0">
+                        {/* 
+                          - If loading, show skeleton
+                          - Else if we have a profile, show the card
+                          - Else if no more profiles, show empty state
+                          - Else show nothing
+                        */}
+                        {isLoading ? (
+                            <div className="w-[340px] sm:w-[380px] md:w-[420px]
+                                        min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
+                                        bg-white rounded-2xl shadow-2xl 
+                                        animate-pulse flex flex-col">
+                                <div className="h-[280px] sm:h-[300px] md:h-80 bg-gray-200 rounded-t-2xl"></div>
+                                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col">
+                                    <div className="h-7 bg-gray-200 rounded w-3/4"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                                        <div className="h-6 bg-gray-200 rounded-full w-14"></div>
+                                    </div>
+                                    <div className="flex-1"></div>
+                                    <div className="h-6 bg-gray-200 rounded-full w-24"></div>
+                                </div>
+                            </div>
+                        ) : currentProfile ? (
+                            <div className={getAnimationClass()}>
+                                <ProfileCard 
+                                    profile={currentProfile} 
+                                    distanceKm={currentProfile.distanceKm}
                                 />
                             </div>
-                        </div>
+                        ) : noMoreProfiles ? (
+                            <div className="text-center flex flex-col items-center justify-center max-w-md px-6 h-full">
+                                <div className="w-20 h-20 mb-5 rounded-full bg-linear-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
+                                    No more profiles nearby
+                                </h2>
+                                <p className="text-sm md:text-base text-gray-500">
+                                    Try expanding your distance or check back later
+                                </p>
+                            </div>
+                        ) : null}
                     </div>
+
+                    {/* 
+                      Like/Skip buttons - FIXED HEIGHT container so position never changes
+                      Buttons only visible when we have a currentProfile and not loading
+                    */}
+                    <div className="h-20 flex items-center justify-center shrink-0 mt-4 sm:mt-6">
+                        {currentProfile && !isLoading && (
+                            <div className="flex gap-6 sm:gap-8 md:gap-12">
+                                <SkipButton 
+                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('skip'); }} 
+                                    disabled={buttonsDisabled} 
+                                />
+                                <LikeButton 
+                                    isLiked={false} 
+                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('like'); }}
+                                    disabled={buttonsDisabled}  
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 
+                                      bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg
+                                      animate-slide-up z-50">
+                            {error}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

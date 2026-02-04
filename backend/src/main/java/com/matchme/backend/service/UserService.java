@@ -22,6 +22,9 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private MatchingAlgorithmService matchingAlgorithmService;
+
     public User createUser(String email, String password) {
         // Check if email already exists
         if (userRepository.existsByEmail(email)) {
@@ -67,5 +70,31 @@ public class UserService {
 
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    // Get user bio with distance calculated from viewer's perspective
+    public UserProfile getUserBioWithDistance(Long targetUserId, User viewerUser) {
+        UserProfile targetProfile = userProfileRepository.findByUserId(targetUserId)
+            .orElse(null);
+        
+        if (targetProfile == null || !targetProfile.getProfileCompleted()) {
+            return null;
+        }
+
+        // Don't calculate distance if viewing own profile
+        if (viewerUser != null && !viewerUser.getId().equals(targetUserId)) {
+            UserProfile viewerProfile = userProfileRepository.findByUserId(viewerUser.getId())
+                .orElse(null);
+            
+            if (viewerProfile != null) {
+                Double distance = matchingAlgorithmService.calculateDistanceBetweenProfiles(
+                    viewerProfile, 
+                    targetProfile
+                );
+                targetProfile.setDistanceKm(distance);
+            }
+        }
+
+        return targetProfile;
     }
 }

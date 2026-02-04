@@ -18,10 +18,12 @@ import java.util.stream.Collectors;
 public class RecommendationService {
     private final UserProfileRepository profileRepository;
     private final UserInteractionRepository interactionRepository;
+    private final MatchingAlgorithmService matchingAlgorithmService;
 
-    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository){
+    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository, MatchingAlgorithmService matchingAlgorithmService){
         this.profileRepository = profileRepository;
         this.interactionRepository = interactionRepository;
+        this.matchingAlgorithmService = matchingAlgorithmService;
     }
 
     //Get recommendedprofiles
@@ -34,55 +36,72 @@ public class RecommendationService {
             // Return empty list if profile not completed
             return new ArrayList<>();
         }
-        //get profiles that were already liked or skipped
+
+        // Get profiles that were already liked or skipped
         List<UserInteraction> myInteractions = interactionRepository.findByUser(currentUser);
-                List<Long> interactedProfileIds = myInteractions.stream()
-                .map(interaction -> interaction.getTargetProfile().getId())
-                .collect(Collectors.toList());
-
-
-        //find profiles that match preferences
-        List<UserProfile> allProfiles = profileRepository.findAll();
-
-        return allProfiles.stream()
-        .filter(profile -> !profile.getUser().getId().equals(currentUser.getId())) //excludes urself
-        .filter(profile -> profile.getProfileCompleted()) // Only show completed profiles
-        .filter(profile -> !interactedProfileIds.contains(profile.getId())) // Exclude already swiped
-                .limit(10) // Limit to 10 profiles at a time
-                .collect(Collectors.toList());
-        }
-
-        //Record the likes action
-        public void likeProfile(User currentUser, Long targetProfileId) {
-                UserProfile targetProfile = profileRepository.findById(targetProfileId)
-                .orElseThrow(() -> new RuntimeException("Profile not founds"));
-        //save likes
-                UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.LIKE);
-                interactionRepository.save(interaction);
-
-        }
-
-        //Records skip action
-        public void skipProfile(User currentUser, Long targetProfileId) {
-                UserProfile targetProfile = profileRepository.findById(targetProfileId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
-                //save skips
-                UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
-                interactionRepository.save(interaction);
-        }
-
-                //here should add whether gender preferences match, 
-
-                //here should add whether users liked eachother
-
-                //here should add whether its a match or not
-
-                //save the match to database 
-
-                //notification to both users
-
-                //enable chat
-
-
         
+        List<Long> interactedUserIds = myInteractions.stream()
+            .map(interaction -> interaction.getTargetProfile().getUser().getId())
+            .collect(Collectors.toList());
+
+        // Use custom database query to filter early
+        List<UserProfile> candidateProfiles;
+        if (interactedUserIds.isEmpty()) {
+            // Avoid SQL error with empty IN clause
+            candidateProfiles = profileRepository.findAll().stream()
+                .filter(profile -> profile.getProfileCompleted())
+                .filter(profile -> !profile.getUser().getId().equals(currentUser.getId()))
+                .collect(Collectors.toList());
+        } else {
+            candidateProfiles = profileRepository.findCandidateProfiles(
+                currentUser.getId(),
+                interactedUserIds
+            );
         }
+
+        // Apply matching algorithm (gender → distance → scoring)
+        // The algorithm internally applies filters in optimal order (cheapest first)
+        List<UserProfile> scoredProfiles = matchingAlgorithmService.filterAndScoreProfiles(
+            myProfile,
+            candidateProfiles
+        );
+
+        // Return top 10 matches
+        return scoredProfiles.stream()
+            .limit(10)
+            .collect(Collectors.toList());
+    }
+
+    // Record the like action - now receives USER ID, not profile ID
+    public void likeProfile(User currentUser, Long targetUserId) {
+            UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+            
+            UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.LIKE);
+            interactionRepository.save(interaction);
+    }
+
+    // Record skip action - now receives USER ID, not profile ID
+    public void skipProfile(User currentUser, Long targetUserId) {
+            UserProfile targetProfile = profileRepository.findByUserId(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Profile not found for user: " + targetUserId));
+            
+            UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
+            interactionRepository.save(interaction);
+    }
+
+            //here should add whether gender preferences match, 
+
+            //here should add whether users liked eachother
+
+            //here should add whether its a match or not
+
+            //save the match to database 
+
+            //notification to both users
+
+            //enable chat
+
+
+    
+}

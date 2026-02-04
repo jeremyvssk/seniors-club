@@ -12,6 +12,11 @@ export default defineConfig({
         target: 'http://backend:3001',  // Docker service name
         changeOrigin: true,
         secure: false
+      },
+      '/uploads': {
+        target: 'http://backend:3001',  // Proxy image uploads too
+        changeOrigin: true,
+        secure: false
       }
     }
   },
@@ -20,6 +25,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
+        target: 'http://backend:3001',
+        changeOrigin: true,
+        secure: false
+      },
+      '/uploads': {
         target: 'http://backend:3001',
         changeOrigin: true,
         secure: false

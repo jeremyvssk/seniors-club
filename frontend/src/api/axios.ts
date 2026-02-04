@@ -28,7 +28,13 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Debug: log successful responses
+    console.log('=== AXIOS RESPONSE ===');
+    console.log('URL:', response.config.url);
+    console.log('Response Data:', response.data);
+    return response;
+  },
   (error) => {
     // debug
     console.error('=== AXIOS RESPONSE ERROR ===');
