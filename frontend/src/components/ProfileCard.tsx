@@ -4,10 +4,9 @@ import { ViewableProfile } from '../types/User';
 
 interface ProfileCardProps {
   profile: ViewableProfile;
-  distanceKm?: number;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
   const [showBio, setShowBio] = useState(false);
   const [imageError, setImageError] = useState(false);
   
@@ -18,6 +17,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, distanceKm }) => {
     profilePicture,
     hobbies = [],
     lookingFor,
+    distanceKm,
   } = profile;
 
   // Debug: log what profilePicture we received

@@ -290,7 +290,6 @@ const MainPage: React.FC = () => {
                             <div className={getAnimationClass()}>
                                 <ProfileCard 
                                     profile={currentProfile} 
-                                    distanceKm={currentProfile.distanceKm}
                                 />
                             </div>
                         ) : noMoreProfiles ? (
@@ -322,9 +321,15 @@ const MainPage: React.FC = () => {
                                     disabled={buttonsDisabled} 
                                 />
                                 <LikeButton 
-                                    isLiked={false} 
-                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('like'); }}
-                                    disabled={buttonsDisabled}  
+                                    userId={currentProfile?.userId || 0}  // Pass the user ID
+                                    isLiked={false}  // You can check this from API if needed
+                                    onLikeSuccess={(isMatch) => {
+                                        if (isMatch) {
+                                        // Handle match - maybe refresh matches list
+                                        console.log("It's a match!");
+                                        }
+                                        handleAction('like')
+                                    }}
                                 />
                             </div>
                         )}

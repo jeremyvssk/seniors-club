@@ -22,7 +22,7 @@ const Step5ProfilePic = ({
 
   // Restore preview when navigating back with existing profile picture
   useEffect(() => {
-    if (data.profilePicture) {
+    if (data.profilePicture instanceof File) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);

@@ -31,6 +31,8 @@ const SeniorsClubLogIn: React.FC = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
+      
+
       // checks if there is a profile
       if (response.data.user.profileComplete) {
         navigate("/explore"); // if there is, go to main page

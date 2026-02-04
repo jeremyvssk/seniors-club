@@ -2,6 +2,7 @@ export type Gender = "man" | "woman" | "other";
 export type LookingFor = "love" | "friend" | "travel" | "open";
 // Used for creating, editing profile
 export interface UserFormData {
+  userId?: number;
   name: string;
   age: string;
   gender: Gender;

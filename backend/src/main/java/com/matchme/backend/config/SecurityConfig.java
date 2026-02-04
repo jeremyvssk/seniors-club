@@ -40,7 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/signup", "/api/login").permitAll()
                 .requestMatchers("/api/me/**").authenticated()
                 .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/error").permitAll() 
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/ws/**").permitAll() 
+                .requestMatchers("/api/auth/**").permitAll() 
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
