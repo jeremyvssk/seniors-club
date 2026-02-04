@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { chatService, ChatResponse, MessageResponse } from '../services/chat.service';
 import websocketService from '../services/websocket.service';
 
@@ -25,12 +25,15 @@ interface ChatContextType {
   loading: boolean;
   error: string | null;
   hasMoreMessages: boolean;
+  totalUnreadCount: number;
+  typingUsers: Set<number>;
   openChatWithUser: (userId: number) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   closeChat: () => void;
   refreshChats: () => Promise<void>;
   setActiveChat: (chat: ChatResponse | null) => void;
   loadMoreMessages: () => Promise<void>;
+  sendTypingIndicator: (isTyping: boolean) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -52,13 +55,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [wsConnected, setWsConnected] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
+
+
+  //  Use ref to always have current activeChat value
+  const activeChatRef = useRef<ChatResponse | null>(null);
+
+  // Update ref whenever activeChat changes
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
+
+  // Calculate total unread count
+  const totalUnreadCount = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
   // Connect to WebSocket when component mounts
   useEffect(() => {
     const { token, user } = getAuthData();
     
     if (token && user?.id) {
-      console.log('🔌 Connecting to WebSocket...');
+      console.log('🔌 Connecting to WebSocket for user:', user.id);
+
+      websocketService.disconnect();
+      setCurrentUserId(user.id);
       
       websocketService.connect(token)
         .then(() => {
@@ -68,18 +88,43 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Subscribe to messages for current user
           websocketService.subscribeToMessages(user.id.toString(), (newMessage: Message) => {
             console.log('📨 New message received:', newMessage);
+            console.log('   - Message chatId:', newMessage.chatId);
+            console.log('   - Active chatId:', activeChatRef.current?.chatId);
             
-            // Add message to current chat if it matches
-            setMessages(prev => {
-              // Check if message already exists (avoid duplicates)
-              if (prev.some(m => m.id === newMessage.id)) {
-                return prev;
-              }
-              return [...prev, newMessage];
-            });
-            
-            // Update chat list
+            // ONLY add message if it belongs to the active chat
+            if (activeChatRef.current && newMessage.chatId === activeChatRef.current.chatId) {
+              console.log('✅ Message belongs to active chat, adding to messages');
+              
+              setMessages(prev => {
+                // Check if message already exists (avoid duplicates)
+                if (prev.some(m => m.id === newMessage.id)) {
+                  console.log('⚠️ Message already exists, skipping');
+                  return prev;
+                }
+                return [...prev, newMessage];
+              });
+            } else {
+              console.log('⚠️ Message for different chat (or no active chat), only updating chat list');
+            }
+
+            // Always refresh chat list to update unread counts and last message
             refreshChats();
+          });
+
+           // Subscribe to typing events
+           websocketService.subscribeToTyping(user.id.toString(), (data: { senderId: number; isTyping: boolean }) => {
+            
+            setTypingUsers(prev => {
+              const newSet = new Set(prev);
+              if (data.isTyping) {
+                newSet.add(data.senderId);
+              } else {
+                newSet.delete(data.senderId);
+              }
+              return newSet;
+            });
+
+           
           });
         })
         .catch((err) => {
@@ -87,26 +132,81 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setWsConnected(false);
         });
 
-      return () => {
-        console.log('🔌 Disconnecting WebSocket...');
-        websocketService.disconnect();
-        setWsConnected(false);
-      };
-    }
-  }, []);
+    return () => {
+      console.log('🔌 Disconnecting WebSocket...');
+      websocketService.disconnect();
+      setWsConnected(false);
+    };
+  }
+}, []);
 
-  // Fetch user's chats
-  const refreshChats = useCallback(async () => {
-    const { user } = getAuthData();
-    if (!user?.id) return;
+const sendTypingIndicator = (isTyping: boolean) => {
+  if (activeChat) {
+    websocketService.sendTypingIndicator(activeChat.otherUserId, isTyping);
+  }
+};
+
+useEffect(() => {
+  if (activeChat) {
+    console.log('📂 Loading messages for chat:', activeChat.chatId);
     
-    try {
-      const userChats = await chatService.getUserChats();
-      setChats(userChats);
-    } catch (err) {
-      console.error('Failed to fetch chats:', err);
-    }
-  }, []);
+    // Clear old messages immediately
+    setMessages([]);
+    setCurrentPage(0);
+    setLoading(true);
+
+    chatService.getChatMessages(activeChat.chatId, 0, 50)
+      .then(messagesResponse => {
+        setMessages(messagesResponse.content.reverse());
+        setHasMoreMessages(!messagesResponse.last);
+        
+        // Mark as read
+        return chatService.markMessagesAsRead(activeChat.chatId);
+      })
+      .then(() => {
+        refreshChats();
+      })
+      .catch(err => {
+        console.error('Failed to load messages:', err);
+        setError('Failed to load messages');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  } else {
+    // No active chat, clear messages
+    setMessages([]);
+    setCurrentPage(0);
+    setHasMoreMessages(false);
+  }
+}, [activeChat]); // ← Runs when activeChat changes
+
+const refreshChats = useCallback(async () => {
+  const { user } = getAuthData();
+  if (!user?.id) return;
+  
+  try {
+    const userChats = await chatService.getUserChats();
+    setChats(userChats);
+  } catch (err) {
+    console.error('Failed to fetch chats:', err);
+  }
+}, []);
+
+  // Listen for user changes and force reload
+  useEffect(() => {
+    const checkUserChange = () => {
+      const { user } = getAuthData();
+      if (user?.id && currentUserId && user.id !== currentUserId) {
+        console.log('🔄 User changed from', currentUserId, 'to', user.id);
+        console.log('🔄 Forcing page reload...');
+        window.location.reload();
+      }
+    };
+
+    const interval = setInterval(checkUserChange, 1000);
+    return () => clearInterval(interval);
+  }, [currentUserId]);
 
   // Load chats on mount
   useEffect(() => {
@@ -122,44 +222,31 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
 
     try {
-      // Get or create chat
       const chat = await chatService.getOrCreateChatWithUser(userId);
-      setActiveChat(chat);
-      setCurrentPage(0);
-
-      // Load messages
-      const messagesResponse = await chatService.getChatMessages(chat.chatId, 0, 50);
-      // Messages come in desc order, reverse for display
-      setMessages(messagesResponse.content.reverse());
-      setHasMoreMessages(!messagesResponse.last);
-
-      // Mark as read
-      await chatService.markMessagesAsRead(chat.chatId);
-      
-      // Refresh chat list to update unread counts
-      refreshChats();
+      setActiveChat(chat); // ← This triggers the effect above
     } catch (err: any) {
       console.error('Failed to open chat:', err);
       setError(err.response?.data?.message || 'Failed to open chat');
-    } finally {
       setLoading(false);
     }
   };
 
   // Load more messages (pagination)
   const loadMoreMessages = async () => {
-    if (!activeChat || !hasMoreMessages) return;
+    if (!activeChat || !hasMoreMessages || loading) return;
 
+    setLoading(true);
     try {
       const nextPage = currentPage + 1;
       const messagesResponse = await chatService.getChatMessages(activeChat.chatId, nextPage, 50);
       
-      // Prepend older messages (they come in desc order, so reverse)
       setMessages(prev => [...messagesResponse.content.reverse(), ...prev]);
       setCurrentPage(nextPage);
       setHasMoreMessages(!messagesResponse.last);
     } catch (err) {
       console.error('Failed to load more messages:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,7 +255,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!activeChat || !content.trim()) return;
 
     try {
-      // Send via WebSocket
       websocketService.sendMessage(activeChat.otherUserId, content.trim());
       console.log('📤 Message sent via WebSocket');
     } catch (err: any) {
@@ -193,12 +279,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       loading,
       error,
       hasMoreMessages,
+      totalUnreadCount,
+      typingUsers,
       openChatWithUser,
       sendMessage,
       closeChat,
       refreshChats,
       setActiveChat,
       loadMoreMessages,
+      sendTypingIndicator,
     }}>
       {children}
     </ChatContext.Provider>

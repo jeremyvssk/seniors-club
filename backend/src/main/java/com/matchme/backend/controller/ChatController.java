@@ -3,6 +3,8 @@ package com.matchme.backend.controller;
 import com.matchme.backend.dto.ChatResponse;
 import com.matchme.backend.dto.MessageResponse;
 import com.matchme.backend.dto.SendMessageRequest;
+import com.matchme.backend.dto.TypingIndicatorRequest;
+import com.matchme.backend.dto.TypingIndicatorResponse;
 import com.matchme.backend.model.Chat;
 import com.matchme.backend.model.Message;
 import com.matchme.backend.model.User;
@@ -22,7 +24,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chats")
@@ -65,9 +71,7 @@ public class ChatController {
     
     // Build response
     ChatResponse response = chatService.buildChatResponse(chat, currentUser.getId());
-    
-    System.out.println("✅ Chat ID: " + response.getChatId());
-    
+        
     return ResponseEntity.ok(response);
         }
 
@@ -99,10 +103,8 @@ public class ChatController {
         return ResponseEntity.ok().build();
     }
 
-    // WebSocket: Send message
-@MessageMapping("/chat.send")
-public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
-    System.out.println("🔵 WebSocket message received!");
+    @MessageMapping("/chat.send")
+    public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
     
     if (principal == null) {
         System.out.println("❌ Principal is null");
@@ -115,13 +117,11 @@ public void sendMessage(@Payload SendMessageRequest request, Principal principal
     User sender = userService.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-    System.out.println("👤 Sender ID: " + sender.getId());
-    System.out.println("📤 Recipient ID: " + request.getRecipientId());
-    System.out.println("💬 Content: " + request.getContent());
 
     // Save message to database
     Message message = chatService.sendMessage(sender.getId(), request.getRecipientId(), request.getContent());
-    System.out.println("✅ Message saved with ID: " + message.getId());
+    
+
 
     // Get sender profile for name
     UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
@@ -131,21 +131,41 @@ public void sendMessage(@Payload SendMessageRequest request, Principal principal
     MessageResponse response = new MessageResponse();
     response.setId(message.getId());
     response.setChatId(message.getChatId());
-    response.setSenderId(sender.getId());
+    response.setSenderId(message.getSenderId());
     response.setSenderName(senderProfile != null ? senderProfile.getName() : "Unknown");
     response.setContent(message.getContent());
     response.setCreatedAt(message.getCreatedAt());
     response.setIsRead(false);
 
-    // ✅ Send to recipient via topic (NOT convertAndSendToUser)
+    // Send to recipient via topic
     String recipientDestination = "/topic/messages/" + request.getRecipientId();
     messagingTemplate.convertAndSend(recipientDestination, response);
     System.out.println("📤 Sent to recipient: " + recipientDestination);
 
-    // ✅ Also send back to sender for confirmation
+    // Also send back to sender for confirmation
     String senderDestination = "/topic/messages/" + sender.getId();
     messagingTemplate.convertAndSend(senderDestination, response);
     System.out.println("📤 Sent to sender: " + senderDestination);
-        
 }
+
+    // Handle typing indicator
+    @MessageMapping("/chat.typing")
+    public void handleTyping(@Payload TypingIndicatorRequest request, Principal principal) {
+        String email = principal.getName();
+        User sender = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        System.out.println("👀 Typing indicator from: " + sender.getId() + " to: " + request.getRecipientId() + " - isTyping: " + request.getIsTyping());
+
+        TypingIndicatorResponse response = new TypingIndicatorResponse(
+                sender.getId(),
+                request.getIsTyping()
+        );
+
+        messagingTemplate.convertAndSend(
+                "/topic/typing/" + request.getRecipientId(),
+                response
+        );
+    }
+   
 }

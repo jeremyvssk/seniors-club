@@ -11,6 +11,7 @@ import ProfileSection from "./sections/ProfileSection";
 import MatchesSection from "./sections/MatchesSection";
 import RequestsSection from "./sections/RequestsSection";
 import { matchService } from "../../services/match.service";
+import { useChat } from "../../context/ChatContext";
 
 interface SidebarProps {
   className?: string;
@@ -33,6 +34,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const [activeSection, setActiveSection] = React.useState<string | null>(null);
   const [hasNewRequests, setHasNewRequests] = useState(false);
 
+  const { totalUnreadCount } = useChat();
+  const hasNewMessages = totalUnreadCount > 0;
+  
   // Check for pending requests
   useEffect(() => {
     const checkRequests = async () => {
@@ -86,6 +90,13 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               
               {/* 🔴 Only show when sidebar is closed */}
               {id === 'requests' && hasNewRequests && !activeSection && (
+                <span className="absolute top-2 right-2 md:top-3 md:right-3 
+                               w-2 h-2 md:w-2.5 md:h-2.5 
+                               bg-red-500 rounded-full" />
+              )}
+
+               {/* 🔴 Red dot for messages - Only show when sidebar is closed */}
+               {id === 'messages' && hasNewMessages && !activeSection && (
                 <span className="absolute top-2 right-2 md:top-3 md:right-3 
                                w-2 h-2 md:w-2.5 md:h-2.5 
                                bg-red-500 rounded-full" />
@@ -163,13 +174,23 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                  ${activeSection === id ? 'scale-110' : ''}`} 
                 />
 
-                  {/* 🔴 Only show when section is closed */}
+                  {/* 🔴 - requests */}
                   {id === 'requests' && hasNewRequests && activeSection !== 'requests' && (
                   <span className="absolute top-3 right-7 sm:top-1.5 sm:right-1.5 
                                  w-2 h-2 sm:w-2.5 sm:h-2.5 
                                  bg-red-500 rounded-full 
                                  border border-white" />
                 )}
+
+                {/* 🔴 - messages */}
+                {id === 'messages' && hasNewMessages && activeSection !== 'messages' && (
+                  <span className="absolute top-3 right-57 sm:top-1.5 sm:right-1.5 
+                                 w-2 h-2 sm:w-2.5 sm:h-2.5 
+                                 bg-red-500 rounded-full 
+                                 border border-white" />
+                )}
+
+                 
 
                 <span className="text-[10px] sm:text-xs font-medium">{label}</span>
               </button>

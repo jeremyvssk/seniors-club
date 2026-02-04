@@ -69,27 +69,36 @@ public class ChatService {
     // Send a message
     @Transactional
     public Message sendMessage(Long senderId, Long recipientId, String content) {
-        // Get or create chat
-        Chat chat = getOrCreateChat(senderId, recipientId);
-
-        // Create message
-        Message message = new Message();
-        message.setChatId(chat.getId());
-        message.setSenderId(senderId);
-        message.setContent(content);
-        message.setIsRead(false);
-
-        // Save message
-        message = messageRepository.save(message);
-
-        // Update chat
-        chat.setLastMessage(content);
-        chat.setLastMessageAt(message.getCreatedAt());
-        chat.incrementUnreadCountForUser(recipientId);
-        chatRepository.save(chat);
-
-        return message;
+    // Get or create chat
+    Chat chat = getOrCreateChat(senderId, recipientId);
+    
+    // Create and save message
+    Message message = new Message();
+    message.setChatId(chat.getId());
+    message.setSenderId(senderId);
+    message.setContent(content);
+    message.setCreatedAt(LocalDateTime.now());
+    message.setIsRead(false);
+    
+    Message savedMessage = messageRepository.save(message);
+    
+    System.out.println("💾 Saved message with senderId: " + savedMessage.getSenderId());
+    
+    chat.setLastMessage(content);
+    chat.setLastMessageAt(LocalDateTime.now());
+    
+    // Update unread count for the recipient
+    if (chat.getUser1Id().equals(recipientId)) {
+        chat.setUnreadCountUser1(chat.getUnreadCountUser1() + 1);
+    } else {
+        chat.setUnreadCountUser2(chat.getUnreadCountUser2() + 1);
     }
+    
+    chatRepository.save(chat);
+    System.out.println("✅ Updated chat with last message");
+    
+    return savedMessage;
+}
 
     // Get paginated messages for a chat
     public Page<MessageResponse> getChatMessages(Long chatId, Long userId, int page, int size) {

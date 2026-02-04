@@ -4,12 +4,10 @@ class WebSocketService {
   private client: Client | null = null;
   private connected: boolean = false;
   private messageSubscription: StompSubscription | null = null;
+  private typingSubscription: StompSubscription | null = null;
 
   connect(token: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      // ✅ Add logging to see what token we're using
-      console.log('🔌 Connecting with token:', token.substring(0, 20) + '...');
-      
       this.client = new Client({
         brokerURL: 'ws://localhost:3001/ws',
         connectHeaders: {
@@ -24,21 +22,14 @@ class WebSocketService {
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         
-        // ✅ More detailed logging
         onConnect: (frame) => {
           console.log('✅ CONNECTED! Frame:', frame);
           this.connected = true;
+
           resolve();
         },
         
-        // ✅ Better error logging
-        onStompError: (frame) => {
-          console.error('❌ STOMP ERROR');
-          console.error('Headers:', frame.headers);
-          console.error('Body:', frame.body);
-          reject(frame);
-        },
-        
+      
         onWebSocketError: (error) => {
           console.error('❌ WebSocket error:', error);
           reject(error);
@@ -59,6 +50,12 @@ class WebSocketService {
       this.messageSubscription.unsubscribe();
       this.messageSubscription = null;
     }
+
+    if (this.typingSubscription) {
+      this.typingSubscription.unsubscribe();
+      this.typingSubscription = null;
+    }
+
     if (this.client) {
       this.client.deactivate();
       this.connected = false;
@@ -90,6 +87,43 @@ class WebSocketService {
 
     return this.messageSubscription;
   }
+
+  // Typing events
+  subscribeToTyping(userId: string, callback: (data: { senderId: number; isTyping: boolean }) => void): void {
+    if (!this.client || !this.connected) {
+      console.error('❌ Cannot subscribe to typing: WebSocket not connected');
+      return;
+    }
+
+    this.typingSubscription = this.client.subscribe(
+      `/topic/typing/${userId}`,
+      (message) => {
+        try {
+          const data = JSON.parse(message.body);
+          callback(data);
+        } catch (error) {
+          console.error('❌ Failed to parse typing event:', error);
+        }
+      }
+    );
+  }
+
+  // Send typing indicator
+  sendTypingIndicator(recipientId: number, isTyping: boolean): void {
+    if (!this.client || !this.connected) {
+      console.error('❌ Cannot send typing indicator: WebSocket not connected');
+      return;
+    }
+
+    this.client.publish({
+      destination: '/app/chat.typing',
+      body: JSON.stringify({
+        recipientId,
+        isTyping
+      })
+    });
+  }
+
 
   sendMessage(recipientId: number, content: string) {
     if (!this.client || !this.connected) {

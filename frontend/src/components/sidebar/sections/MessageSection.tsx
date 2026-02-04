@@ -1,6 +1,6 @@
 import React from 'react';
 import { useChat } from '../../../context/ChatContext';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, User } from 'lucide-react';
 
 export const MessagesSection: React.FC = () => {
   const { chats, setActiveChat, totalUnreadCount } = useChat();
@@ -21,14 +21,6 @@ export const MessagesSection: React.FC = () => {
     return `${diffDays}d ago`;
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   if (chats.length === 0) {
     return (
@@ -53,6 +45,7 @@ export const MessagesSection: React.FC = () => {
                    hover:shadow-md relative"
         >
           <div className="flex items-start gap-3">
+            
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               {chat.otherUserProfilePicture ? (
@@ -63,9 +56,9 @@ export const MessagesSection: React.FC = () => {
                 />
               ) : (
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br 
-                              from-blue-400 to-purple-500 flex items-center justify-center 
-                              text-white font-semibold text-sm">
-                  {getInitials(chat.otherUserName)}
+                              from-blue-200 to-purple-200 
+                              flex items-center justify-center">
+                  < User className='w-5 h-5 md:w-6 md:h-6 text-gray-400' />
                 </div>
               )}
               
@@ -86,7 +79,6 @@ export const MessagesSection: React.FC = () => {
                   {chat.otherUserName}
                 </h3>
                 <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                  {formatTime(chat.lastMessageAt)}
                 </span>
               </div>
               <p className={`text-xs md:text-sm truncate ${
