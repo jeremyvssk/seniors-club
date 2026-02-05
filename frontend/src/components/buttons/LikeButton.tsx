@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Heart, Loader } from 'lucide-react';
-import { matchService } from '../../services/match.service';
+import { matchAPI } from '../../api/api';
 
 interface LikeButtonProps {
   userId: number;
@@ -18,7 +18,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ userId, isLiked: initialIsLiked
     setIsLoading(true);
 
     try {
-      const response = await matchService.sendConnectionRequest(userId);
+      const response = await matchAPI.sendConnectionRequest(userId);
       setIsLiked(true);
       alert(response.message); // "Connection request sent!"
       

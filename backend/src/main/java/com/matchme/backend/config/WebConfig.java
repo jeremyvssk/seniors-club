@@ -1,3 +1,4 @@
+// When image request comes in from frontend this file helps to map the file url to file
 package com.matchme.backend.config;
 
 import java.nio.file.Paths;

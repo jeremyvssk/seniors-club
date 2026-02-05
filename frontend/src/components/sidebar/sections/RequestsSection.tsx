@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserCheck, UserX, Loader, Maximize2, X } from 'lucide-react';
-import { matchService } from '../../../services/match.service';
+import { matchAPI } from '../../../api/api';
 import api from '../../../api/axios';
 import ProfileCard from '../../ProfileCard';
 import { ViewableProfile } from '../../../types/User';
@@ -31,7 +31,7 @@ export const RequestsSection: React.FC = () => {
       setLoading(true);
       
       // Fetch requests (returns basic info)
-      const requestsData = await matchService.getPendingRequests();
+      const requestsData = await matchAPI.getPendingRequests();
       
       // Fetch full profile data for each request
       const fullProfiles = await Promise.all(
@@ -59,11 +59,11 @@ export const RequestsSection: React.FC = () => {
         })
       );
       
-      console.log('✅ Full request profiles loaded:', fullProfiles);
+      console.log('Full request profiles loaded:', fullProfiles);
       setRequests(fullProfiles);
       
     } catch (error: any) {
-      console.error('❌ Failed to fetch requests:', error);
+      console.error('Failed to fetch requests:', error);
     } finally {
       setLoading(false);
     }
@@ -74,10 +74,10 @@ export const RequestsSection: React.FC = () => {
     setShowProfileModal(true);
   };
 
-  const handleAccept = async (requestId: number, name: string) => {
+  const handleAccept = async (requestId: number) => {
     setProcessingId(requestId);
     try {
-      const response = await matchService.acceptRequest(requestId);
+      const response = await matchAPI.acceptRequest(requestId);
       alert(response.message);
       setRequests(prev => prev.filter(r => r.requestId !== requestId));
     } catch (error: any) {
@@ -88,10 +88,10 @@ export const RequestsSection: React.FC = () => {
     }
   };
 
-  const handleDecline = async (requestId: number, name: string) => {
+  const handleDecline = async (requestId: number) => {
     setProcessingId(requestId);
     try {
-      await matchService.declineRequest(requestId);
+      await matchAPI.declineRequest(requestId);
       setRequests(prev => prev.filter(r => r.requestId !== requestId));
     } catch (error: any) {
       console.error('Failed to decline request:', error);
@@ -142,7 +142,7 @@ export const RequestsSection: React.FC = () => {
 
               <div className="flex gap-3 md:gap-4">
                 {/* Profile Picture */}
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md flex-shrink-0">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md shrink-0">
                   {request.profilePicture ? (
                     <img 
                       src={request.profilePicture} 
@@ -187,7 +187,7 @@ export const RequestsSection: React.FC = () => {
                   {/* Action Buttons */}
                   <div className="flex gap-2 md:gap-3 mt-2">
                     <button
-                      onClick={() => handleAccept(request.requestId, request.name)}
+                      onClick={() => handleAccept(request.requestId)}
                       disabled={processingId === request.requestId}
                       className="flex-1 px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white text-sm md:text-base rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 md:gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -201,7 +201,7 @@ export const RequestsSection: React.FC = () => {
                       )}
                     </button>
                     <button
-                      onClick={() => handleDecline(request.requestId, request.name)}
+                      onClick={() => handleDecline(request.requestId)}
                       disabled={processingId === request.requestId}
                       className="px-3 py-1.5 md:px-4 md:py-2 text-red-500 text-sm md:text-base font-medium hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -243,7 +243,7 @@ export const RequestsSection: React.FC = () => {
               <X className="w-5 h-5 text-gray-600" />
             </button>
 
-            {/* ✅ Just pass the profile directly - it already has all ViewableProfile fields */}
+            {/* Just pass the profile directly - it already has all ViewableProfile fields */}
             <ProfileCard profile={selectedProfile} />
           </div>
         </div>

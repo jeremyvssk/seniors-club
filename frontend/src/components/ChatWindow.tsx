@@ -163,7 +163,7 @@ export const ChatWindow: React.FC = () => {
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-200 to-purple-200 
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-200 to-purple-200 
                             flex items-center justify-center">
                < User className="w-5 h-5 md:h-6 md:w-6 text-gray-400 "/>
               </div>
@@ -225,7 +225,7 @@ export const ChatWindow: React.FC = () => {
                             : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                         }`}
                       >
-                        <p className="text-sm break-words">{message.content}</p>
+                        <p className="text-sm wrap-break-word">{message.content}</p>
                       </div>
                       <div className={`flex items-center gap-1 mt-1 text-xs text-gray-500 ${
                         isOwn ? 'justify-end' : 'justify-start'

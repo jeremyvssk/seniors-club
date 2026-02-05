@@ -11,6 +11,8 @@ import ProfileSuccess from "./ProfileSuccess";
 import { UserFormData } from "../../types/User";
 import api from "../../api/axios";
 import LogOutButton from "../buttons/LogOutButton";
+import { Loader } from "lucide-react";
+
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -51,9 +53,6 @@ const CreateUser = () => {
 
   const handleSubmit = async () => {
     try {
-      console.log("=== SUBMITTING PROFILE ===");
-      console.log("Form data:", formData);
-
       if (!formData.name.trim()) {
         alert("Name is required");
         setCurrentStep(1);
@@ -129,20 +128,17 @@ const CreateUser = () => {
       // Add profile picture if exists
       if (formData.profilePicture instanceof File) {
         formDataToSend.append('profilePicture', formData.profilePicture);
-      } else {
-        console.log("No profile picture to upload");
       }
 
       // ========================================
       // Send FormData with multipart header
       // ========================================
-      const response = await api.post("/me/profile", formDataToSend, {
+      await api.post("/me/profile", formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      console.log("Profile created successfully:", response.data);
       // wait 2 seconds to show success state, then navigate
 
       // Only show success screen after successful response
@@ -157,12 +153,9 @@ const CreateUser = () => {
       // Reset loading state on error
       setIsSubmitting(false);
       setIsSuccess(false);
-      console.error("Error creating profile:", error);
 
       if (error.response) {
         const status = error.response.status;
-        console.error("Server status:", status);
-        console.error("Server data:", error.response.data);
 
         if (status === 403) {
           // Check if it's actually a token issue or validation error
@@ -209,6 +202,23 @@ const CreateUser = () => {
   // how success component only after successful API call
   if (isSuccess) {
     return <ProfileSuccess userName={formData.name} />;
+  }
+
+  // Show loading overlay when submitting
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-t from-blue-500 to-slate-50">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl text-center">
+          <Loader className="w-16 h-16 animate-spin text-blue-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Creating your profile...
+          </h2>
+          <p className="text-gray-600">
+            Please wait while we set everything up
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const renderStep = () => {
@@ -274,7 +284,7 @@ const CreateUser = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-t from-blue-500 to-slate-50 py-4 md:py-8">
+    <div className="min-h-screen flex flex-col bg-linear-to-t from-blue-500 to-slate-50 py-4 md:py-8">
       
       <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
                 <LogOutButton onClick={() => console.log('Logout clicked')} />

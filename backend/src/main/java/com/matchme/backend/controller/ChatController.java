@@ -11,9 +11,8 @@ import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ChatService;
 import com.matchme.backend.service.UserService;
-import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.UserProfileRepository;
-import jakarta.validation.Valid;
+import com.matchme.backend.repo.ChatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +23,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -44,9 +41,11 @@ public class ChatController {
     private UserProfileRepository userProfileRepository;
 
     @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    // Get all chats for current user
     @GetMapping
     public ResponseEntity<List<ChatResponse>> getUserChats(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
@@ -61,21 +60,17 @@ public class ChatController {
         @AuthenticationPrincipal String email,
         @PathVariable Long otherUserId) {
     
-    System.out.println("🔵 Get/Create chat: " + email + " with user " + otherUserId);
-    
-    User currentUser = userService.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-    
-    // Get or create chat
-    Chat chat = chatService.getOrCreateChat(currentUser.getId(), otherUserId);
-    
-    // Build response
-    ChatResponse response = chatService.buildChatResponse(chat, currentUser.getId());
+        System.out.println("Get/Create chat: " + email + " with user " + otherUserId);
         
-    return ResponseEntity.ok(response);
-        }
+        User currentUser = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Chat chat = chatService.getOrCreateChat(currentUser.getId(), otherUserId);
+        ChatResponse response = chatService.buildChatResponse(chat, currentUser.getId());
+            
+        return ResponseEntity.ok(response);
+    }
 
-    // Get messages for a specific chat (paginated)
     @GetMapping("/{chatId}/messages")
     public ResponseEntity<Page<MessageResponse>> getChatMessages(
             @AuthenticationPrincipal String email,
@@ -90,7 +85,6 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    // Mark messages as read
     @PostMapping("/{chatId}/read")
     public ResponseEntity<Void> markAsRead(
             @AuthenticationPrincipal String email,
@@ -100,72 +94,66 @@ public class ChatController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         chatService.markMessagesAsRead(chatId, user.getId());
+        
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat not found"));
+        
+        Long otherUserId = chat.getOtherUserId(user.getId());
+        
+        Map<String, Object> readReceipt = new HashMap<>();
+        readReceipt.put("chatId", chatId);
+        readReceipt.put("readBy", user.getId());
+        
+        String destination = "/topic/read-receipts/" + otherUserId;
+        messagingTemplate.convertAndSend(destination, (Object) readReceipt);
+        
         return ResponseEntity.ok().build();
     }
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
     
-    if (principal == null) {
-        System.out.println("❌ Principal is null");
-        return;
+        if (principal == null) {
+            System.out.println("Principal is null");
+            return;
+        }
+        
+        String email = principal.getName();
+        User sender = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Message message = chatService.sendMessage(sender.getId(), request.getRecipientId(), request.getContent());
+
+        UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
+                .orElse(null);
+
+        MessageResponse response = new MessageResponse();
+        response.setId(message.getId());
+        response.setChatId(message.getChatId());
+        response.setSenderId(message.getSenderId());
+        response.setSenderName(senderProfile != null ? senderProfile.getName() : "Unknown");
+        response.setContent(message.getContent());
+        response.setCreatedAt(message.getCreatedAt());
+        response.setIsRead(false);
+
+        messagingTemplate.convertAndSend("/topic/messages/" + request.getRecipientId(), (Object) response);
+        messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), (Object) response);
+        
+        System.out.println("Message sent to both users");
     }
-    
-    String email = principal.getName();
-    System.out.println("📧 Email: " + email);
-    
-    User sender = userService.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
 
-
-    // Save message to database
-    Message message = chatService.sendMessage(sender.getId(), request.getRecipientId(), request.getContent());
-    
-
-
-    // Get sender profile for name
-    UserProfile senderProfile = userProfileRepository.findByUserId(sender.getId())
-            .orElse(null);
-
-    // Build response
-    MessageResponse response = new MessageResponse();
-    response.setId(message.getId());
-    response.setChatId(message.getChatId());
-    response.setSenderId(message.getSenderId());
-    response.setSenderName(senderProfile != null ? senderProfile.getName() : "Unknown");
-    response.setContent(message.getContent());
-    response.setCreatedAt(message.getCreatedAt());
-    response.setIsRead(false);
-
-    // Send to recipient via topic
-    String recipientDestination = "/topic/messages/" + request.getRecipientId();
-    messagingTemplate.convertAndSend(recipientDestination, response);
-    System.out.println("📤 Sent to recipient: " + recipientDestination);
-
-    // Also send back to sender for confirmation
-    String senderDestination = "/topic/messages/" + sender.getId();
-    messagingTemplate.convertAndSend(senderDestination, response);
-    System.out.println("📤 Sent to sender: " + senderDestination);
-}
-
-    // Handle typing indicator
     @MessageMapping("/chat.typing")
     public void handleTyping(@Payload TypingIndicatorRequest request, Principal principal) {
         String email = principal.getName();
         User sender = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        System.out.println("👀 Typing indicator from: " + sender.getId() + " to: " + request.getRecipientId() + " - isTyping: " + request.getIsTyping());
-
         TypingIndicatorResponse response = new TypingIndicatorResponse(
                 sender.getId(),
                 request.getIsTyping()
         );
 
-        messagingTemplate.convertAndSend(
-                "/topic/typing/" + request.getRecipientId(),
-                response
-        );
+        String destination = "/topic/typing/" + request.getRecipientId();
+        messagingTemplate.convertAndSend(destination, (Object) response);
     }
-   
 }

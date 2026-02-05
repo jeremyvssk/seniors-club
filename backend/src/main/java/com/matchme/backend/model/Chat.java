@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "chats")
@@ -29,11 +29,11 @@ public class Chat {
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
     
     @UpdateTimestamp
     @Column(nullable = false)
-    private LocalDateTime lastMessageAt;
+    private ZonedDateTime lastMessageAt;
     
     @Column(length = 1000)
     private String lastMessage;

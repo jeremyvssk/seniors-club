@@ -3,23 +3,33 @@ import { useChat } from '../../../context/ChatContext';
 import { MessageCircle, User } from 'lucide-react';
 
 export const MessagesSection: React.FC = () => {
-  const { chats, setActiveChat, totalUnreadCount } = useChat();
+  const { chats, setActiveChat } = useChat();
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
-  };
+  // Backend sends: "2026-02-05T12:30:00Z" (UTC)
+  // JavaScript automatically converts to user's local timezone!
+  const date = new Date(dateString);
+  
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  
+  // Show actual date for older messages
+  return date.toLocaleDateString(undefined, { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
 
 
   if (chats.length === 0) {
@@ -47,7 +57,7 @@ export const MessagesSection: React.FC = () => {
           <div className="flex items-start gap-3">
             
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               {chat.otherUserProfilePicture ? (
                 <img
                   src={chat.otherUserProfilePicture}
@@ -55,10 +65,10 @@ export const MessagesSection: React.FC = () => {
                   className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br 
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br 
                               from-blue-200 to-purple-200 
                               flex items-center justify-center">
-                  < User className='w-5 h-5 md:w-6 md:h-6 text-gray-400' />
+                  <User className='w-5 h-5 md:w-6 md:h-6 text-gray-400' />
                 </div>
               )}
               
@@ -78,7 +88,8 @@ export const MessagesSection: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 text-sm md:text-base truncate">
                   {chat.otherUserName}
                 </h3>
-                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                <span className="text-xs text-gray-500 shrink-0 ml-2">
+                  {formatTime(chat.lastMessageAt)}
                 </span>
               </div>
               <p className={`text-xs md:text-sm truncate ${

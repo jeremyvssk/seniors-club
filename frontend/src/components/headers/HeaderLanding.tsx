@@ -10,7 +10,7 @@ const HeaderLanding: React.FC = () => {
     <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {/* lg+ */}
         <nav className="flex items-center justify-between h-16 lg:h-20">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
                 <a href="#" title="" className="flex">
                     <img className="w-auto h-32 lg:h-32" src={logoImg} alt="" />
                 </a>

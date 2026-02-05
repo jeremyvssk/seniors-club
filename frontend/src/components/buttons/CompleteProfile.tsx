@@ -17,7 +17,9 @@ const CompleteProfileButton: React.FC<CompleteProfileButtonProps> = ({
   
   return (
     <button
+      type={type} 
       onClick={onClick}
+      disabled={disabled}
       className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl text-2xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center group ${className}`}
     >
       Complete Profile

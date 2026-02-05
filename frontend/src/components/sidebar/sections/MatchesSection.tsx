@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserX, MessageCircle, Loader, Maximize2, X } from 'lucide-react';
-import { matchService } from '../../../services/match.service';
+import { matchAPI } from '../../../api/api';
 import { useChat } from '../../../context/ChatContext';
 import api from '../../../api/axios'; 
 import ProfileCard from '../../ProfileCard';
@@ -35,7 +35,7 @@ export const MatchesSection: React.FC = () => {
       setError(null);
       
       // Fetch matches (returns basic info)
-      const matchesData = await matchService.getUserMatches();
+      const matchesData = await matchAPI.getUserMatches();
       
       // Fetch full profile data for each match
       const fullProfiles = await Promise.all(
@@ -92,7 +92,7 @@ export const MatchesSection: React.FC = () => {
     if (!selectedUser) return;
     
     try {
-      await matchService.disconnect(selectedUser.userId);
+      await matchAPI.disconnect(selectedUser.userId);
       setMatches(prev => prev.filter(m => m.userId !== selectedUser.userId));
       setShowUnfriendModal(false);
       setSelectedUser(null);
@@ -161,7 +161,7 @@ export const MatchesSection: React.FC = () => {
               </button>
 
               <div className="flex gap-3 md:gap-4">
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md flex-shrink-0">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center shadow-md shrink-0">
                   {match.profilePicture ? (
                     <img 
                       src={match.profilePicture} 
@@ -244,7 +244,7 @@ export const MatchesSection: React.FC = () => {
               <X className="w-5 h-5 text-gray-600" />
             </button>
 
-            {/* ✅ Just pass the profile directly - it already has all ViewableProfile fields */}
+            {/* Just pass the profile directly - it already has all ViewableProfile fields */}
             <ProfileCard profile={selectedProfile} />
           </div>
         </div>
@@ -252,7 +252,7 @@ export const MatchesSection: React.FC = () => {
 
       {/* Unfriend Modal */}
       {showUnfriendModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div className="text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">

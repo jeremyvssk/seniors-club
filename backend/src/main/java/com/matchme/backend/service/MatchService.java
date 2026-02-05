@@ -3,11 +3,9 @@ package com.matchme.backend.service;
 import com.matchme.backend.dto.ConnectionRequestResponse;
 import com.matchme.backend.dto.MatchedUserResponse;
 import com.matchme.backend.model.Match;
-import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.MatchRepository;
 import com.matchme.backend.repo.UserProfileRepository;
-import com.matchme.backend.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +20,6 @@ public class MatchService {
 
     @Autowired
     private MatchRepository matchRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private UserProfileRepository userProfileRepository;

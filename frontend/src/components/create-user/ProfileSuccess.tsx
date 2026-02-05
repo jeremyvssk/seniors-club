@@ -4,7 +4,7 @@ interface ProfileSuccessProps {
 
 const ProfileSuccess = ({ userName }: ProfileSuccessProps) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-t from-blue-500 to-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-t from-blue-500 to-slate-50 px-4">
       <style>{`
         @keyframes scale-in {
           0% {

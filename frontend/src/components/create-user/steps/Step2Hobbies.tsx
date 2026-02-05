@@ -1,8 +1,7 @@
-import { set } from 'react-hook-form';
 import { UserFormData } from '../../../types/User';
 import NextButton from '../../buttons/NextButton';
 import PrevStepButton from '../../buttons/PrevStepButton';
-import { use, useState } from 'react';
+import { useState } from 'react';
 
 interface Step2Props {
   data: UserFormData;

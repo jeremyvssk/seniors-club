@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;  
 
 @Entity
 @Table(name = "messages", indexes = {
@@ -34,7 +34,7 @@ public class Message {
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
     
     @Column(nullable = false)
     private Boolean isRead = false;

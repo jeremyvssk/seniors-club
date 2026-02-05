@@ -10,7 +10,7 @@ import { MessagesSection } from "./sections/MessageSection";
 import ProfileSection from "./sections/ProfileSection";
 import MatchesSection from "./sections/MatchesSection";
 import RequestsSection from "./sections/RequestsSection";
-import { matchService } from "../../services/match.service";
+import { matchAPI } from "../../api/api";
 import { useChat } from "../../context/ChatContext";
 
 interface SidebarProps {
@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   useEffect(() => {
     const checkRequests = async () => {
       try {
-        const requests = await matchService.getPendingRequests();
+        const requests = await matchAPI.getPendingRequests();
         setHasNewRequests(requests.length > 0);
       } catch (error) {
         console.error('Failed to check requests:', error);
@@ -115,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
         {/* Expanded Content Panel - Desktop */}
         <div
-          className={`bg-gradient-to-br from-blue-50 to-purple-50 
+          className={`bg-linear-to-br from-blue-50 to-purple-50 
                      rounded-xl md:rounded-2xl shadow-2xl 
                      transition-all duration-300 ease-in-out 
                      h-full
@@ -128,7 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <div className="h-full flex flex-col">
               
               {/* Header with Close Button */}
-              <div className="flex-shrink-0 flex items-center justify-between 
+              <div className="shrink-0 flex items-center justify-between 
                             p-3 md:p-4 lg:p-5 pb-2 md:pb-3 
                             border-b border-white/50">
                 <h2 className="text-xl md:text-2xl lg:text-3xl font-bold capitalize text-gray-800">
@@ -201,16 +201,16 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
       {/* Mobile Fullscreen Panel */}
       {activeSection && (
-        <div className="md:hidden fixed inset-0 bg-gradient-to-br from-blue-50 to-purple-50 z-40 flex flex-col">
+        <div className="md:hidden fixed inset-0 bg-linear-to-br from-blue-50 to-purple-50 z-40 flex flex-col">
           {/* Header with Close Button on Left */}
-          <div className="flex-shrink-0 flex items-center gap-3 
+          <div className="shrink-0 flex items-center gap-3 
                         p-3 sm:p-4 bg-white border-b border-gray-200">
             {/* Close Button - Left Side */}
             <button
               onClick={() => setActiveSection(null)}
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full 
                        bg-gray-100 flex items-center justify-center 
-                       hover:bg-gray-200 transition-colors flex-shrink-0"
+                       hover:bg-gray-200 transition-colors shrink-0"
             >
               <X size={20} className="sm:w-6 sm:h-6 text-gray-700" />
             </button>

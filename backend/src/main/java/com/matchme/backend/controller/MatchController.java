@@ -71,7 +71,7 @@ public class MatchController {
         Match match = matchService.acceptConnectionRequest(requestId, currentUser.getId());
 
         LikeResponse response = new LikeResponse(
-            "Connection accepted! 🎉",
+            "Connection accepted!",
             true,
             match.getId()
         );
