@@ -236,7 +236,7 @@ export const MatchesSection: React.FC = () => {
           >
             <button
               onClick={() => setShowProfileModal(false)}
-              className="absolute -top-9 right-6 md:-top-10 md:-right-10                      
+              className="absolute -top-12 right-1 md:-top-10 md:-right-18                      
                        w-10 h-10 bg-white rounded-full 
                        shadow-lg hover:bg-gray-100 flex items-center justify-center 
                        transition-colors z-20"  

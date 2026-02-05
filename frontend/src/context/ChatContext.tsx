@@ -44,6 +44,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
+  const [wsConnected, setWsConnected] = useState(false);
 
   const activeChatRef = useRef<ChatResponse | null>(null);
 
@@ -59,10 +60,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (token && user?.id) {
       websocketAPI.disconnect();
       setCurrentUserId(user.id);
-      
+      setWsConnected(false);
+
       websocketAPI.connect(token)
         .then(() => {
+          console.log('✅ WebSocket connected');
+          setWsConnected(true); 
+          
+          // Subscribe to messages
           websocketAPI.subscribeToMessages(user.id.toString(), (newMessage: MessageResponse) => {
+            console.log('📨 New message received:', newMessage);
+
+            const currentActiveChat = activeChatRef.current;
+            
             setMessages(prev => {
               if (prev.some(m => m.id === newMessage.id)) {
                 return prev;
@@ -75,183 +85,208 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               
               return prev;
             });
-
-            refreshChats();
-          });
-
-          websocketAPI.subscribeToReadReceipts(user.id.toString(), (data) => {
-            setMessages(prev => 
-              prev.map(msg => 
-                msg.chatId === data.chatId && msg.senderId === user.id
-                  ? { ...msg, isRead: true }
-                  : msg
-              )
-            );
+            // If the new message is for the current active chat, mark it as read
+            if (currentActiveChat && newMessage.chatId === currentActiveChat.chatId && newMessage.senderId !== user.id) {
             
+              chatAPI.markMessagesAsRead(currentActiveChat.chatId)
+                .then(() => {
+                  console.log('✓✓ Marked message as read');
+                })
+                .catch(err => {
+                  console.error('❌ Failed to mark message as read:', err);
+                });
+            }
+
+            // refresh chat list to update last message and unread count
             refreshChats();
           });
-
-          websocketAPI.subscribeToTyping(user.id.toString(), (data) => {
-            setTypingUsers(prev => {
-              const newSet = new Set(prev);
-              if (data.isTyping) {
-                newSet.add(data.senderId);
-              } else {
-                newSet.delete(data.senderId);
-              }
-              return newSet;
-            });
-          });
-        })
-        .catch((err) => {
-          console.error('WebSocket connection failed:', err);
-        });
-
-      return () => {
-        websocketAPI.disconnect();
-      };
-    }
-  }, []);
-
-  const sendTypingIndicator = (isTyping: boolean) => {
-    if (activeChat) {
-      websocketAPI.sendTypingIndicator(activeChat.otherUserId, isTyping);
-    }
-  };
-
-  useEffect(() => {
-    if (activeChat) {
-      setMessages([]);
-      setCurrentPage(0);
-      setLoading(true);
-
-      chatAPI.getChatMessages(activeChat.chatId, 0, 50)
-        .then(messagesResponse => {
-          setMessages(messagesResponse.content.reverse());
-          setHasMoreMessages(!messagesResponse.last);
-          
-          return chatAPI.markMessagesAsRead(activeChat.chatId);
-        })
-        .then(() => {
-          refreshChats();
-        })
-        .catch(err => {
-          console.error('Failed to load messages:', err);
-          setError('Failed to load messages');
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setMessages([]);
-      setCurrentPage(0);
-      setHasMoreMessages(false);
-    }
-  }, [activeChat]);
-
-  const refreshChats = useCallback(async () => {
-    const { user } = getAuthData();
-    if (!user?.id) return;
-    
-    try {
-      const userChats = await chatAPI.getUserChats();
-      setChats(userChats);
-    } catch (err) {
-      console.error('Failed to fetch chats:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    const checkUserChange = () => {
-      const { user } = getAuthData();
-      if (user?.id && currentUserId && user.id !== currentUserId) {
-        window.location.reload();
-      }
-    };
-
-    const interval = setInterval(checkUserChange, 1000);
-    return () => clearInterval(interval);
-  }, [currentUserId]);
-
-  useEffect(() => {
-    const { user } = getAuthData();
-    if (user?.id) {
-      refreshChats();
-    }
-  }, [refreshChats]);
-
-  const openChatWithUser = async (userId: number) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const chat = await chatAPI.getOrCreateChatWithUser(userId);
-      setActiveChat(chat);
-    } catch (err: any) {
-      console.error('Failed to open chat:', err);
-      setError(err.response?.data?.message || 'Failed to open chat');
-      setLoading(false);
-    }
-  };
-
-  const loadMoreMessages = async () => {
-    if (!activeChat || !hasMoreMessages || loading) return;
-
-    setLoading(true);
-    try {
-      const nextPage = currentPage + 1;
-      const messagesResponse = await chatAPI.getChatMessages(activeChat.chatId, nextPage, 50);
       
-      setMessages(prev => [...messagesResponse.content.reverse(), ...prev]);
-      setCurrentPage(nextPage);
-      setHasMoreMessages(!messagesResponse.last);
-    } catch (err) {
-      console.error('Failed to load more messages:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendMessage = async (content: string) => {
-    if (!activeChat || !content.trim()) return;
-
-    try {
-      websocketAPI.sendMessage(activeChat.otherUserId, content.trim());
-    } catch (err: any) {
-      console.error('Failed to send message:', err);
-      setError(err.message || 'Failed to send message');
-    }
-  };
-
-  const closeChat = () => {
-    setActiveChat(null);
-    setMessages([]);
-    setCurrentPage(0);
-    setHasMoreMessages(false);
-  };
-
-  return (
-    <ChatContext.Provider value={{
-      chats,
-      activeChat,
-      messages,
-      loading,
-      error,
-      hasMoreMessages,
-      totalUnreadCount,
-      typingUsers,
-      openChatWithUser,
-      sendMessage,
-      closeChat,
-      refreshChats,
-      setActiveChat,
-      loadMoreMessages,
-      sendTypingIndicator,
-    }}>
-      {children}
-    </ChatContext.Provider>
-  );
-};
+ 
+    // Subscribe to read receipts
+     websocketAPI.subscribeToReadReceipts(user.id.toString(), (data: { chatId: number; readBy: number }) => {
+                              
+               // Update messages in current chat
+                      setMessages(prev => 
+                        prev.map(msg => 
+                          msg.chatId === data.chatId && msg.senderId === user.id
+                            ? { ...msg, isRead: true }
+                            : msg
+                        )
+                      );
+                      
+                      // Refresh chat list to update unread counts
+                      refreshChats();
+                    });
+          
+                    // Subscribe to typing indicators
+                    websocketAPI.subscribeToTyping(user.id.toString(), (data: { senderId: number; isTyping: boolean }) => {
+                      console.log('👀 Typing indicator:', data);
+                      
+                      setTypingUsers(prev => {
+                        const newSet = new Set(prev);
+                        if (data.isTyping) {
+                          newSet.add(data.senderId);
+                        } else {
+                          newSet.delete(data.senderId);
+                        }
+                        return newSet;
+                      });
+                    });
+          
+                    // ✅ Load chats AFTER WebSocket is connected
+                    refreshChats();
+                  })
+                  .catch((err) => {
+                    console.error('❌ WebSocket connection failed:', err);
+                    setWsConnected(false);
+                  });
+          
+                return () => {
+                  console.log('🔌 Disconnecting WebSocket...');
+                  websocketAPI.disconnect();
+                  setWsConnected(false);
+                };
+              }
+            }, []); // ✅ Only run once on mount
+          
+            const sendTypingIndicator = (isTyping: boolean) => {
+              if (activeChat && wsConnected) { // ✅ Check if connected
+                websocketAPI.sendTypingIndicator(activeChat.otherUserId, isTyping);
+              }
+            };
+          
+            // ✅ Load messages when activeChat changes
+            useEffect(() => {
+              if (activeChat) {
+                setMessages([]);
+                setCurrentPage(0);
+                setLoading(true);
+          
+                chatAPI.getChatMessages(activeChat.chatId, 0, 50)
+                  .then(messagesResponse => {
+                    setMessages(messagesResponse.content.reverse());
+                    setHasMoreMessages(!messagesResponse.last);
+                    
+                    // Mark messages as read
+                    return chatAPI.markMessagesAsRead(activeChat.chatId);
+                  })
+                  .then(() => {
+                    // Refresh chat list after marking as read
+                    refreshChats();
+                  })
+                  .catch(err => {
+                    console.error('Failed to load messages:', err);
+                    setError('Failed to load messages');
+                  })
+                  .finally(() => {
+                    setLoading(false);
+                  });
+              } else {
+                setMessages([]);
+                setCurrentPage(0);
+                setHasMoreMessages(false);
+              }
+            }, [activeChat]);
+          
+            const refreshChats = useCallback(async () => {
+              const { user } = getAuthData();
+              if (!user?.id) return;
+              
+              try {
+                console.log('🔄 Refreshing chats...');
+                const userChats = await chatAPI.getUserChats();
+                setChats(userChats);
+                console.log('✅ Chats refreshed:', userChats.length);
+              } catch (err) {
+                console.error('❌ Failed to fetch chats:', err);
+              }
+            }, []);
+          
+            useEffect(() => {
+              const checkUserChange = () => {
+                const { user } = getAuthData();
+                if (user?.id && currentUserId && user.id !== currentUserId) {
+                  console.log('🔄 User changed, reloading...');
+                  window.location.reload();
+                }
+              };
+          
+              const interval = setInterval(checkUserChange, 1000);
+              return () => clearInterval(interval);
+            }, [currentUserId]);
+          
+            const openChatWithUser = async (userId: number) => {
+              setLoading(true);
+              setError(null);
+          
+              try {
+                const chat = await chatAPI.getOrCreateChatWithUser(userId);
+                setActiveChat(chat);
+              } catch (err: any) {
+                console.error('Failed to open chat:', err);
+                setError(err.response?.data?.message || 'Failed to open chat');
+                setLoading(false);
+              }
+            };
+          
+            const loadMoreMessages = async () => {
+              if (!activeChat || !hasMoreMessages || loading) return;
+          
+              setLoading(true);
+              try {
+                const nextPage = currentPage + 1;
+                const messagesResponse = await chatAPI.getChatMessages(activeChat.chatId, nextPage, 50);
+                
+                setMessages(prev => [...messagesResponse.content.reverse(), ...prev]);
+                setCurrentPage(nextPage);
+                setHasMoreMessages(!messagesResponse.last);
+              } catch (err) {
+                console.error('Failed to load more messages:', err);
+              } finally {
+                setLoading(false);
+              }
+            };
+          
+            const sendMessage = async (content: string) => {
+              if (!activeChat || !content.trim()) return;
+          
+              try {
+                websocketAPI.sendMessage(activeChat.otherUserId, content.trim());
+              } catch (err: any) {
+                console.error('Failed to send message:', err);
+                setError(err.message || 'Failed to send message');
+              }
+            };
+          
+            const closeChat = () => {
+              setActiveChat(null);
+              setMessages([]);
+              setCurrentPage(0);
+              setHasMoreMessages(false);
+            };
+          
+            return (
+              <ChatContext.Provider value={{
+                chats,
+                activeChat,
+                messages,
+                loading,
+                error,
+                hasMoreMessages,
+                totalUnreadCount,
+                typingUsers,
+                openChatWithUser,
+                sendMessage,
+                closeChat,
+                refreshChats,
+                setActiveChat,
+                loadMoreMessages,
+                sendTypingIndicator,
+              }}>
+                {children}
+              </ChatContext.Provider>
+            );
+          };
 
 export const useChat = () => {
   const context = useContext(ChatContext);

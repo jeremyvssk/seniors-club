@@ -35,9 +35,9 @@ export const MessagesSection: React.FC = () => {
   if (chats.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <MessageCircle className="w-12 h-12 text-gray-300 mb-3" />
-        <p className="text-gray-500 text-sm">No messages yet</p>
-        <p className="text-gray-400 text-xs mt-1">
+        <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
+        <p className="text-gray-500 font-medium text-lg">No messages yet</p>
+        <p className="text-gray-400 text-sm mt-1">
           Start matching to begin conversations
         </p>
       </div>

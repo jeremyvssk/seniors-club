@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from '../components/headers/Header';
-import exampleImg from '../assets/images/example.svg';
+import exampleImg from '../assets/images/mockup.svg';
 import LogInButton from "../components/buttons/LogInButton";
 import SignUpButton from "../components/buttons/SignUpButton";
 
@@ -29,7 +29,7 @@ const SeniorsClubLanding: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             
             {/* Left Column */}
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-start justify-center">
               {/* Text for Log in button */}
               <p className="text-xl md:text-xl text-slate-600 mb-1 font-light leading-relaxed text-center">
                 Already an user?
@@ -48,7 +48,7 @@ const SeniorsClubLanding: React.FC = () => {
                 alt="Example" 
                 className="max-w-md lg:max-w-xl w-full h-auto object-contain"
               />
-              <p className="text-xl text-slate-50 font-medium mt-2">
+              <p className="text-xl text-slate-50 mt-2">
                 All your new friends are here!
               </p>
             </div>
