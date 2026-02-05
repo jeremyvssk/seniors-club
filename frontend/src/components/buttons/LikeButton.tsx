@@ -19,8 +19,8 @@ const LikeButton: React.FC<LikeButtonProps> = ({ userId, isLiked: initialIsLiked
 
     try {
       const response = await matchAPI.sendConnectionRequest(userId);
-      setIsLiked(true);
-      alert(response.message); // "Connection request sent!"
+      /*setIsLiked(true);
+      alert(response.message);*/ // "Connection request sent!"
       
       if (onLikeSuccess) {
         onLikeSuccess(true);
