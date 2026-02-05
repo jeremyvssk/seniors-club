@@ -14,6 +14,7 @@ export interface UserFormData {
   latitude?: number;
   longitude?: number;
   maxRadiusKm?: number;
+  email: string;
 }
 
 // Used when viewing other users' profiles (from API)

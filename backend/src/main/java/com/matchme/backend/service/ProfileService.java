@@ -123,6 +123,14 @@ public class ProfileService {
         }
     }
 
+        public void deleteProfilePicture(UserProfile profile) {
+        String currentPictureUrl = profile.getProfilePictureUrl();
+        if (currentPictureUrl != null && !currentPictureUrl.isEmpty()) {
+            fileStorageService.deleteFile(currentPictureUrl);
+            profile.setProfilePictureUrl(null);
+        }
+    }
+
     // check if profile is complete
     public boolean isProfileComplete(UserProfile profile) {
         return profile.getName() != null &&

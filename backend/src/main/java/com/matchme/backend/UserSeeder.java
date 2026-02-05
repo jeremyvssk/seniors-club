@@ -52,6 +52,7 @@ public class UserSeeder implements CommandLineRunner {
             profile.setUser(user);
 
             profile.setName(randomFullName());
+            profile.setBio(randomBio());
             profile.setAge(randomAge());
             profile.setGender(randomGender());
             profile.setHobbies(randomHobbies());
@@ -75,15 +76,19 @@ public class UserSeeder implements CommandLineRunner {
 
     // generate random names:
 
-    private static final String[] FIRST_NAMES = {
+   private static final String[] FIRST_NAMES = {
             "Alex", "Sam", "Chris", "Jamie", "Taylor",
             "Mark", "Daniel", "Karl", "Martin", "Robert",
-            "Laura", "Anna", "Maria", "Eva", "Katrin"
+            "Laura", "Anna", "Maria", "Eva", "Katrin",
+            "Liisa", "Kristjan", "Jaan", "Piret", "Toomas",
+            "Marika", "Andres", "Karin", "Peeter", "Helen"
     };
 
     private static final String[] LAST_NAMES = {
             "Tamm", "Saar", "Sepp", "Mägi", "Kask",
-            "Kallas", "Ilves", "Põder", "Rebane", "Lepp"
+            "Kallas", "Ilves", "Põder", "Rebane", "Lepp",
+            "Kukk", "Pärn", "Lill", "Rand", "Järv",
+            "Koppel", "Ots", "Paju", "Vaher", "Nurm"
     };
 
     private static String randomFullName() {
@@ -91,6 +96,26 @@ public class UserSeeder implements CommandLineRunner {
         String last = LAST_NAMES[RANDOM.nextInt(LAST_NAMES.length)];
         return first + " " + last;
     }
+
+    private static final String[] BIO_WORDS = {
+        "Hello", "yes", "when", "words", "big",
+        "I", "very", "like", "to", "and", "flabbergasted",
+        "often", "running", "love", "am", "thanks",
+        "enjoy", "happy", "life", "adventure", "fun",
+        "friendly", "kind", "creative", "curious", "excited"
+    };
+
+      private static String randomBio() {
+        StringBuilder bio = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            bio.append(BIO_WORDS[RANDOM.nextInt(BIO_WORDS.length)]);
+            if (i < 9) {
+                bio.append(" ");
+            }
+        }
+        return bio.toString();
+    }
+
 
     // generate age
 
