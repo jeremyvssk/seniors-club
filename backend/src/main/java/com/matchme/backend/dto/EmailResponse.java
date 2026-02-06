@@ -1,6 +1,6 @@
 package com.matchme.backend.dto;
 
-public class ConfidentialDataResponse {
+public class EmailResponse {
     
 }
 //for the email on the profilecard

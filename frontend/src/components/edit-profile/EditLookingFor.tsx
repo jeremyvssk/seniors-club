@@ -70,7 +70,7 @@ const EditLookingFor = ({ data, updateData, onNext, onBack }: EditLookingForProp
  try {
     //save both to database via backend
 
-    await api.put("/me/profile", {
+    await api.put("/me/bio", {
         lookingFor: data.lookingFor,
         lookingForGender: data.lookingForGender
     });

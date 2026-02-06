@@ -8,7 +8,8 @@ import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
 import com.matchme.backend.dto.ProfileUpdateRequest;
-import com.matchme.backend.dto.AboutMeResponse;
+import com.matchme.backend.dto.ProfileUpdateResponse;
+import com.matchme.backend.dto.UserBioRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -93,61 +93,56 @@ public class ProfileController {
         BasicUserInfoResponse response = new BasicUserInfoResponse();
         response.setId(user.getId());
         response.setName(profile.getName());
+        response.setEmail(user.getEmail());
         // Always set profilePictureUrl, even if null
         response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : null);
 
         return ResponseEntity.ok(response);
     }
-/*
+
     @GetMapping("/profile")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-        if (profile == null || !profile.getProfileCompleted()) {
+
+        if (profile == null) { // || !profile.getProfileCompleted() - selle commentisin sulu seest v'lja prg
             return ResponseEntity.notFound().build();
         }
 
         // Return only "about me" info
-        UserBioResponse response = new UserBioResponse();
-        response.setId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setName(profile.getName() != null ? profile.getName() : "");
-        response.setAge(profile.getAge() != null ? profile.getAge() : 0);
+        ProfileUpdateResponse response = new ProfileUpdateResponse();
+
         response.setBio(profile.getBio() != null ? profile.getBio() : "");
-        response.setHobbies(profile.getHobbies() != null ? profile.getHobbies() : new ArrayList<>());
-        response.setLookingFor(profile.getLookingFor() != null ? profile.getLookingFor() : "");
-        response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : "");
-        response.setMaxRadiusKm(profile.getMaxRadiusKm() != null ? profile.getMaxRadiusKm() : 50);
+
         return ResponseEntity.ok(response);
     }
-*/
-/* 
+
     // Get MY biographical data
+
     @GetMapping("/bio")
     public ResponseEntity<?> getMyBio(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-        if (profile == null || !profile.getProfileCompleted()) {
+        if (profile == null) { // || !profile.getProfileCompleted() - commentisin selle v'lja
             return ResponseEntity.notFound().build();
         }
 
         UserBioResponse response = new UserBioResponse();
         response.setId(user.getId());
         response.setGender(profile.getGender());
-        response.setBio(profile.getBio());
         response.setHobbies(profile.getHobbies());
         response.setLookingFor(profile.getLookingFor());
         response.setLookingForGender(profile.getLookingForGender());
         response.setAge(profile.getAge());
-        
+        response.setMaxRadiusKm(profile.getMaxRadiusKm());
 
         return ResponseEntity.ok(response);
     }
-*/
+
     @GetMapping("/profile/edit")
     public ResponseEntity<?> getMyProfileForEdit(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
@@ -163,7 +158,6 @@ public class ProfileController {
 
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
-                "bio", profile.getBio() !=null? profile.getBio() : 0,
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),
                 "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor() : "",
                 "lookingForGender",
@@ -227,10 +221,10 @@ public class ProfileController {
 
     // Update only provided fields
 
-    @PutMapping("/profile")
+    @PutMapping("/bio")
     public ResponseEntity<?> updateProfile(
             @AuthenticationPrincipal String email,
-            @Valid @RequestBody ProfileUpdateRequest updates) {
+            @Valid @RequestBody UserBioRequest updates) {
 
         try {
             User user = userService.findByEmail(email)
@@ -241,12 +235,6 @@ public class ProfileController {
                 return ResponseEntity.notFound().build();
             }
 
-            if (updates.getName() != null) {
-                profile.setName(updates.getName().trim());
-            }
-            if (updates.getBio() != null) {
-                profile.setBio(updates.getBio());
-            }
             if (updates.getHobbies() != null) {
                 profile.setHobbies(updates.getHobbies());
             }
@@ -268,4 +256,32 @@ public class ProfileController {
             return ResponseEntity.internalServerError().body("Failed to update profile");
         }
     }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal String email,
+            @Valid @RequestBody ProfileUpdateRequest updates) {
+
+        try {
+            User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            UserProfile profile = profileService.getProfileByUser(user);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (updates.getBio() != null) {
+                profile.setBio(updates.getBio());
+            }
+
+            profileService.saveProfile(profile);
+
+            return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Failed to update profile");
+        }
+    }
+
 }

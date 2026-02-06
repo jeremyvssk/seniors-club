@@ -17,17 +17,23 @@ const ProfilePicture = ({
 }: ProfilePictureProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   // Restore preview when navigating back with existing profile picture
   useEffect(() => {
-    if (data.profilePicture) {
+    // First check if there's an existing uploaded image URL
+    if (data.profilePictureUrl) {
+      setPreview(data.profilePictureUrl);
+    } 
+    // Then check if there's a newly selected file
+    else if (data.profilePicture) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(data.profilePicture);
     }
-  }, [data.profilePicture]);
+  }, [data.profilePicture, data.profilePictureUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,29 +58,29 @@ const ProfilePicture = ({
     }
   };
 
-  const handleRemove = () => {
-    updateData({ profilePicture: null });
-    setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+const handleRemove = () => {
+  updateData({ profilePicture: null, profilePictureUrl: null });
+  setPreview(null);
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+};
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext();
   };
 
-  const hasPhoto = preview !== null;
+  // const hasPhoto = preview !== null;
 
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="bg-white/55 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-md">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
-          Add a profile picture
+          Profile picture
         </h2>
         <p className="text-center text-slate-500 text-sm mb-4 md:mb-6">
-          You can add this later if you prefer
+          Choose a new photo or remove the current one
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
@@ -88,6 +94,7 @@ const ProfilePicture = ({
                     alt="Profile preview"
                     className="w-full h-full object-cover"
                   />
+                  
                 </div>
                 <button
                   type="button"
@@ -127,7 +134,8 @@ const ProfilePicture = ({
               type="submit"
               className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
             >
-              {hasPhoto ? "Save Changes" : "Close"}
+              Save
+              {/* {hasPhoto ? "Save Changes" : "Close"} */}
             </button>
           </div>
         </form>
