@@ -180,6 +180,19 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
+    //gett all accepted matches by their id (/connections endpoint)
+    public List<Long> getConnectionIds(Long userId) {
+    List<Match> matches = matchRepository.findAllMatchesByUserId(userId);
+
+    return matches.stream()
+            .filter(m -> m.getStatus() == Match.MatchStatus.MATCHED)
+            .map(m -> m.getUserId().equals(userId)
+                    ? m.getLikedUserId()
+                    : m.getUserId())
+            .distinct()
+            .collect(Collectors.toList());
+}
+
     // Check if user has sent a request
     public boolean hasUserLiked(Long userId, Long likedUserId) {
         Optional<Match> match = matchRepository.findByUserIdAndLikedUserId(userId, likedUserId);
