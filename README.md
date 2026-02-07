@@ -7,7 +7,11 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 ## ✨ Features
 
 - **Profile Management** - Create and customize your profile with bio, hobbies, preferences, and profile picture
-- **Find New Connections** - Smart matching algorithm finds perfect matches based on gender preference, age, location, and mutual interests
+- **Find New Connections** - Smart matching algorithm finds perfect matches based on: 
+- Gender preference 
+- Age
+- Location 
+- Mutual interests
 - **Real-time Chat** - Talk to your connections instantly with WebSocket-powered messaging
 - **Responsive Design** - Find new connections on every device
 
@@ -29,8 +33,7 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 ## 📋 Prerequisites
 
 - **Docker Desktop** - Required for running the application
-- Git - For cloning the repository
-
+- **Java 17+**
 ---
 
 ## 🚀 Installation
