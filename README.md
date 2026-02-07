@@ -34,6 +34,9 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 
 - **Docker Desktop** - Required for running the application
 - **Java 17+**
+
+Download Docker Desktop for free: https://www.docker.com/products/docker-desktop/ 
+
 ---
 
 ## 🚀 Installation
