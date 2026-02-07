@@ -115,6 +115,7 @@ public class ProfileController {
         ProfileUpdateResponse response = new ProfileUpdateResponse();
 
         response.setBio(profile.getBio() != null ? profile.getBio() : "");
+        response.setId(user.getId());
 
         return ResponseEntity.ok(response);
     }
@@ -155,7 +156,7 @@ public class ProfileController {
 
         // Return all editable fields
         return ResponseEntity.ok(Map.of(
-
+                "id", profile.getId() != null ? profile.getId() : "",
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),

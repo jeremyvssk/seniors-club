@@ -90,18 +90,5 @@ public class RecommendationService {
             interactionRepository.save(interaction);
     }
 
-            //here should add whether gender preferences match, 
-
-            //here should add whether users liked eachother
-
-            //here should add whether its a match or not
-
-            //save the match to database 
-
-            //notification to both users
-
-            //enable chat
-
-
     
 }
