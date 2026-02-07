@@ -11,7 +11,7 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 - **Real-time Chat** - Talk to your connections instantly with WebSocket-powered messaging
 - **Responsive Design** - Find new connections on every device
 
----
+
 
 ## 🛠️ Tech Stack
 
@@ -24,7 +24,7 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 **Database:**
 - PostgreSQL 14 + Docker
 
----
+
 
 ## 📋 Prerequisites
 
@@ -60,7 +60,10 @@ This automatically installs all the necessary dependencies and runs both backend
 3. Create a new server with these settings:
 
 ```
+General:
 Name: matchme
+
+Connection:
 Host: postgres
 Port: 5432
 Database: matchme
@@ -117,7 +120,7 @@ The seed users will be automatically created.
 - Accept or decline requests
 - Disconnect from users if needed
 
----
+
 
 ## 🏗️ Project Structure
 
@@ -152,8 +155,6 @@ web/
 └── README.md
 ```
 
----
-
 ## 🐳 Docker Commands
 
 ### Start the Application
@@ -168,6 +169,7 @@ docker-compose up --build
 
 ### Stop the Application
 ```bash
+Ctrl + c 
 docker-compose down
 ```
 ---
@@ -179,4 +181,4 @@ docker-compose down
 - Aigar Orav
 - Timo Lipp
 
----
+
