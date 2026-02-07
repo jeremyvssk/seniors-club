@@ -153,6 +153,8 @@ web/
 │   └── package.json
 │
 └── README.md
+└──docker-compose.yml         # Environment configuration
+
 ```
 
 ## 🐳 Docker Commands
