@@ -47,10 +47,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [wsConnected, setWsConnected] = useState(false);
 
   const activeChatRef = useRef<ChatResponse | null>(null);
+  const wsConnectedRef = useRef(false);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
   }, [activeChat]);
+
+  // ADD THIS: Sync wsConnected state with ref
+  useEffect(() => {
+    wsConnectedRef.current = wsConnected;
+  }, [wsConnected]);
 
   const totalUnreadCount = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
@@ -61,11 +67,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       websocketAPI.disconnect();
       setCurrentUserId(user.id);
       setWsConnected(false);
+      wsConnectedRef.current = false;
 
       websocketAPI.connect(token)
         .then(() => {
           console.log('✅ WebSocket connected');
           setWsConnected(true); 
+          wsConnectedRef.current = true;
           
           // Subscribe to messages
           websocketAPI.subscribeToMessages(user.id.toString(), (newMessage: MessageResponse) => {
@@ -158,12 +166,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   console.log('🔌 Disconnecting WebSocket...');
                   websocketAPI.disconnect();
                   setWsConnected(false);
+                  wsConnectedRef.current = false;
                 };
               }
             }, []); // ✅ Only run once on mount
           
             const sendTypingIndicator = (isTyping: boolean) => {
-              if (activeChat && wsConnected) { // ✅ Check if connected
+              if (activeChat && wsConnectedRef.current) { // ✅ Check if connected
                 websocketAPI.sendTypingIndicator(activeChat.otherUserId, isTyping);
               }
             };
@@ -261,15 +270,21 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             };
           
             const sendMessage = async (content: string) => {
-              if (!activeChat || !content.trim()) return;
-          
-              try {
-                websocketAPI.sendMessage(activeChat.otherUserId, content.trim());
-              } catch (err: any) {
-                console.error('Failed to send message:', err);
-                setError(err.message || 'Failed to send message');
-              }
-            };
+            if (!activeChat || !content.trim()) return;
+            
+            if (!wsConnectedRef.current) {
+              console.error('❌ WebSocket not connected');
+              setError('Connection lost. Please refresh the page.');
+              return;
+            }
+
+            try {
+              websocketAPI.sendMessage(activeChat.otherUserId, content.trim());
+            } catch (err: any) {
+              console.error('Failed to send message:', err);
+              setError(err.message || 'Failed to send message');
+            }
+          };
           
             const closeChat = () => {
               setActiveChat(null);

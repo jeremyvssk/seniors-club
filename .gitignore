@@ -12,7 +12,10 @@
 # Docker volumes (if needed)
 *.log
 
-# Ignore README temporarily
-README.md
 # debug script
 test-profile.sh
+
+# Temporary files
+*.tmp
+*.swp
+*~
