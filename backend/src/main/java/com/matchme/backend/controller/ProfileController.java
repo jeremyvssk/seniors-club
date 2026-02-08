@@ -1,15 +1,16 @@
 package com.matchme.backend.controller;
 
 import com.matchme.backend.dto.ProfileRequest;
+import com.matchme.backend.dto.UserBioRequest;
 import com.matchme.backend.dto.UserBioResponse;
+import com.matchme.backend.dto.AboutMeRequest;
+import com.matchme.backend.dto.AboutMeResponse;
 import com.matchme.backend.dto.BasicUserInfoResponse;
+import com.matchme.backend.dto.EmailResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
-import com.matchme.backend.dto.ProfileUpdateRequest;
-import com.matchme.backend.dto.ProfileUpdateResponse;
-import com.matchme.backend.dto.UserBioRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -93,29 +94,35 @@ public class ProfileController {
         BasicUserInfoResponse response = new BasicUserInfoResponse();
         response.setId(user.getId());
         response.setName(profile.getName());
-        response.setEmail(user.getEmail());
         // Always set profilePictureUrl, even if null
         response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : null);
 
         return ResponseEntity.ok(response);
     }
 
+    // GET /me/email - Returns only email (for authenticated user's own profile view)
+    @GetMapping("/email")
+    public ResponseEntity<?> getMyEmail(@AuthenticationPrincipal String email) {
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(new EmailResponse(user.getEmail()));
+    }
+
+    // GET /me/profile - shortcut to /users/{id}/profile
     @GetMapping("/profile")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-
-        if (profile == null) { // || !profile.getProfileCompleted() - selle commentisin sulu seest v'lja prg
+        if (profile == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Return only "about me" info
-        ProfileUpdateResponse response = new ProfileUpdateResponse();
-
-        response.setBio(profile.getBio() != null ? profile.getBio() : "");
+        AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
+        response.setBio(profile.getBio() != null ? profile.getBio() : "");
 
         return ResponseEntity.ok(response);
     }
@@ -128,7 +135,7 @@ public class ProfileController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-        if (profile == null) { // || !profile.getProfileCompleted() - commentisin selle v'lja
+        if (profile == null) { 
             return ResponseEntity.notFound().build();
         }
 
@@ -259,9 +266,9 @@ public class ProfileController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(
+    public ResponseEntity<?> updateAboutMe(
             @AuthenticationPrincipal String email,
-            @Valid @RequestBody ProfileUpdateRequest updates) {
+            @Valid @RequestBody AboutMeRequest request) {
 
         try {
             User user = userService.findByEmail(email)
@@ -272,16 +279,16 @@ public class ProfileController {
                 return ResponseEntity.notFound().build();
             }
 
-            if (updates.getBio() != null) {
-                profile.setBio(updates.getBio());
+            if (request.getBio() != null) {
+                profile.setBio(request.getBio());
             }
 
             profileService.saveProfile(profile);
 
-            return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
+            return ResponseEntity.ok(Map.of("message", "Bio updated successfully"));
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Failed to update profile");
+            return ResponseEntity.internalServerError().body("Failed to update bio");
         }
     }
 

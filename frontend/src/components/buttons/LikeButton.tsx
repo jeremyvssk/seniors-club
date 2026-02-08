@@ -9,16 +9,15 @@ interface LikeButtonProps {
 }
 
 const LikeButton: React.FC<LikeButtonProps> = ({ userId, isLiked: initialIsLiked, onLikeSuccess }) => {
-  const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
-    if (isLoading) return;
+    if (isLoading || initialIsLiked) return;
 
     setIsLoading(true);
 
     try {
-      const response = await matchAPI.sendConnectionRequest(userId);
+      await matchAPI.sendConnectionRequest(userId);
       /*setIsLiked(true);
       alert(response.message);*/ // "Connection request sent!"
       
@@ -36,7 +35,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({ userId, isLiked: initialIsLiked
   return (
     <button
       onClick={handleClick}
-      disabled={isLoading || isLiked}
+      disabled={isLoading || initialIsLiked}
       className={`flex items-center justify-center 
                   border-2 border-gray-400 
                   p-2 sm:p-2.5 md:p-3 lg:p-4
@@ -44,13 +43,13 @@ const LikeButton: React.FC<LikeButtonProps> = ({ userId, isLiked: initialIsLiked
                   shadow-lg hover:shadow-xl
                   transition-all duration-300 
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  ${isLiked ? 'bg-green-100 text-green-600' : 'bg-white text-green-500 hover:bg-green-50'}`}
-      aria-label={isLiked ? 'Request Sent' : 'Send Connection Request'}
+                  ${initialIsLiked ? 'bg-green-100 text-green-600' : 'bg-white text-green-500 hover:bg-green-50'}`}
+      aria-label={initialIsLiked ? 'Request Sent' : 'Send Connection Request'}
     >
       {isLoading ? (
         <Loader className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 animate-spin" />
       ) : (
-        <Heart className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 ${isLiked ? 'fill-current' : ''}`} />
+        <Heart className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 ${initialIsLiked ? 'fill-current' : ''}`} />
       )}
     </button>
   );

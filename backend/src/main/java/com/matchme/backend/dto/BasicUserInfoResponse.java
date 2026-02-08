@@ -7,7 +7,6 @@ public class BasicUserInfoResponse {
     private Long id;
     private String name;
     private String profilePictureUrl;
-    private String email;
 
     // Getters and setters
     public Long getId() {
@@ -32,12 +31,6 @@ public class BasicUserInfoResponse {
 
     public void setProfilePictureUrl(String profilePictureUrl) { 
         this.profilePictureUrl = profilePictureUrl; }
-
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-    public String getEmail() { return email; }
 
     }
 

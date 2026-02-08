@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { UserFormData } from "../../types/User";
+import React, { useState } from "react";
+import { EditProfileData } from "../../types/User";
 import api from "../../api/axios";
 import { Heart, Handshake, Plane, Compass, VenusAndMars } from "lucide-react";
 
 type Gender = "man" | "woman" | "other"
 
 interface EditLookingForProps {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
+  data: EditProfileData;
+  updateData: (data: Partial<EditProfileData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -45,7 +45,7 @@ const genderOptions: { value: Gender; label: string }[] = [ // Explicitly type t
   { value: "other", label: "Other" },
 ];
 
-const EditLookingFor = ({ data, updateData, onNext, onBack }: EditLookingForProps) => {
+const EditLookingFor = ({ data, updateData, onNext }: EditLookingForProps) => {
   const [error, setError] = useState<string> ("");
   const [saving, setSaving] = useState(false);
 

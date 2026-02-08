@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { UserFormData } from "../../types/User";
+import { EditProfileData } from "../../types/User";
 
 
 interface ProfilePictureProps {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
+  data: EditProfileData;
+  updateData: (data: Partial<EditProfileData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -13,7 +13,6 @@ const ProfilePicture = ({
   data,
   updateData,
   onNext,
-  onBack,
 }: ProfilePictureProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

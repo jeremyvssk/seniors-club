@@ -16,7 +16,7 @@ export const MatchesSection: React.FC = () => {
   const [matches, setMatches] = useState<ProfileWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { openChatWithUser } = useChat();
+  const { openChatWithUser, refreshChats } = useChat();
   
   // Modals
   const [showUnfriendModal, setShowUnfriendModal] = useState(false);
@@ -56,7 +56,7 @@ export const MatchesSection: React.FC = () => {
             lookingFor: bio.data.lookingFor,
             lookingForGender: bio.data.lookingForGender,
             profilePicture: user.data.profilePictureUrl || null,
-            distanceKm: bio.data.distanceKm, // ✅ This should be calculated by backend
+            distanceKm: bio.data.distanceKm,
             matchedAt: match.matchedAt,
           };
         })
@@ -74,8 +74,15 @@ export const MatchesSection: React.FC = () => {
   };
 
   const handleSendMessage = async (userId: number, name: string) => {
-    console.log(`Send message to ${name} (ID: ${userId})`);
-    await openChatWithUser(userId);
+    console.log(`💬 Opening chat with ${name} (ID: ${userId})`);
+    try {
+      await openChatWithUser(userId);
+      await refreshChats();
+      console.log('✅ Chat opened successfully');
+    } catch (err) {
+      console.error('❌ Failed to open chat:', err);
+      alert('Failed to open chat');
+    }
   };
 
   const handleProfileClick = (match: ProfileWithId) => {

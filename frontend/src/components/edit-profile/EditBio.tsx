@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { UserFormData } from "../../types/User";
+import React, {  useState } from "react";
+import { EditProfileData } from "../../types/User";
 import api from "../../api/axios";
 
 interface EditBioProps {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
+  data: EditProfileData;
+  updateData: (data: Partial<EditProfileData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-const EditBio = ({ data, updateData, onNext, onBack }: EditBioProps) => {
+const EditBio = ({ data, updateData, onNext }: EditBioProps) => {
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

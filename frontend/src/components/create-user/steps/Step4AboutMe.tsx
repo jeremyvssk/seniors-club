@@ -16,8 +16,8 @@ const Step4AboutMe = ({ data, updateData, onNext, onBack }: Step4Props) => {
 
     // If user typed something, validate it
     if (hasBio) {
-      if (data.bio.trim().length > 200) {
-        alert("Bio must be no more than 200 characters");
+      if (data.bio.trim().length > 150) {
+        alert("Bio must be no more than 150 characters");
         return;
       }
     }
@@ -47,10 +47,10 @@ const Step4AboutMe = ({ data, updateData, onNext, onBack }: Step4Props) => {
             className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             placeholder="What should others now about you..."
             rows={6}
-            maxLength={200}
+            maxLength={150}
           />
           <p className="text-sm text-slate-500 mt-1">
-            {data.bio.length}/200 characters
+            {data.bio.length}/150 characters
           </p>
         </div>
 

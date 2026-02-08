@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User, Edit } from "lucide-react";
-import { UserFormData } from "../../../types/User";
+import { EditProfileData } from "../../../types/User";
 import api from "../../../api/axios";
 import EditHobbies from "../../../components/edit-profile/EditHobbies";
 import EditBio from "../../edit-profile/EditBio";
@@ -8,7 +8,7 @@ import EditLookingFor from "../../edit-profile/EditLookingFor";
 import EditProfilePic from "../../edit-profile/EditProfilePic";
 
 export const ProfileSection: React.FC = () => {
-  const [profile, setProfile] = useState<UserFormData | null>(null);
+  const [profile, setProfile] = useState<EditProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [radius, setRadius] = useState(50);
@@ -20,21 +20,25 @@ export const ProfileSection: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Call all three endpoints at the same time
-        const [meRes, bioRes, profileRes] = await Promise.all([
-          api.get("/me"), // BasicUserInfoResponse: name, email, profilePicture, id
-          api.get("/me/bio"), // UserBioResponse: age, gender, hobbies, lookingFor, lookingForGender, maxRadiusKm
-          api.get("/me/profile"), // ProfileUpdateResponse: bio
+        // Call all FOUR endpoints
+        const [meRes, bioRes, profileRes, emailRes] = await Promise.all([
+          api.get("/me"),           // BasicUserInfoResponse: id, name, profilePictureUrl
+          api.get("/me/bio"),       // UserBioResponse: age, gender, hobbies, lookingFor, lookingForGender, maxRadiusKm
+          api.get("/me/profile"),   // AboutMeResponse: id, bio
+          api.get("/me/email"),     // EmailResponse: email
         ]);
 
         console.log("✅ /me response:", meRes.data);
         console.log("✅ /me/bio response:", bioRes.data);
         console.log("✅ /me/profile response:", profileRes.data);
+        console.log("✅ /me/email response:", emailRes.data);
 
+        // Merge all responses into profile state
         setProfile({
-          ...bioRes.data,
-          ...profileRes.data,
-          ...meRes.data,
+          ...meRes.data,           // id, name, profilePictureUrl
+          ...bioRes.data,          // age, gender, hobbies, lookingFor, lookingForGender, maxRadiusKm
+          ...profileRes.data,      // bio
+          email: emailRes.data.email,  // Add email to profile
         });
 
         if (bioRes.data.maxRadiusKm) {
@@ -69,7 +73,6 @@ export const ProfileSection: React.FC = () => {
           });
         }
       } else {
-        // Send request to remove profile picture
         await api.delete("/me/profile/picture");
         setProfile({ ...profile!, profilePictureUrl: null });
       }
@@ -85,7 +88,6 @@ export const ProfileSection: React.FC = () => {
     const value = parseInt(e.target.value);
     setRadius(value);
 
-    // Auto-save to backend whenever the slider is moved
     try {
       await api.put("/me/bio", { maxRadiusKm: value });
     } catch (err) {
@@ -118,7 +120,7 @@ export const ProfileSection: React.FC = () => {
           <div className="flex flex-col items-center gap-2 sm:gap-3">
             <div
               className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36
-                          rounded-full bg-gradient-to-br from-blue-200 to-purple-200 
+                          rounded-full bg-linear-to-br from-blue-200 to-purple-200 
                           flex items-center justify-center shadow-lg"
             >
               {profile.profilePictureUrl ? (
@@ -146,26 +148,23 @@ export const ProfileSection: React.FC = () => {
             </button>
           </div>
 
-          {/* ✅ Overlay goes HERE */}
           {editingProfilePic && (
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
               <div
                 className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-                onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+                onClick={(e) => e.stopPropagation()}
               >
                 <EditProfilePic
                   data={profile}
                   updateData={(updated) => {
-                    // just update local state (preview) in modal
                     setProfile({ ...profile, ...updated });
                   }}
                   onNext={async () => {
-                    // Only now actually send to backend
                     try {
                       if (profile.profilePicture) {
                         await handleProfilePicUpdate(profile.profilePicture);
                       } else if (profile.profilePicture === null) {
-                        await handleProfilePicUpdate(null); // remove
+                        await handleProfilePicUpdate(null);
                       }
                       setEditingProfilePic(false);
                     } catch (err) {
@@ -178,7 +177,7 @@ export const ProfileSection: React.FC = () => {
             </div>
           )}
 
-          {/* Name and Age and Email */}
+          {/* Name, Age, and Email */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-0.5 sm:mb-1">
               {profile.name}
@@ -221,12 +220,12 @@ export const ProfileSection: React.FC = () => {
             </div>
           </div>
         )}
-        {/* ✅ Overlay goes HERE, right after hobbies section */}
+        
         {editingHobbies && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
             <div
               className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+              onClick={(e) => e.stopPropagation()}
             >
               <EditHobbies
                 data={profile}
@@ -277,23 +276,19 @@ export const ProfileSection: React.FC = () => {
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
             <div
               className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+              onClick={(e) => e.stopPropagation()}
             >
               <EditLookingFor
                 data={profile}
                 updateData={(updated) => setProfile({ ...profile, ...updated })}
                 onNext={async () => {
                   try {
-                    console.log("🔍 Saving lookingFor:", profile.lookingFor);
-
-                    const response = await api.put("/me/bio", {
+                    await api.put("/me/bio", {
                       lookingFor: profile.lookingFor,
                     });
-
-                    console.log("✅ Save response:", response.data);
                     setEditingLookingFor(false);
                   } catch (err) {
-                    console.error("❌ Failed to save looking for", err);
+                    console.error("Failed to save looking for", err);
                     alert("Failed to save changes");
                   }
                 }}
@@ -337,7 +332,7 @@ export const ProfileSection: React.FC = () => {
             <p
               className="text-gray-700 leading-5 sm:leading-6 md:leading-7 
                 text-xs sm:text-sm md:text-base lg:text-lg text-left 
-                break-words overflow-wrap-anywhere max-w-full"
+                wrap-break-word overflow-wrap-anywhere max-w-full"
             >
               {profile.bio}
             </p>
@@ -348,12 +343,11 @@ export const ProfileSection: React.FC = () => {
           )}
         </div>
 
-        {/* ✅ Bio overlay */}
         {editingBio && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
             <div
               className="bg-white rounded-2xl p-4 shadow-lg w-full max-w-md"
-              onClick={(e) => e.stopPropagation()} // prevents closing when clicking inside
+              onClick={(e) => e.stopPropagation()}
             >
               <EditBio
                 data={profile}
@@ -377,7 +371,6 @@ export const ProfileSection: React.FC = () => {
 
         {/* Radius Slider Section */}
         <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-gray-200">
-          {/* Slider Label and Current Value */}
           <div className="flex items-center justify-between mb-2 md:mb-3">
             <label className="block text-base md:text-lg font-medium text-slate-700">
               Match Radius
@@ -387,7 +380,6 @@ export const ProfileSection: React.FC = () => {
             </span>
           </div>
 
-          {/* Range Slider Input */}
           <input
             type="range"
             min="1"
@@ -396,23 +388,18 @@ export const ProfileSection: React.FC = () => {
             onChange={handleRadiusChange}
             className="w-full h-2 md:h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer"
             style={{
-              // Dynamic gradient to show filled portion of slider
               background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(radius / 300) * 100}%, #e2e8f0 ${(radius / 300) * 100}%, #e2e8f0 100%)`,
             }}
           />
 
-          {/* Slider Range Labels */}
           <div className="flex justify-between text-xs text-slate-500 mt-1 md:mt-2">
             <span>1 km</span>
             <span>150 km</span>
             <span>300 km</span>
           </div>
 
-          {/* Helper Text */}
           <p className="text-xs md:text-sm text-slate-600 text-center mt-2 md:mt-3">
-            {radius >= 300
-              ? "Match with everyone!"
-              : `Show matches within ${radius} km`}
+            Show matches within {radius} km
           </p>
         </div>
       </div>
