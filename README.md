@@ -4,20 +4,34 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 
 ---
 
-## ✨ Features
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Seed Database](#seed-database)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Docker Commands](#docker-commands)
+- [Authors](#authors)
+
+---
+
+## Features
 
 - **Profile Management** - Create and customize your profile with bio, hobbies, preferences, and profile picture
 - **Find New Connections** - Smart matching algorithm finds perfect matches based on: 
-- Gender preference 
-- Age
-- Location 
-- Mutual interests
-- **Real-time Chat** - Talk to your connections instantly with WebSocket-powered messaging
+  - Gender preference 
+  - Age
+  - Location 
+  - Mutual interests
+- **Real-time Chat** - Talk to your connections in real-time powered by WebSocket
 - **Responsive Design** - Find new connections on every device
 
+---
 
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend:**
 - TypeScript + React + Vite + Tailwind CSS
@@ -28,9 +42,9 @@ A modern matchmaking application designed for older people. Built with Java, Spr
 **Database:**
 - PostgreSQL 14 + Docker
 
+---
 
-
-## 📋 Prerequisites
+## Prerequisites
 
 - **Docker Desktop** - Required for running the application
 - **Java 17+**
@@ -39,7 +53,7 @@ Download Docker Desktop for free: https://www.docker.com/products/docker-desktop
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### 1. Clone the Repository
 
@@ -49,6 +63,8 @@ cd web
 ```
 
 ### 2. Run the Application
+
+**Note:** Use `docker compose` (modern) or `docker-compose` (legacy) depending on your Docker version. Both commands work the same way.
 
 ```bash
 docker-compose build --no-cache
@@ -67,7 +83,7 @@ This automatically installs all the necessary dependencies and runs both backend
 
 ```
 General:
-Name: matchme
+Name: matchme-db
 
 Connection:
 Host: postgres
@@ -83,11 +99,20 @@ Go to: http://localhost:5173
 
 ---
 
-## 🌱 Optional: Seed Database
+## Seed Database
+
+**(Optional)** 
 
 To use the application with 100 seed users:
 
-1. Go to `docker-compose.yml` and uncomment line 42
+1. Go to `docker-compose.yml` and uncomment line 42 by removing the `#`:
+
+```yaml
+    SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+    # Remove the # below to automatically seed 100 users
+    SPRING_PROFILES_ACTIVE: seed
+```
+
 2. Run:
 
 ```bash
@@ -98,37 +123,39 @@ The seed users will be automatically created.
 
 ---
 
-## 📱 Usage
+## Usage
 
 ### 1. Create an Account
-- Navigate to the registration page
-- Fill in your email, password, and basic info
-- Upload a profile picture
+- Navigate to the registration page at http://localhost:5173/
+- Create an account by completing the registration steps
 
 ### 2. Complete Your Profile
-- Add your bio, hobbies, and interests
-- Set your preferences (age range, gender, distance)
-- Enable location sharing for proximity-based matching
+- After successfully creating an account, you'll be guided through the account completion steps
 
 ### 3. Start Exploring
 - Browse recommended profiles
 - **Like (❤️)** users you're interested in
 - **Skip (✕)** to move to the next profile
 
-### 4. Chat with Matches
-- View your matches in the sidebar
-- Click to open a chat window
+### 4. Manage Connection Requests
+- When you like a user, it sends them a connection request
+- Received requests can be found and interacted with in the **Requests** tab
+
+### 5. View Your Matches
+- Once a request is accepted, the user appears in the **Matches** tab
+- Click on a match to view their full profile
+- You can **Disconnect** from users at any time if needed
+
+### 6. Chat with Matches
+- Open the **Messages** tab
+- Click on a match to open the chat window
 - Send messages with real-time delivery
-- See typing indicators and read receipts
+- See when the other person is typing
+- Unread message notifications appear as red dots on the Messages icon
 
-### 5. Manage Connections
-- View pending connection requests
-- Accept or decline requests
-- Disconnect from users if needed
+---
 
-
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 web/
@@ -140,30 +167,43 @@ web/
 │   │   ├── model/            # JPA entities
 │   │   ├── repo/             # JPA repositories
 │   │   ├── service/          # Business logic
-│   │   └── security/         # JWT authentication
-│   └── src/main/resources/
-│       └── application.properties
+│   │   ├── security/         # JWT authentication
+│   │   ├── util/             # Utility classes
+│   │   ├── UserSeeder.java   # Database seeding
+│   │   └── MatchMeBackendApplication.java  # Main application
+│   ├── src/main/resources/
+│   │   └── application.properties  # Backend configuration
+│   ├── Dockerfile            # Backend container setup
+│   └── pom.xml               # Maven dependencies
 │
 ├── frontend/
-│   ├── public/
 │   ├── src/
 │   │   ├── api/              # API service layer
 │   │   ├── components/       # React components
 │   │   │   ├── buttons/      # Button components
-│   │   │   ├── chat/         # Chat-related components
-│   │   │   ├── profile/      # Profile components
-│   │   │   └── sidebar/      # Sidebar sections
-│   │   ├── context/          # React Context providers
+│   │   │   ├── chat/         # Chat components
+│   │   │   ├── create-user/  # Steps to complete profile
+│   │   │   ├── edit-profile/ # Profile editing
+│   │   │   ├── headers/      # Header components
+│   │   │   └── sidebar/      # Navigation sections
+│   │   ├── context/          # React Context providers (global state)
 │   │   ├── pages/            # Page components
-│   │   └── App.tsx           # Main app component
-│   └── package.json
+│   │   ├── types/            # TypeScript type definitions
+│   │   ├── App.tsx           # Main app component
+│   │   └── main.tsx          # Application entry point
+│   ├── index.html            # HTML entry point
+│   ├── vite.config.ts        # Vite configuration
+│   ├── Dockerfile            # Frontend container setup
+│   └── package.json          # npm dependencies
 │
-└── README.md
-└──docker-compose.yml         # Environment configuration
-
+└── docker-compose.yml        # Docker orchestration
 ```
 
-## 🐳 Docker Commands
+---
+
+## Docker Commands
+
+**Note:** Use `docker compose` (modern) or `docker-compose` (legacy) depending on your Docker version. Both commands work the same way.
 
 ### Start the Application
 ```bash
@@ -176,17 +216,15 @@ docker-compose up --build
 ```
 
 ### Stop the Application
+Press `Ctrl + C` in the terminal where docker-compose is running, then run:
 ```bash
-Ctrl + c 
 docker-compose down
 ```
+
 ---
 
-
-## 👥 Authors
+## Authors
 
 - Jeremy Vaask
 - Aigar Orav
 - Timo Lipp
-
-
