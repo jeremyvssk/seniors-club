@@ -1,8 +1,7 @@
 export type Gender = "man" | "woman" | "other";
 export type LookingFor = "love" | "friend" | "travel" | "open";
-// Used for creating, editing profile
+// Used for creating profile
 export interface UserFormData {
-  userId?: number;
   name: string;
   age: string;
   gender: Gender;
@@ -13,7 +12,21 @@ export interface UserFormData {
   profilePicture?: File | null;
   latitude?: number;
   longitude?: number;
-  maxRadiusKm?: number;
+  maxRadiusKm: number;
+}
+// Used for editing profile
+export interface EditProfileData {
+  userId?: number;
+  name: string;
+  age: string;
+  gender: Gender;
+  hobbies: string[];
+  lookingFor: LookingFor;
+  lookingForGender: Gender[];
+  bio: string;
+  profilePicture?: File | null;      // New file if replacing
+  profilePictureUrl?: string | null; // Current uploaded URL
+  maxRadiusKm: number;
   email: string;
 }
 

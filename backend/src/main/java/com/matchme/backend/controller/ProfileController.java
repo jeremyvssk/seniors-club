@@ -1,14 +1,16 @@
 package com.matchme.backend.controller;
 
 import com.matchme.backend.dto.ProfileRequest;
+import com.matchme.backend.dto.UserBioRequest;
 import com.matchme.backend.dto.UserBioResponse;
+import com.matchme.backend.dto.AboutMeRequest;
+import com.matchme.backend.dto.AboutMeResponse;
 import com.matchme.backend.dto.BasicUserInfoResponse;
+import com.matchme.backend.dto.EmailResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.ProfileService;
 import com.matchme.backend.service.UserService;
-import com.matchme.backend.dto.ProfileUpdateRequest;
-import com.matchme.backend.dto.AboutMeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -98,56 +99,58 @@ public class ProfileController {
 
         return ResponseEntity.ok(response);
     }
-/*
+
+    // GET /me/email - Returns only email (for authenticated user's own profile view)
+    @GetMapping("/email")
+    public ResponseEntity<?> getMyEmail(@AuthenticationPrincipal String email) {
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(new EmailResponse(user.getEmail()));
+    }
+
+    // GET /me/profile - shortcut to /users/{id}/profile
     @GetMapping("/profile")
     public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-        if (profile == null || !profile.getProfileCompleted()) {
+        if (profile == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Return only "about me" info
-        UserBioResponse response = new UserBioResponse();
+        AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setName(profile.getName() != null ? profile.getName() : "");
-        response.setAge(profile.getAge() != null ? profile.getAge() : 0);
         response.setBio(profile.getBio() != null ? profile.getBio() : "");
-        response.setHobbies(profile.getHobbies() != null ? profile.getHobbies() : new ArrayList<>());
-        response.setLookingFor(profile.getLookingFor() != null ? profile.getLookingFor() : "");
-        response.setProfilePictureUrl(profile.getProfilePictureUrl() != null ? profile.getProfilePictureUrl() : "");
-        response.setMaxRadiusKm(profile.getMaxRadiusKm() != null ? profile.getMaxRadiusKm() : 50);
+
         return ResponseEntity.ok(response);
     }
-*/
-/* 
+
     // Get MY biographical data
+
     @GetMapping("/bio")
     public ResponseEntity<?> getMyBio(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfile profile = profileService.getProfileByUser(user);
-        if (profile == null || !profile.getProfileCompleted()) {
+        if (profile == null) { 
             return ResponseEntity.notFound().build();
         }
 
         UserBioResponse response = new UserBioResponse();
         response.setId(user.getId());
         response.setGender(profile.getGender());
-        response.setBio(profile.getBio());
         response.setHobbies(profile.getHobbies());
         response.setLookingFor(profile.getLookingFor());
         response.setLookingForGender(profile.getLookingForGender());
         response.setAge(profile.getAge());
-        
+        response.setMaxRadiusKm(profile.getMaxRadiusKm());
 
         return ResponseEntity.ok(response);
     }
-*/
+
     @GetMapping("/profile/edit")
     public ResponseEntity<?> getMyProfileForEdit(@AuthenticationPrincipal String email) {
         User user = userService.findByEmail(email)
@@ -160,10 +163,9 @@ public class ProfileController {
 
         // Return all editable fields
         return ResponseEntity.ok(Map.of(
-
+                "id", profile.getId() != null ? profile.getId() : "",
                 "name", profile.getName() != null ? profile.getName() : "",
                 "age", profile.getAge() != null ? profile.getAge() : 0,
-                "bio", profile.getBio() !=null? profile.getBio() : 0,
                 "hobbies", profile.getHobbies() != null ? profile.getHobbies() : java.util.List.of(),
                 "lookingFor", profile.getLookingFor() != null ? profile.getLookingFor() : "",
                 "lookingForGender",
@@ -227,10 +229,10 @@ public class ProfileController {
 
     // Update only provided fields
 
-    @PutMapping("/profile")
+    @PutMapping("/bio")
     public ResponseEntity<?> updateProfile(
             @AuthenticationPrincipal String email,
-            @Valid @RequestBody ProfileUpdateRequest updates) {
+            @Valid @RequestBody UserBioRequest updates) {
 
         try {
             User user = userService.findByEmail(email)
@@ -241,12 +243,6 @@ public class ProfileController {
                 return ResponseEntity.notFound().build();
             }
 
-            if (updates.getName() != null) {
-                profile.setName(updates.getName().trim());
-            }
-            if (updates.getBio() != null) {
-                profile.setBio(updates.getBio());
-            }
             if (updates.getHobbies() != null) {
                 profile.setHobbies(updates.getHobbies());
             }
@@ -268,4 +264,32 @@ public class ProfileController {
             return ResponseEntity.internalServerError().body("Failed to update profile");
         }
     }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateAboutMe(
+            @AuthenticationPrincipal String email,
+            @Valid @RequestBody AboutMeRequest request) {
+
+        try {
+            User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            UserProfile profile = profileService.getProfileByUser(user);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (request.getBio() != null) {
+                profile.setBio(request.getBio());
+            }
+
+            profileService.saveProfile(profile);
+
+            return ResponseEntity.ok(Map.of("message", "Bio updated successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Failed to update bio");
+        }
+    }
+
 }

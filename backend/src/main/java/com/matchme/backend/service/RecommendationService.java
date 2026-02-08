@@ -1,10 +1,12 @@
 package com.matchme.backend.service;
 
 
+import com.matchme.backend.model.Match;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserInteraction;
 import com.matchme.backend.model.UserInteraction.InteractionType;
 import com.matchme.backend.model.UserProfile;
+import com.matchme.backend.repo.MatchRepository;
 import com.matchme.backend.repo.UserInteractionRepository;
 import com.matchme.backend.repo.UserProfileRepository;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,13 @@ public class RecommendationService {
     private final UserProfileRepository profileRepository;
     private final UserInteractionRepository interactionRepository;
     private final MatchingAlgorithmService matchingAlgorithmService;
+    private final MatchRepository matchRepository;
 
-    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository, MatchingAlgorithmService matchingAlgorithmService){
+    public RecommendationService(UserProfileRepository profileRepository, UserInteractionRepository interactionRepository, MatchingAlgorithmService matchingAlgorithmService, MatchRepository matchRepository){
         this.profileRepository = profileRepository;
         this.interactionRepository = interactionRepository;
         this.matchingAlgorithmService = matchingAlgorithmService;
+        this.matchRepository = matchRepository;
     }
 
     //Get recommendedprofiles
@@ -39,23 +43,42 @@ public class RecommendationService {
 
         // Get profiles that were already liked or skipped
         List<UserInteraction> myInteractions = interactionRepository.findByUser(currentUser);
-        
         List<Long> interactedUserIds = myInteractions.stream()
             .map(interaction -> interaction.getTargetProfile().getUser().getId())
             .collect(Collectors.toList());
 
-        // Use custom database query to filter early
+        // Get all matches where current user is involved (both directions)
+        List<Match> allMyMatches = matchRepository.findAll().stream()
+            .filter(m -> m.getStatus() == Match.MatchStatus.MATCHED)
+            .filter(m -> m.getUserId().equals(currentUser.getId()) || 
+                        m.getLikedUserId().equals(currentUser.getId()))
+            .collect(Collectors.toList());
+        // Extract matched user IDs (the other person in each match)
+        List<Long> matchedUserIds = allMyMatches.stream()
+            .map(m -> m.getUserId().equals(currentUser.getId()) 
+                ? m.getLikedUserId() 
+                : m.getUserId())
+            .collect(Collectors.toList());
+        // Combine interacted and matched users into exclusion list
+        List<Long> excludedUserIds = new ArrayList<>();
+        excludedUserIds.addAll(interactedUserIds);
+        excludedUserIds.addAll(matchedUserIds);
+        // Remove duplicates from exclusion list
+        excludedUserIds = excludedUserIds.stream().distinct().collect(Collectors.toList());
+
+        // Get candidate profiles (excluding current user, interacted users, and matched users)
         List<UserProfile> candidateProfiles;
-        if (interactedUserIds.isEmpty()) {
-            // Avoid SQL error with empty IN clause
+        if (excludedUserIds.isEmpty()) {
+            // No exclusions, get all completed profiles except current user
             candidateProfiles = profileRepository.findAll().stream()
                 .filter(profile -> profile.getProfileCompleted())
                 .filter(profile -> !profile.getUser().getId().equals(currentUser.getId()))
                 .collect(Collectors.toList());
         } else {
+            // Use database query to efficiently filter excluded users
             candidateProfiles = profileRepository.findCandidateProfiles(
                 currentUser.getId(),
-                interactedUserIds
+                excludedUserIds
             );
         }
 
@@ -89,19 +112,6 @@ public class RecommendationService {
             UserInteraction interaction = new UserInteraction(currentUser, targetProfile, InteractionType.SKIP);
             interactionRepository.save(interaction);
     }
-
-            //here should add whether gender preferences match, 
-
-            //here should add whether users liked eachother
-
-            //here should add whether its a match or not
-
-            //save the match to database 
-
-            //notification to both users
-
-            //enable chat
-
 
     
 }

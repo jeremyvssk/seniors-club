@@ -37,6 +37,7 @@ public class ProfileRequest {
     private List<@Pattern(regexp = "^(man|woman|other)$", message = "Each gender must be: man, woman, or other") String> lookingForGender;
 
     //optional - about me
+    @Size(max = 150, message = "Bio must be no more than 150 characters")
     private String bio;
 
     // Optional - can be null

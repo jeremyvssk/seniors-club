@@ -279,12 +279,9 @@ const Step6Location = ({ data, updateData, onNext, onBack }: Step6Props) => {
                   <span>300 km</span>
                 </div>
 
-                {/* Helper Text */}
+                {/* Match radius text */}
                 <p className="text-xs md:text-sm text-slate-600 text-center mt-2 md:mt-3">
-                  {radius >= 300 
-                    ? 'Match with everyone!' 
-                    : `Show matches within ${radius} km`
-                  }
+                  Show matches within {radius} km
                 </p>
               </div>
 

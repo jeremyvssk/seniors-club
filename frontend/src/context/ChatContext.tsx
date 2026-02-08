@@ -132,6 +132,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         return newSet;
                       });
                     });
+
+                    // Subscribe to chat creation notifications
+                    websocketAPI.subscribeToTopic(`/topic/chat-created/${user.id}`, (newChat: ChatResponse) => {
+                      console.log('📬 New chat created:', newChat);
+                      setChats(prev => {
+                        // Don't add duplicate chats
+                        if (prev.some(c => c.chatId === newChat.chatId)) {
+                          return prev;
+                        }
+                        // Add new chat to the top of the list
+                        return [newChat, ...prev];
+                      });
+                    });
           
                     // ✅ Load chats AFTER WebSocket is connected
                     refreshChats();

@@ -29,19 +29,18 @@ public class MatchController {
     public ResponseEntity<LikeResponse> sendConnectionRequest(
             @AuthenticationPrincipal String email,
             @Valid @RequestBody LikeRequest request) {
-        
+
         System.out.println("Connection request from: " + email + " to user: " + request.getLikedUserId());
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Match match = matchService.sendConnectionRequest(currentUser.getId(), request.getLikedUserId());
 
         LikeResponse response = new LikeResponse(
-            "Connection request sent!",
-            false,
-            match.getId()
-        );
+                "Connection request sent!",
+                false,
+                match.getId());
 
         return ResponseEntity.ok(response);
     }
@@ -50,7 +49,7 @@ public class MatchController {
     @GetMapping("/requests/pending")
     public ResponseEntity<List<ConnectionRequestResponse>> getPendingRequests(
             @AuthenticationPrincipal String email) {
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -64,17 +63,16 @@ public class MatchController {
     public ResponseEntity<LikeResponse> acceptRequest(
             @AuthenticationPrincipal String email,
             @PathVariable Long requestId) {
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Match match = matchService.acceptConnectionRequest(requestId, currentUser.getId());
 
         LikeResponse response = new LikeResponse(
-            "Connection accepted!",
-            true,
-            match.getId()
-        );
+                "Connection accepted!",
+                true,
+                match.getId());
 
         return ResponseEntity.ok(response);
     }
@@ -84,7 +82,7 @@ public class MatchController {
     public ResponseEntity<Void> declineRequest(
             @AuthenticationPrincipal String email,
             @PathVariable Long requestId) {
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -98,7 +96,7 @@ public class MatchController {
     public ResponseEntity<Void> disconnect(
             @AuthenticationPrincipal String email,
             @PathVariable Long userId) {
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -111,12 +109,25 @@ public class MatchController {
     @GetMapping
     public ResponseEntity<List<MatchedUserResponse>> getUserMatches(
             @AuthenticationPrincipal String email) {
-        
+
         User currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<MatchedUserResponse> matches = matchService.getUserMatches(currentUser.getId());
 
         return ResponseEntity.ok(matches);
+    }
+
+    //get all accepted matches by their ID
+    @GetMapping("/connections")
+    public ResponseEntity<List<Long>> getConnections(
+            @AuthenticationPrincipal String email) {
+
+        User currentUser = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Long> connectionIds = matchService.getConnectionIds(currentUser.getId());
+
+        return ResponseEntity.ok(connectionIds);
     }
 }

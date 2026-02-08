@@ -77,7 +77,7 @@ export const RequestsSection: React.FC = () => {
   const handleAccept = async (requestId: number) => {
     setProcessingId(requestId);
     try {
-      const response = await matchAPI.acceptRequest(requestId);
+      await matchAPI.acceptRequest(requestId);
       
       setRequests(prev => prev.filter(r => r.requestId !== requestId));
     } catch (error: any) {

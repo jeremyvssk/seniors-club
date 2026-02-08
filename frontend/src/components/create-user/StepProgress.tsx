@@ -21,7 +21,7 @@ const StepProgress = ({ currentStep, totalSteps }: StepProgressProps) => {
         
         {/* Progress line - vibrant blue */}
         <div 
-          className="absolute top-1/2 left-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-out rounded-full shadow-sm"
+          className="absolute top-1/2 left-0 h-1.5 bg-linear-to-r from-blue-600 to-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-out rounded-full shadow-sm"
           style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
         />
 

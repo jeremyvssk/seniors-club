@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,9 @@ public class ChatService {
 
     @Autowired
     private MatchService matchService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     public List<ChatResponse> getUserChats(Long userId) {
         List<Chat> chats = chatRepository.findAllByUserIdOrderByLastMessageDesc(userId);
@@ -61,6 +65,14 @@ public class ChatService {
                     
                     Chat saved = chatRepository.save(newChat);
                     System.out.println("Created new chat ID: " + saved.getId());
+
+                    // Notify both users via WebSocket
+                    ChatResponse chatForUser1 = buildChatResponse(saved, user1Id);
+                    ChatResponse chatForUser2 = buildChatResponse(saved, user2Id);
+                    
+                    messagingTemplate.convertAndSend("/topic/chat-created/" + user1Id, chatForUser1);
+                    messagingTemplate.convertAndSend("/topic/chat-created/" + user2Id, chatForUser2);
+                    
                     return saved;
                 });
     }

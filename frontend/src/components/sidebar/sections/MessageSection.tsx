@@ -3,7 +3,7 @@ import { useChat } from '../../../context/ChatContext';
 import { MessageCircle, User } from 'lucide-react';
 
 export const MessagesSection: React.FC = () => {
-  const { chats, setActiveChat } = useChat();
+  const { chats, openChatWithUser, activeChat } = useChat();
 
   const formatTime = (dateString: string) => {
   // Backend sends: "2026-02-05T12:30:00Z" (UTC)
@@ -31,6 +31,14 @@ export const MessagesSection: React.FC = () => {
   });
 };
 
+const handleChatClick = async (chat: typeof chats[0]) => {
+    try {
+      await openChatWithUser(chat.otherUserId);
+    } catch (err) {
+      console.error('Failed to open chat:', err);
+    }
+  };
+
 
   if (chats.length === 0) {
     return (
@@ -49,10 +57,11 @@ export const MessagesSection: React.FC = () => {
       {chats.map((chat) => (
         <div
           key={chat.chatId}
-          onClick={() => setActiveChat(chat)}
-          className="p-3 md:p-4 bg-white rounded-lg border border-gray-200 
+          onClick={() => handleChatClick(chat)}
+          className={`p-3 md:p-4 bg-white rounded-lg border 
+                   ${activeChat?.chatId === chat.chatId ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} 
                    hover:border-blue-400 cursor-pointer transition-all 
-                   hover:shadow-md relative"
+                   hover:shadow-md relative`}
         >
           <div className="flex items-start gap-3">
             

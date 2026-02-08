@@ -254,6 +254,19 @@ class WebSocketService {
     });
   }
 
+  // Subscribe to chat creation notifications
+  subscribeToTopic(topic: string, callback: (data: any) => void): void {
+    if (!this.client || !this.connected) {
+      console.error('Cannot subscribe - not connected');
+      return;
+    }
+    
+    this.client.subscribe(topic, (message) => {
+      const data = JSON.parse(message.body);
+      callback(data);
+    });
+  }
+
   // Send typing indicator
   sendTypingIndicator(recipientId: number, isTyping: boolean): void {
     if (!this.client || !this.connected) {

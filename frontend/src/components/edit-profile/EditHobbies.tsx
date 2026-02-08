@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { UserFormData } from "../../types/User";
+import { EditProfileData } from "../../types/User";
 import api from "../../api/axios";
 
 interface EditHobbiesProps {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
+  data: EditProfileData;
+  updateData: (data: Partial<EditProfileData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -36,7 +36,7 @@ const EditHobbies: React.FC<EditHobbiesProps> = ({
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get<UserFormData>("/me/profile");
+        const res = await api.get<EditProfileData>("/me/bio");
         setHobbies(res.data.hobbies || []);
       } catch (err) {
         setError("Failed to load hobbies");
@@ -63,7 +63,7 @@ const EditHobbies: React.FC<EditHobbiesProps> = ({
     }
 
     try {
-      await api.put("/me/profile", { hobbies });
+      await api.put("/me/bio", { hobbies });
       updateData({ hobbies }); // update parent state
       onBack(); // close overlay
     } catch {
