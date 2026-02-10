@@ -18,5 +18,5 @@ public class ChatResponse {
     private String lastMessage;
     private ZonedDateTime lastMessageAt;
     private Integer unreadCount;
-    
+    private Boolean isOnline;
 }

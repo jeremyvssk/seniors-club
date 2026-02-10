@@ -80,6 +80,13 @@ const handleChatClick = async (chat: typeof chats[0]) => {
                   <User className='w-5 h-5 md:w-6 md:h-6 text-gray-400' />
                 </div>
               )}
+
+              {/* Online Indicator*/}
+              {chat.isOnline !== undefined && (
+                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                  chat.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                }`} />
+              )}
               
               {/* Unread badge */}
               {chat.unreadCount > 0 && (

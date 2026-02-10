@@ -7,11 +7,14 @@ import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.repo.MatchRepository;
 import com.matchme.backend.repo.UserProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,9 @@ public class MatchService {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate; 
 
     // Send connection request (like a user)
     @Transactional
@@ -51,7 +57,21 @@ public class MatchService {
         match.setLikedUserId(likedUserId);
         match.setStatus(Match.MatchStatus.PENDING);
 
-        return matchRepository.save(match);
+        Match savedMatch = matchRepository.save(match);
+
+        // Send WebSocket notification to recipient
+        Map<String, Object> notification = new HashMap<>();
+        notification.put("type", "NEW_REQUEST");
+        notification.put("fromUserId", userId);
+        notification.put("requestId", savedMatch.getId());
+        
+        messagingTemplate.convertAndSend(
+            "/topic/requests/" + likedUserId, 
+            (Object) notification
+        );
+        System.out.println("🔔 Sent request notification to user: " + likedUserId);
+
+        return savedMatch;
     }
 
     // Accept connection request
@@ -90,6 +110,19 @@ public class MatchService {
             reverse.setMatchedAt(LocalDateTime.now());
             matchRepository.save(reverse);
         }
+
+        // Send WebSocket notifications to both users
+        Long otherUserId = request.getUserId();
+        
+        Map<String, Object> notification = new HashMap<>();
+        notification.put("type", "NEW_MATCH");
+        notification.put("matchedUserId", currentUserId);
+        notification.put("matchId", request.getId());
+        
+        messagingTemplate.convertAndSend("/topic/matches/" + currentUserId, (Object) notification);
+        messagingTemplate.convertAndSend("/topic/matches/" + otherUserId, (Object) notification);
+        
+        System.out.println("🎉 Sent match notifications to users: " + currentUserId + " and " + otherUserId);
 
         return request;
     }
@@ -180,18 +213,18 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
-    //gett all accepted matches by their id (/connections endpoint)
+    //get all accepted matches by their id (/connections endpoint)
     public List<Long> getConnectionIds(Long userId) {
-    List<Match> matches = matchRepository.findAllMatchesByUserId(userId);
+        List<Match> matches = matchRepository.findAllMatchesByUserId(userId);
 
-    return matches.stream()
-            .filter(m -> m.getStatus() == Match.MatchStatus.MATCHED)
-            .map(m -> m.getUserId().equals(userId)
-                    ? m.getLikedUserId()
-                    : m.getUserId())
-            .distinct()
-            .collect(Collectors.toList());
-}
+        return matches.stream()
+                .filter(m -> m.getStatus() == Match.MatchStatus.MATCHED)
+                .map(m -> m.getUserId().equals(userId)
+                        ? m.getLikedUserId()
+                        : m.getUserId())
+                .distinct()
+                .collect(Collectors.toList());
+    }
 
     // Check if user has sent a request
     public boolean hasUserLiked(Long userId, Long likedUserId) {

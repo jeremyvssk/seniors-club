@@ -99,7 +99,7 @@ const CreateUser = () => {
       // Bio is optional - no validation needed
       // Profile picture is optional - no validation needed
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (!token) {
         alert("You must be logged in to create a profile");
         navigate("/login");
@@ -163,7 +163,7 @@ const CreateUser = () => {
           
           if (errorMessage && errorMessage.toLowerCase().includes('token')) {
             alert("Session expired. Please login again.");
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
             navigate("/login");
           } else {
             // It's a validation error, not token issue
@@ -174,7 +174,7 @@ const CreateUser = () => {
 
         if (status === 401) {
           alert("Authentication failed. Please login again.");
-          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           navigate("/login");
           return;
         }

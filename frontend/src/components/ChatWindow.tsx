@@ -20,7 +20,7 @@ export const ChatWindow: React.FC = () => {
   
   // Get userId from user object instead
   const getUserId = () => {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
       return user.id;

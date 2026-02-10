@@ -16,17 +16,12 @@ export const MatchesSection: React.FC = () => {
   const [matches, setMatches] = useState<ProfileWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { openChatWithUser, refreshChats } = useChat();
-  
+  const { openChatWithUser, refreshChats, clearMatchesNotification, newMatchesCount } = useChat(); 
   // Modals
   const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ userId: number; name: string } | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<ProfileWithId | null>(null);
-
-  useEffect(() => {
-    fetchMatches();
-  }, []);
 
   const fetchMatches = async () => {
     try {
@@ -72,6 +67,21 @@ export const MatchesSection: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Initial load + clear notification
+  useEffect(() => {
+    fetchMatches();
+    clearMatchesNotification();
+  }, [clearMatchesNotification]);
+
+  // Auto-refresh when new matches arrive
+  useEffect(() => {
+    if (newMatchesCount > 0) {
+      console.log('🎉 New match notification detected, refreshing list...');
+      fetchMatches();
+      clearMatchesNotification();
+    }
+  }, [newMatchesCount, clearMatchesNotification]);
 
   const handleSendMessage = async (userId: number, name: string) => {
     console.log(`💬 Opening chat with ${name} (ID: ${userId})`);

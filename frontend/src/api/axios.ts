@@ -8,11 +8,10 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('token'); // Changed from localStorage
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
       // debug
       console.log('=== AXIOS REQUEST ===');
       console.log('URL:', `${config.baseURL || ''}${config.url || ''}`);
@@ -44,8 +43,8 @@ api.interceptors.response.use(
     console.error('Headers:', error.response?.headers);
 
     if (error.response?.status === 401 && !error.config?.url?.includes("/login")) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);

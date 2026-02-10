@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserCheck, UserX, Loader, Maximize2, X } from 'lucide-react';
 import { matchAPI } from '../../../api/api';
+import { useChat } from '../../../context/ChatContext';
 import api from '../../../api/axios';
 import ProfileCard from '../../ProfileCard';
 import { ViewableProfile } from '../../../types/User';
@@ -16,14 +17,10 @@ export const RequestsSection: React.FC = () => {
   const [requests, setRequests] = useState<RequestProfileWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
-  
+  const { clearRequestsNotification, newRequestsCount } = useChat();
   // Profile modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<RequestProfileWithId | null>(null);
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
 
   const fetchRequests = async () => {
     try {
@@ -68,6 +65,20 @@ export const RequestsSection: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchRequests();
+    clearRequestsNotification();
+  }, [clearRequestsNotification]);
+
+  // Auto-refresh when new requests arrive
+  useEffect(() => {
+    if (newRequestsCount > 0) {
+      console.log('🔔 New request notification detected, refreshing list...');
+      fetchRequests();
+      clearRequestsNotification();
+    }
+  }, [newRequestsCount, clearRequestsNotification]);
 
   const handleProfileClick = (request: RequestProfileWithId) => {
     setSelectedProfile(request);

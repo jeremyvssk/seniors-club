@@ -1,6 +1,9 @@
 package com.matchme.backend.config;
 
 import com.matchme.backend.util.JwtUtil;
+import com.matchme.backend.service.OnlineStatusService;
+import com.matchme.backend.service.UserService;
+import com.matchme.backend.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -12,7 +15,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -26,6 +28,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private OnlineStatusService onlineStatusService;
+
+    @Autowired
+    private UserService userService;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic", "/queue");
@@ -35,12 +43,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register endpoint with both native WebSocket and SockJS
         registry.addEndpoint("/ws")
                 .setAllowedOrigins("http://localhost:5173")
-                .withSockJS(); // SockJS fallback
+                .withSockJS();
         
-        // Also register native WebSocket endpoint (without SockJS)
         registry.addEndpoint("/ws")
                 .setAllowedOrigins("http://localhost:5173");
     }
@@ -64,7 +70,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                 new UsernamePasswordAuthenticationToken(email, null, new ArrayList<>());
                             
                             accessor.setUser(authentication);
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                            // Mark user as online
+                            User user = userService.findByEmail(email).orElse(null);
+                            if (user != null) {
+                                onlineStatusService.setOnline(user.getId());
+                            }
+                        }
+                    }
+                } else if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+                    // Mark user as offline
+                    if (accessor.getUser() != null) {
+                        String email = accessor.getUser().getName();
+                        User user = userService.findByEmail(email).orElse(null);
+                        if (user != null) {
+                            onlineStatusService.setOffline(user.getId());
                         }
                     }
                 }

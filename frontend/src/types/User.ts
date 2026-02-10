@@ -40,6 +40,7 @@ export interface ViewableProfile {
   lookingForGender: Gender[];
   bio: string;
   profilePicture?: string | null;
-  distanceKm?: number;      // Only show computed distance
+  distanceKm?: number; // Only show computed distance
+  isOnline?: boolean;
   // NO latitude, longitude, maxRadiusKm
 }

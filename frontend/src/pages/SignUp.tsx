@@ -54,8 +54,8 @@ const SeniorsClubSignUp: React.FC = () => {
 
       // Step 3: Store token and user data
       const token = loginResponse.data.token;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(loginResponse.data.user));
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(loginResponse.data.user));
       
       // Step 4: Update axios default headers immediately
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;

@@ -6,6 +6,7 @@ import com.matchme.backend.dto.UserBioResponse;
 import com.matchme.backend.model.User;
 import com.matchme.backend.model.UserProfile;
 import com.matchme.backend.service.UserService;
+import com.matchme.backend.service.OnlineStatusService;
 import com.matchme.backend.service.ProfileService;
 
 
@@ -27,6 +28,9 @@ public class UserController {
 
     @Autowired
     private ProfileService profileService;
+
+    @Autowired
+    private OnlineStatusService onlineStatusService;
 
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserBasicInfo(@PathVariable Long id) {
@@ -67,6 +71,7 @@ public class UserController {
         AboutMeResponse response = new AboutMeResponse();
         response.setId(user.getId());
         response.setBio(profile.getBio());
+        response.setIsOnline(onlineStatusService.isOnline(id));
 
         return ResponseEntity.ok(response);
     }

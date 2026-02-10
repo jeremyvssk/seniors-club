@@ -39,6 +39,9 @@ public class ChatService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private OnlineStatusService onlineStatusService;
+
     public List<ChatResponse> getUserChats(Long userId) {
         List<Chat> chats = chatRepository.findAllByUserIdOrderByLastMessageDesc(userId);
         
@@ -151,6 +154,7 @@ public class ChatService {
         response.setLastMessage(chat.getLastMessage());
         response.setLastMessageAt(chat.getLastMessageAt());
         response.setUnreadCount(chat.getUnreadCountForUser(currentUserId));
+        response.setIsOnline(onlineStatusService.isOnline(otherUserId));
 
         return response;
     }

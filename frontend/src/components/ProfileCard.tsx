@@ -18,6 +18,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
     hobbies = [],
     lookingFor,
     distanceKm,
+    isOnline,
   } = profile;
 
   // Debug: log what profilePicture we received
@@ -77,6 +78,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
               <User className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
             )}
           </>
+        )}
+
+        {/* Online Indicator */}
+        {isOnline !== undefined && (
+          <div className="absolute top-4 right-4 flex items-center gap-2 
+                        bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+            <div className={`w-2.5 h-2.5 rounded-full ${
+              isOnline ? 'bg-green-500' : 'bg-gray-400'
+            }`} />
+            <span className="text-xs font-medium text-gray-700">
+              {isOnline ? 'Online' : 'Offline'}
+            </span>
+          </div>
         )}
         
         {/* Tap hint overlay */}

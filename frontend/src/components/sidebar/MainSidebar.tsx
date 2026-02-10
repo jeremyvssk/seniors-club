@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   CircleUser,
   HeartHandshake,
@@ -10,7 +10,6 @@ import { MessagesSection } from "./sections/MessageSection";
 import ProfileSection from "./sections/ProfileSection";
 import MatchesSection from "./sections/MatchesSection";
 import RequestsSection from "./sections/RequestsSection";
-import { matchAPI } from "../../api/api";
 import { useChat } from "../../context/ChatContext";
 
 interface SidebarProps {
@@ -32,35 +31,11 @@ const items: SidebarItem[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const [activeSection, setActiveSection] = React.useState<string | null>(null);
-  const [hasNewRequests, setHasNewRequests] = useState(false);
 
-  const { totalUnreadCount } = useChat();
+  const { totalUnreadCount, newRequestsCount, newMatchesCount } = useChat();
   const hasNewMessages = totalUnreadCount > 0;
-  
-  // Check for pending requests
-  useEffect(() => {
-    const checkRequests = async () => {
-      try {
-        const requests = await matchAPI.getPendingRequests();
-        setHasNewRequests(requests.length > 0);
-      } catch (error) {
-        console.error('Failed to check requests:', error);
-      }
-    };
-
-    checkRequests();
-
-    // Poll every 30 seconds for new requests
-    const interval = setInterval(checkRequests, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Clear notification when requests section is opened
-  useEffect(() => {
-    if (activeSection === 'requests') {
-      setHasNewRequests(false);
-    }
-  }, [activeSection]);
+  const hasNewRequests = newRequestsCount > 0;
+  const hasNewMatches = newMatchesCount > 0;
 
   const handleToggle = (id: string) => {
     setActiveSection(activeSection === id ? null : id);
@@ -88,18 +63,24 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                ${activeSection === id ? 'scale-110 text-blue-500' : 'text-gray-700'}`} 
               />
               
-              {/* 🔴 Only show when sidebar is closed */}
+              {/* Red dots - Only show when sidebar is closed */}
+                {id === 'matches' && hasNewMatches && !activeSection && (
+                <span className="absolute top-2 right-2 md:top-3 md:right-3 
+                              w-2 h-2 md:w-2.5 md:h-2.5 
+                              bg-red-500 rounded-full" />
+              )}
+              
+              {/* Existing red dots for requests and messages */}
               {id === 'requests' && hasNewRequests && !activeSection && (
                 <span className="absolute top-2 right-2 md:top-3 md:right-3 
-                               w-2 h-2 md:w-2.5 md:h-2.5 
-                               bg-red-500 rounded-full" />
+                              w-2 h-2 md:w-2.5 md:h-2.5 
+                              bg-red-500 rounded-full" />
               )}
 
-               {/* 🔴 Red dot for messages - Only show when sidebar is closed */}
-               {id === 'messages' && hasNewMessages && !activeSection && (
+              {id === 'messages' && hasNewMessages && !activeSection && (
                 <span className="absolute top-2 right-2 md:top-3 md:right-3 
-                               w-2 h-2 md:w-2.5 md:h-2.5 
-                               bg-red-500 rounded-full" />
+                              w-2 h-2 md:w-2.5 md:h-2.5 
+                              bg-red-500 rounded-full" />
               )}
               {/* Tooltip */}
               <span className="absolute left-full ml-2 whitespace-nowrap rounded-lg 
@@ -174,23 +155,27 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                                  ${activeSection === id ? 'scale-110' : ''}`} 
                 />
 
-                  {/* 🔴 - requests */}
-                  {id === 'requests' && hasNewRequests && activeSection !== 'requests' && (
-                  <span className="absolute top-3 right-7 sm:top-1.5 sm:right-1.5 
+              {/* Red dots for mobile - Only when NOT active */}
+                {id === 'matches' && hasNewMatches && activeSection !== 'matches' && (
+                  <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 
                                  w-2 h-2 sm:w-2.5 sm:h-2.5 
                                  bg-red-500 rounded-full 
                                  border border-white" />
                 )}
 
-                {/* 🔴 - messages */}
+                {id === 'requests' && hasNewRequests && activeSection !== 'requests' && (
+                  <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 
+                                 w-2 h-2 sm:w-2.5 sm:h-2.5 
+                                 bg-red-500 rounded-full 
+                                 border border-white" />
+                )}
+
                 {id === 'messages' && hasNewMessages && activeSection !== 'messages' && (
-                  <span className="absolute top-3 right-57 sm:top-1.5 sm:right-1.5 
+                  <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 
                                  w-2 h-2 sm:w-2.5 sm:h-2.5 
                                  bg-red-500 rounded-full 
                                  border border-white" />
                 )}
-
-                 
 
                 <span className="text-[10px] sm:text-xs font-medium">{label}</span>
               </button>

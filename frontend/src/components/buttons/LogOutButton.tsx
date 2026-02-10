@@ -12,8 +12,8 @@ const LogOutButton: React.FC<LogOutButtonProps> = ({ onClick }) => {
 
   const handleLogout = () => {
     // Clear authentication data
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userId');
     
     // Call custom onClick handler if provided
     if (onClick) {
