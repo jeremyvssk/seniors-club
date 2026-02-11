@@ -48,11 +48,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const [newRequestsCount, setNewRequestsCount] = useState(0);
   const [newMatchesCount, setNewMatchesCount] = useState(0);
   const activeChatRef = useRef<ChatResponse | null>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
@@ -72,113 +72,125 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Setup WebSocket subscriptions when connection is ready
+  // WebSocket initialization - only runs once per mount
   useEffect(() => {
-    const { user } = getAuthData();
-    
-    if (!user?.id) return;
+    if (isInitializedRef.current) {
+      console.log('WebSocket already initialized, skipping');
+      return;
+    }
 
-    setCurrentUserId(user.id);
+    const { token, user } = getAuthData();
     
-    // Wait for WebSocket to connect, then setup all subscriptions
-    const unsubscribe = websocketService.onConnect(() => {
-      console.log('Setting up chat subscriptions for user:', user.id);
-      
-      // Subscribe to messages
-      websocketService.subscribeToMessages(user.id.toString(), (newMessage: MessageResponse) => {
-        console.log('New message received:', newMessage);
+    if (!token || !user?.id) {
+      console.log('No token or user, skipping WebSocket setup');
+      return;
+    }
 
-        const currentActiveChat = activeChatRef.current;
+    // Mark as initialized before connecting to prevent double initialization
+    isInitializedRef.current = true;
+    console.log('Initializing WebSocket for user:', user.id);
+
+    websocketService.connect(token)
+      .then(() => {
+        console.log('WebSocket connected, setting up subscriptions');
         
-        setMessages(prev => {
-          // Avoid duplicates
-          if (prev.some(m => m.id === newMessage.id)) {
-            return prev;
-          }
+        // Subscribe to incoming messages
+        websocketService.subscribeToMessages(user.id.toString(), (newMessage: MessageResponse) => {
+          console.log('New message received:', newMessage);
+
+          const currentActiveChat = activeChatRef.current;
           
-          // Only add to messages if it's for the active chat
-          if (currentActiveChat && newMessage.chatId === currentActiveChat.chatId) {
-            return [...prev, newMessage];
-          }
-          
-          return prev;
-        });
-
-        // Auto-mark as read if in active chat and from other user
-        if (currentActiveChat && newMessage.chatId === currentActiveChat.chatId && newMessage.senderId !== user.id) {
-          chatAPI.markMessagesAsRead(currentActiveChat.chatId)
-            .then(() => console.log('Marked message as read'))
-            .catch(err => console.error('Failed to mark message as read:', err));
-        }
-
-        refreshChats();
-      });
-  
-      // Subscribe to read receipts
-      websocketService.subscribeToReadReceipts(user.id.toString(), (data: { chatId: number; readBy: number }) => {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.chatId === data.chatId && msg.senderId === user.id
-              ? { ...msg, isRead: true }
-              : msg
-          )
-        );
-        
-        refreshChats();
-      });
-      
-      // Subscribe to typing indicators
-      websocketService.subscribeToTyping(user.id.toString(), (data: { senderId: number; isTyping: boolean }) => {
-        setTypingUsers(prev => {
-          const newSet = new Set(prev);
-          if (data.isTyping) {
-            newSet.add(data.senderId);
-          } else {
-            newSet.delete(data.senderId);
-          }
-          return newSet;
-        });
-      });
-
-      // Subscribe to new chat creation
-      websocketService.subscribeToTopic(`/topic/chat-created/${user.id}`, (newChat: ChatResponse) => {
-        setChats(prev => {
-          // Avoid duplicates
-          if (prev.some(c => c.chatId === newChat.chatId)) {
+          setMessages(prev => {
+            // Prevent duplicate messages
+            if (prev.some(m => m.id === newMessage.id)) {
+              return prev;
+            }
+            
+            // Only add to messages if it's for the active chat
+            if (currentActiveChat && newMessage.chatId === currentActiveChat.chatId) {
+              return [...prev, newMessage];
+            }
+            
             return prev;
+          });
+
+          // Auto-mark as read if we're viewing this chat and we didn't send it
+          if (currentActiveChat && newMessage.chatId === currentActiveChat.chatId && newMessage.senderId !== user.id) {
+            chatAPI.markMessagesAsRead(currentActiveChat.chatId)
+              .catch(err => console.error('Failed to mark message as read:', err));
           }
-          return [newChat, ...prev];
-        });
-      });
 
-      // Subscribe to connection requests
-      websocketService.subscribeToTopic(`/topic/requests/${user.id}`, (data: any) => {
-        console.log('RAW REQUEST NOTIFICATION RECEIVED:', data);
-        setNewRequestsCount(prev => {
-          const newCount = prev + 1;
-          console.log('Updated newRequestsCount:', prev, '→', newCount); 
-          return newCount;
+          // Refresh chat list to update unread counts
+          refreshChats();
         });
-      });
-
-      // Subscribe to new matches
-      websocketService.subscribeToTopic(`/topic/matches/${user.id}`, (data: any) => {
-        console.log('RAW MATCH NOTIFICATION RECEIVED:', data); 
-        setNewMatchesCount(prev => {
-          const newCount = prev + 1;
-          console.log('Updated newMatchesCount:', prev, '→', newCount); 
-          return newCount;
-        });
-      });
-      
-      // Load initial chats
-      refreshChats();
-    });
     
+        // Subscribe to read receipts
+        websocketService.subscribeToReadReceipts(user.id.toString(), ({ chatId, readBy }) => {
+          console.log('Read receipt received for chat:', chatId, 'by user:', readBy);
+          
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.chatId === chatId && msg.senderId === user.id
+                ? { ...msg, isRead: true }
+                : msg
+            )
+          );
+          
+          refreshChats();
+        });
+        
+        // Subscribe to typing indicators
+        websocketService.subscribeToTyping(user.id.toString(), ({ senderId, isTyping }) => {
+          setTypingUsers(prev => {
+            const newSet = new Set(prev);
+            if (isTyping) {
+              newSet.add(senderId);
+            } else {
+              newSet.delete(senderId);
+            }
+            return newSet;
+          });
+        });
+
+        // Subscribe to new chats being created
+        websocketService.subscribeToTopic(`/topic/chat-created/${user.id}`, (newChat: ChatResponse) => {
+          console.log('New chat created:', newChat);
+          setChats(prev => {
+            if (prev.some(c => c.chatId === newChat.chatId)) {
+              return prev;
+            }
+            return [newChat, ...prev];
+          });
+        });
+
+        // Subscribe to connection requests
+        websocketService.subscribeToTopic(`/topic/requests/${user.id}`, () => {
+          console.log('New connection request notification');
+          setNewRequestsCount(prev => prev + 1);
+        });
+
+        // Subscribe to match notifications
+        websocketService.subscribeToTopic(`/topic/matches/${user.id}`, () => {
+          console.log('New match notification');
+          setNewMatchesCount(prev => prev + 1);
+        });
+        
+        // Initial chat list fetch
+        refreshChats();
+      })
+      .catch((err) => {
+        console.error('WebSocket connection failed:', err);
+        // Reset on failure so it can retry
+        isInitializedRef.current = false;
+      });
+    
+    // Cleanup function - only runs on unmount
     return () => {
-      unsubscribe();
+      console.log('ChatProvider unmounting, cleaning up WebSocket');
+      websocketService.disconnect();
+      isInitializedRef.current = false;
     };
-  }, []); // Only run once on mount
+  }, []); // Empty dependency array - only run once
 
   // Load messages when active chat changes
   useEffect(() => {
@@ -211,18 +223,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [activeChat, refreshChats]);
 
-  // Reload if user changes (e.g., logout/login)
-  useEffect(() => {
-    const checkUserChange = () => {
-      const { user } = getAuthData();
-      if (user?.id && currentUserId && user.id !== currentUserId) {
-        window.location.reload();
-      }
-    };
-
-    const interval = setInterval(checkUserChange, 1000);
-    return () => clearInterval(interval);
-  }, [currentUserId]);
+  const sendTypingIndicator = useCallback((isTyping: boolean) => {
+    if (activeChat && websocketService.isConnected()) {
+      websocketService.sendTypingIndicator(activeChat.otherUserId, isTyping);
+    }
+  }, [activeChat]);
 
   const clearRequestsNotification = useCallback(() => {
     setNewRequestsCount(0);
@@ -232,13 +237,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setNewMatchesCount(0);
   }, []);
 
-  const sendTypingIndicator = (isTyping: boolean) => {
-    if (activeChat && websocketService.isConnected()) {
-      websocketService.sendTypingIndicator(activeChat.otherUserId, isTyping);
-    }
-  };
-
-  const openChatWithUser = async (userId: number) => {
+  const openChatWithUser = useCallback(async (userId: number) => {
     setLoading(true);
     setError(null);
 
@@ -252,9 +251,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [refreshChats]);
 
-  const loadMoreMessages = async () => {
+  const loadMoreMessages = useCallback(async () => {
     if (!activeChat || !hasMoreMessages || loading) return;
 
     setLoading(true);
@@ -270,9 +269,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeChat, hasMoreMessages, loading, currentPage]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = useCallback(async (content: string) => {
     if (!activeChat || !content.trim()) return;
     
     if (!websocketService.isConnected()) {
@@ -287,14 +286,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Failed to send message:', err);
       setError(err.message || 'Failed to send message');
     }
-  };
+  }, [activeChat]);
 
-  const closeChat = () => {
+  const closeChat = useCallback(() => {
     setActiveChat(null);
     setMessages([]);
     setCurrentPage(0);
     setHasMoreMessages(false);
-  };
+  }, []);
 
   return (
     <ChatContext.Provider value={{

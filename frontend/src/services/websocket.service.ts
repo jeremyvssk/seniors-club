@@ -4,12 +4,26 @@ import { MessageResponse } from '../types';
 class WebSocketService {
   private client: Client | null = null;
   private connected: boolean = false;
-  private connectionListeners: Array<() => void> = [];
   private messageSubscription: StompSubscription | null = null;
   private typingSubscription: StompSubscription | null = null;
   private readReceiptsSubscription: StompSubscription | null = null;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
+  private currentToken: string | null = null;
 
   connect(token: string): Promise<void> {
+    if (this.client?.connected && this.currentToken === token) {
+      console.log('Already connected with same token, reusing connection');
+      return Promise.resolve();
+    }
+
+    if (this.currentToken !== token) {
+      console.log('Token changed, disconnecting old connection');
+      this.disconnect();
+    }
+
+    this.currentToken = token;
+
     return new Promise((resolve, reject) => {
       this.client = new Client({
         brokerURL: 'ws://localhost:3001/ws',
@@ -18,31 +32,50 @@ class WebSocketService {
         },
         
         debug: (str) => {
-          console.log('STOMP: ' + str);
+          console.log('STOMP:', str);
         },
         
         reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 10000,
+        heartbeatOutgoing: 10000,
         
         onConnect: () => {
           this.connected = true;
-          console.log('WebSocket connected');
-          
-          // Notify all listeners that connection is ready
-          this.connectionListeners.forEach(listener => listener());
-          
+          this.reconnectAttempts = 0;
+          console.log('WebSocket connected successfully');
           resolve();
+        },
+
+        onStompError: (frame) => {
+          console.error('STOMP error:', frame.headers['message']);
+          
+          if (frame.headers['message']?.includes('JWT expired') || 
+              frame.headers['message']?.includes('ExecutorSubscribableChannel')) {
+            console.error('Token expired, redirecting to login');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            window.location.href = '/login';
+          }
+          
+          this.reconnectAttempts++;
+          if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.error('Max reconnection attempts reached');
+            reject(new Error('Failed to connect after max attempts'));
+          }
         },
         
         onWebSocketError: (error) => {
           console.error('WebSocket error:', error);
-          reject(error);
+          this.reconnectAttempts++;
+          
+          if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            reject(error);
+          }
         },
         
-        onWebSocketClose: () => {
+        onWebSocketClose: (event) => {
           this.connected = false;
-          console.log('WebSocket disconnected');
+          console.log('WebSocket closed:', event.reason);
         },
       });
 
@@ -69,33 +102,17 @@ class WebSocketService {
     if (this.client) {
       this.client.deactivate();
       this.connected = false;
+      this.currentToken = null;
     }
-    
-    this.connectionListeners = [];
   }
 
   isConnected(): boolean {
     return this.connected && this.client?.connected === true;
   }
 
-  // Register callback to be notified when WebSocket connects
-  onConnect(callback: () => void): () => void {
-    this.connectionListeners.push(callback);
-    
-    // If already connected, call immediately
-    if (this.isConnected()) {
-      callback();
-    }
-    
-    // Return unsubscribe function
-    return () => {
-      this.connectionListeners = this.connectionListeners.filter(cb => cb !== callback);
-    };
-  }
-
   subscribeToMessages(userId: string, callback: (message: MessageResponse) => void): void {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
+      console.error('Cannot subscribe to messages: not connected');
       return;
     }
 
@@ -111,7 +128,7 @@ class WebSocketService {
 
   subscribeToReadReceipts(userId: string, callback: (data: { chatId: number; readBy: number }) => void): void {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
+      console.error('Cannot subscribe to read receipts: not connected');
       return;
     }
 
@@ -123,7 +140,7 @@ class WebSocketService {
 
   subscribeToTyping(userId: string, callback: (data: { senderId: number; isTyping: boolean }) => void): void {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
+      console.error('Cannot subscribe to typing: not connected');
       return;
     }
 
@@ -135,7 +152,7 @@ class WebSocketService {
 
   subscribeToTopic(topic: string, callback: (data: any) => void): void {
     if (!this.client || !this.connected) {
-      console.error('Cannot subscribe - not connected');
+      console.error('Cannot subscribe to topic: not connected');
       return;
     }
     
@@ -147,7 +164,7 @@ class WebSocketService {
 
   sendTypingIndicator(recipientId: number, isTyping: boolean): void {
     if (!this.client || !this.connected) {
-      console.error('WebSocket not connected');
+      console.error('Cannot send typing indicator: not connected');
       return;
     }
 

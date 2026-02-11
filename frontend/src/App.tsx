@@ -7,34 +7,48 @@ import CreateUser from "./components/create-user/StepIndex";
 import MainPage from "./pages/MainPage";
 import { ChatProvider } from "./context/ChatContext";  
 import { ChatWindow } from "./components/ChatWindow";
-import { useWebSocketConnection } from "./hooks/useWebSocketConnection";
 
-function AppContent() {
-  useWebSocketConnection(); // Connect WebSocket based on auth/route
-  
+// Wrapper for authenticated routes
+function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LogIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/complete-profile" element={<CreateUser />} />
-        <Route path="/test" element={<TestPage />} />
-        <Route path="/explore" element={<MainPage />} />
-      </Routes>
-      
-      <ChatWindow />
-    </div>
+    <ChatProvider>
+      <div className="min-h-screen bg-gray-100">
+        {children}
+        <ChatWindow />
+      </div>
+    </ChatProvider>
   );
 }
 
 function App() {
   return (
-    <ChatProvider>  
-      <Router>
-        <AppContent />
-      </Router>
-    </ChatProvider>  
+    <Router>
+      <Routes>
+        {/* Public routes - no ChatProvider */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        
+        {/* Authenticated routes - wrapped in ChatProvider */}
+        <Route path="/complete-profile" element={
+          <AuthenticatedLayout>
+            <CreateUser />
+          </AuthenticatedLayout>
+        } />
+        
+        <Route path="/test" element={
+          <AuthenticatedLayout>
+            <TestPage />
+          </AuthenticatedLayout>
+        } />
+        
+        <Route path="/explore" element={
+          <AuthenticatedLayout>
+            <MainPage />
+          </AuthenticatedLayout>
+        } />
+      </Routes>
+    </Router>
   );
 }
 
