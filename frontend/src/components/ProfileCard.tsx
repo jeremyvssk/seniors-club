@@ -1,170 +1,228 @@
-import React, { useState } from 'react';
-import { User, MapPin } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, Info, MapPin, Sparkles, X } from 'lucide-react';
 import { ViewableProfile } from '../types/User';
+import { LookingForChip, LookingForValue } from './ui/design';
+import { joinAnd, kmText, sortShared } from '../lib/format';
 
 interface ProfileCardProps {
   profile: ViewableProfile;
+  myHobbies?: string[];
+  // 'out-left' / 'out-right' play the swipe-away, 'still' skips the entry animation
+  className?: string;
+  // Phone only: the Bio pill and the bottom sheet. Desktop shows the bio next to the card instead
+  withBioSheet?: boolean;
+  // Replaces the Bio pill (the profile page puts "Change photo" there)
+  topRight?: React.ReactNode;
+  // Replaces the distance line
+  meta?: string;
+  hideHobbies?: boolean;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+// Average brightness of the lower half of the photo. Bright photos get a stronger scrim so white text stays readable
+const isBrightPhoto = (img: HTMLImageElement) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 24;
+    canvas.height = 24;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return false;
+    ctx.drawImage(img, 0, 0, 24, 24);
+    const { data } = ctx.getImageData(0, 12, 24, 12);
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    }
+    return sum / (data.length / 4) > 170;
+  } catch {
+    return false;
+  }
+};
+
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  myHobbies = [],
+  className = '',
+  withBioSheet = false,
+  topRight,
+  meta,
+  hideHobbies = false,
+}) => {
   const [showBio, setShowBio] = useState(false);
   const [imageError, setImageError] = useState(false);
-  
-  const {
-    name,
-    age,
-    bio,
-    profilePicture,
-    hobbies = [],
-    lookingFor,
-    distanceKm,
-    isOnline,
-  } = profile;
+  const [bright, setBright] = useState(false);
+  const [rowWidth, setRowWidth] = useState(318);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Debug: log what profilePicture we received
-  console.log('ProfileCard received profilePicture:', profilePicture);
+  const { name, age, profilePicture, hobbies = [], lookingFor, distanceKm, isOnline } = profile;
 
-  // Temporary debug - show URL as text
-  if (profilePicture) {
-    console.log('Trying to load image from:', profilePicture);
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setRowWidth(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const all = sortShared(hobbies, myHobbies);
+  const shared = all.filter((h) => h.sh).map((h) => h.t);
+
+  // Fit as many chips as the row holds (max 3), always leaving room for the "+N" chip
+  const visible: typeof all = [];
+  let used = 0;
+  for (let k = 0; k < all.length; k++) {
+    const h = all[k];
+    const w = Math.min(150, h.t.length * 8.1 + 28 + (h.sh ? 20 : 0));
+    const rest = all.length - k - 1;
+    const gap = visible.length ? 8 : 0;
+    if (visible.length >= 3 || used + gap + w + (rest > 0 ? 56 : 0) > rowWidth) break;
+    used += gap + w;
+    visible.push(h);
   }
-
-  // Helper function to format distance nicely
-  const formatDistance = (km: number | undefined | null): string => {
-    if (km === undefined || km === null) return 'Distance unknown';
-    if (km < 1) return 'Less than a kilometer away';
-    return `${Math.round(km)} km away`;
-  };
+  const more = all.length - visible.length;
+  const hasPhoto = Boolean(profilePicture) && !imageError;
+  const kind = lookingFor || 'open';
 
   return (
-    <div className="w-[340px] sm:w-[380px] md:w-[420px]
-                    min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
-                    bg-white rounded-2xl shadow-2xl 
-                    overflow-hidden flex flex-col
-                    transform-gpu">
-      
-      {/* Image/Bio Section - Fixed height */}
-      <div 
-        onClick={() => setShowBio(!showBio)}
-        className="relative h-[280px] sm:h-[300px] md:h-80
-                   bg-linear-to-br from-gray-100 to-gray-200 
-                   flex items-center justify-center shrink-0 cursor-pointer
-                   group"
-      >
-        {showBio ? (
-          <div className="absolute inset-0 p-5 sm:p-6 
-                         flex items-center justify-center overflow-y-auto
-                         bg-linear-to-br from-blue-50 to-purple-50">
-            <p className="text-gray-800 text-sm sm:text-base md:text-lg 
-                         font-medium text-center leading-relaxed">
-              {bio || 'No bio available'}
-            </p>
-          </div>
-        ) : (
-          <>
-            {profilePicture && !imageError ? (
-              <img 
-                src={profilePicture.toString()}
-                alt={`${name}'s profile`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error('Image failed to load:', profilePicture);
-                  console.error('Error event:', e);
-                  setImageError(true);
-                }}
-                onLoad={() => console.log('Image loaded successfully:', profilePicture)}
-              />
-            ) : (
-              <User className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400" />
-            )}
-          </>
-        )}
-
-        {/* Online Indicator */}
-        {isOnline !== undefined && (
-          <div className="absolute top-4 right-4 flex items-center gap-2 
-                        bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-            <div className={`w-2.5 h-2.5 rounded-full ${
-              isOnline ? 'bg-green-500' : 'bg-gray-400'
-            }`} />
-            <span className="text-xs font-medium text-gray-700">
-              {isOnline ? 'Online' : 'Offline'}
-            </span>
-          </div>
-        )}
-        
-        {/* Tap hint overlay */}
-        <div className="absolute bottom-3 right-3 
-                       bg-black/50 text-white text-xs 
-                       px-2.5 py-1 rounded-full 
-                       opacity-0 group-hover:opacity-100 transition-opacity
-                       pointer-events-none">
-          {showBio ? 'Tap for photo' : 'Tap for bio'}
+    <article className={`card${bright ? ' bright' : ''} ${className}`}>
+      {hasPhoto ? (
+        <img
+          className="bgimg"
+          src={profilePicture!.toString()}
+          alt={`Photo of ${name}`}
+          onError={() => setImageError(true)}
+          onLoad={(e) => setBright(isBrightPhoto(e.currentTarget))}
+        />
+      ) : (
+        <div className={`noimg ${kind}`}>
+          <span>{name?.charAt(0)}</span>
+          <p>No photo yet</p>
         </div>
+      )}
+      <div className="frost" />
+      <div className="scrim" />
+
+      {isOnline && (
+        <span className="gpill online">
+          <span className="dot" />
+          Online
+        </span>
+      )}
+
+      {topRight ??
+        (withBioSheet && (
+          <button className="gpill biob btn" onClick={() => setShowBio(true)} aria-label={`Read ${name}'s bio`}>
+            <Info className="s" />
+            <span>Bio</span>
+          </button>
+        ))}
+
+      <div className="ov" ref={overlayRef}>
+        <div className={name && name.length > 9 ? 'nm long' : 'nm'}>
+          <h2>{name}</h2>
+          <span className="age">{age}</span>
+        </div>
+        <div className="meta">
+          <MapPin className="s" />
+          <span>{meta ?? kmText(distanceKm)}</span>
+        </div>
+        <LookingForChip kind={lookingFor} />
+        {!hideHobbies && all.length > 0 && (
+          <ul className="gchips" aria-label="Hobbies">
+            {visible.map((h) => (
+              <li key={h.t}>
+                <span className={h.sh ? 'gc sh' : 'gc'}>
+                  {h.sh && <Check className="xs" />}
+                  <span className="t">{h.t}</span>
+                </span>
+              </li>
+            ))}
+            {more > 0 && (
+              <li>
+                {withBioSheet ? (
+                  <button className="gc more btn" onClick={() => setShowBio(true)} aria-label={`Show all ${all.length} hobbies`}>
+                    +{more}
+                  </button>
+                ) : (
+                  <span className="gc more">+{more}</span>
+                )}
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
-      {/* Info Section */}
-      <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
-        
-        {/* Name, Age & Distance */}
-        <div>
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-              {name}
-            </h2>
-            <span className="text-lg sm:text-xl text-gray-600 font-medium shrink-0">
-              {age}
-            </span>
+      {withBioSheet && showBio && (
+        <div className="sheet" role="dialog" aria-label={`About ${name}`}>
+          <div className="grab" />
+          <div className="sheet-h">
+            <p className="lbl">About {name}</p>
+            <button className="sheet-x btn" onClick={() => setShowBio(false)} aria-label="Close">
+              <X className="s" />
+            </button>
           </div>
-          
-          {/* Distance */}
-          <div className="flex items-center gap-1 mt-1 text-gray-500">
-            <MapPin className="w-3.5 h-3.5" />
-            <span className="text-xs sm:text-sm">
-              {formatDistance(distanceKm)}
-            </span>
+          <div className="sheet-b">
+            <ProfileDetails profile={profile} myHobbies={myHobbies} compact shared={shared} />
           </div>
         </div>
+      )}
+    </article>
+  );
+};
 
-        {/* Hobbies Section */}
-        <div>
-          <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">
-            Hobbies
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {hobbies.map((hobby, index) => (
-              <span 
-                key={index}
-                className="inline-block px-2 py-1 bg-blue-50 text-blue-600 
-                         text-xs font-medium rounded-full
-                         border border-blue-100"
-              >
-                {hobby}
-              </span>
-            ))}
-            {hobbies.length === 0 && (
-              <span className="text-xs text-gray-400 italic">No hobbies listed</span>
-            )}
-          </div>
-        </div>
+// Bio, looking for, distance, shared hobbies and every hobby. Used in the phone sheet and beside the desktop card
+export const ProfileDetails: React.FC<{
+  profile: ViewableProfile;
+  myHobbies?: string[];
+  compact?: boolean;
+  shared?: string[];
+}> = ({ profile, myHobbies = [], compact = false, shared }) => {
+  const all = sortShared(profile.hobbies, myHobbies);
+  const common = shared ?? all.filter((h) => h.sh).map((h) => h.t);
+  const bio = (profile.bio || '').trim();
+  const quoteCls = compact ? 'quote' : bio.length > 180 ? 'quote q3' : bio.length > 100 ? 'quote q2' : 'quote';
 
-        {/* Spacer - pushes Looking For to bottom */}
-        <div className="flex-1" />
-
-        {/* Looking For - always at bottom */}
-        <div>
-          <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-1.5">
-            Looking for
-          </p>
-          <span className="inline-block px-2 py-1 
-                         bg-purple-50 text-purple-600 
-                         text-xs font-medium rounded-full
-                         border border-purple-100 capitalize">
-            {lookingFor}
-          </span>
-        </div>
+  const kv = (
+    <div className="kv2">
+      <div className="kvb">
+        <small>Looking for</small>
+        <LookingForValue kind={profile.lookingFor} />
+      </div>
+      <div className="kvb">
+        <small>Distance</small>
+        <b>{kmText(profile.distanceKm)}</b>
       </div>
     </div>
+  );
+  const commonBox = common.length > 0 && (
+    <p className="common">
+      <Sparkles className="s" />
+      <span>You both enjoy {joinAnd(common)}</span>
+    </p>
+  );
+
+  return (
+    <>
+      {bio ? (
+        <p className={quoteCls}>“{bio}”</p>
+      ) : (
+        <p className="nobio">{profile.name} hasn’t written a bio yet. Say hello and ask what they enjoy.</p>
+      )}
+      {compact ? kv : commonBox}
+      {compact ? commonBox : kv}
+      {all.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p className="lbl">Hobbies · {all.length}</p>
+          <ul className="chips">
+            {all.map((h) => (
+              <li key={h.t} className={h.sh ? 'sh' : ''}>
+                {h.sh && <Check className="xs" />}
+                {h.t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
   );
 };
 

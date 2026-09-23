@@ -72,6 +72,10 @@ public class ProfileService {
             Double longitude,
             Integer maxRadiusKm) {
         
+        if (bio != null && bio.length() > 150) {
+            throw new IllegalArgumentException("Bio must be no more than 150 characters");
+        }
+
         // Parse and validate gender preferences
         List<String> lookingForGenderList = parseAndValidateGenderPreferences(lookingForGenderString);
         

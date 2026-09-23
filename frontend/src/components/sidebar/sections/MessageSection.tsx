@@ -1,37 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import { useChat } from '../../../context/ChatContext';
-import { MessageCircle, User } from 'lucide-react';
+import { Avatar } from '../../ui/design';
+import { listTime } from '../../../lib/format';
 
+// Conversation list: used on its own on phones and as the left column on desktop
 export const MessagesSection: React.FC = () => {
   const { chats, openChatWithUser, activeChat } = useChat();
+  const [query, setQuery] = useState('');
 
-  const formatTime = (dateString: string) => {
-  // Backend sends: "2026-02-05T12:30:00Z" (UTC)
-  // JavaScript automatically converts to user's local timezone!
-  const date = new Date(dateString);
-  
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  
-  // Show actual date for older messages
-  return date.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
-};
+  const shown = chats.filter((c) => c.otherUserName?.toLowerCase().includes(query.trim().toLowerCase()));
 
-const handleChatClick = async (chat: typeof chats[0]) => {
+  const handleChatClick = async (chat: typeof chats[0]) => {
     try {
       await openChatWithUser(chat.otherUserId);
     } catch (err) {
@@ -39,84 +19,46 @@ const handleChatClick = async (chat: typeof chats[0]) => {
     }
   };
 
-
-  if (chats.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
-        <p className="text-gray-500 font-medium text-lg">No messages yet</p>
-        <p className="text-gray-400 text-sm mt-1">
-          Start matching to begin conversations
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      {chats.map((chat) => (
-        <div
-          key={chat.chatId}
-          onClick={() => handleChatClick(chat)}
-          className={`p-3 md:p-4 bg-white rounded-lg border 
-                   ${activeChat?.chatId === chat.chatId ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} 
-                   hover:border-blue-400 cursor-pointer transition-all 
-                   hover:shadow-md relative`}
-        >
-          <div className="flex items-start gap-3">
-            
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              {chat.otherUserProfilePicture ? (
-                <img
-                  src={chat.otherUserProfilePicture}
-                  alt={chat.otherUserName}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br 
-                              from-blue-200 to-purple-200 
-                              flex items-center justify-center">
-                  <User className='w-5 h-5 md:w-6 md:h-6 text-gray-400' />
-                </div>
-              )}
-
-              {/* Online Indicator*/}
-              {chat.isOnline !== undefined && (
-                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                  chat.isOnline ? 'bg-green-500' : 'bg-gray-400'
-                }`} />
-              )}
-              
-              {/* Unread badge */}
-              {chat.unreadCount > 0 && (
-                <div className="absolute -top-1 -right-1 bg-red-500 text-white 
-                              text-xs font-bold rounded-full min-w-[18px] h-[18px] 
-                              flex items-center justify-center px-1">
-                  {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
-                </div>
-              )}
-            </div>
-
-            {/* Message content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-semibold text-gray-900 text-sm md:text-base truncate">
-                  {chat.otherUserName}
-                </h3>
-                <span className="text-xs text-gray-500 shrink-0 ml-2">
-                  {formatTime(chat.lastMessageAt)}
-                </span>
-              </div>
-              <p className={`text-xs md:text-sm truncate ${
-                chat.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-600'
-              }`}>
-                {chat.lastMessage || 'No messages yet'}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="inp" style={{ height: 50 }}>
+        <Search className="s" />
+        <label className="sr" htmlFor="q">Search messages</label>
+        <input id="q" type="search" placeholder="Search by name" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+      {shown.length === 0 ? (
+        <p className="list-note">No one called “{query.trim()}”.</p>
+      ) : (
+        <ul className="convos">
+          {shown.map((chat) => {
+            const unread = chat.unreadCount > 0;
+            return (
+              <li key={chat.chatId}>
+                <button
+                  className={`mrow btn${activeChat?.chatId === chat.chatId ? ' on' : ''}`}
+                  onClick={() => handleChatClick(chat)}
+                >
+                  <Avatar src={chat.otherUserProfilePicture} name={chat.otherUserName} size={56} online={chat.isOnline} />
+                  <span className="mrow-b">
+                    <span className="mrow-t">
+                      <b>{chat.otherUserName}</b>
+                      <span className="mt">{chat.lastMessage ? listTime(chat.lastMessageAt) : ''}</span>
+                    </span>
+                    <span className={`mrow-l${unread ? ' un' : ''}`}>{chat.lastMessage || 'Say hello 👋'}</span>
+                  </span>
+                  {unread && (
+                    <span className="badge" aria-label={`${chat.unreadCount} unread`}>
+                      {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
   );
 };
+
+export default MessagesSection;

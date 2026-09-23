@@ -1,5 +1,6 @@
 import { Client, StompSubscription } from '@stomp/stompjs';
 import { MessageResponse } from '../types';
+import { clearSession } from '../lib/session';
 
 class WebSocketService {
   private client: Client | null = null;
@@ -10,15 +11,25 @@ class WebSocketService {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private currentToken: string | null = null;
+  private statusListeners = new Set<(connected: boolean) => void>();
+
+  // Lets the UI show a "reconnecting" banner when the socket drops
+  onStatusChange(listener: (connected: boolean) => void): () => void {
+    this.statusListeners.add(listener);
+    return () => this.statusListeners.delete(listener);
+  }
+
+  private setConnected(value: boolean) {
+    this.connected = value;
+    this.statusListeners.forEach((listener) => listener(value));
+  }
 
   connect(token: string): Promise<void> {
     if (this.client?.connected && this.currentToken === token) {
-      console.log('Already connected with same token, reusing connection');
       return Promise.resolve();
     }
 
     if (this.currentToken !== token) {
-      console.log('Token changed, disconnecting old connection');
       this.disconnect();
     }
 
@@ -31,18 +42,13 @@ class WebSocketService {
           Authorization: `Bearer ${token}`,
         },
         
-        debug: (str) => {
-          console.log('STOMP:', str);
-        },
-        
         reconnectDelay: 5000,
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
         
         onConnect: () => {
-          this.connected = true;
+          this.setConnected(true);
           this.reconnectAttempts = 0;
-          console.log('WebSocket connected successfully');
           resolve();
         },
 
@@ -52,8 +58,7 @@ class WebSocketService {
           if (frame.headers['message']?.includes('JWT expired') || 
               frame.headers['message']?.includes('ExecutorSubscribableChannel')) {
             console.error('Token expired, redirecting to login');
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
+            clearSession();
             window.location.href = '/login';
           }
           
@@ -73,9 +78,8 @@ class WebSocketService {
           }
         },
         
-        onWebSocketClose: (event) => {
-          this.connected = false;
-          console.log('WebSocket closed:', event.reason);
+        onWebSocketClose: () => {
+          this.setConnected(false);
         },
       });
 
@@ -150,7 +154,7 @@ class WebSocketService {
     });
   }
 
-  subscribeToTopic(topic: string, callback: (data: any) => void): void {
+  subscribeToTopic<T = unknown>(topic: string, callback: (data: T) => void): void {
     if (!this.client || !this.connected) {
       console.error('Cannot subscribe to topic: not connected');
       return;

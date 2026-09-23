@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StepProgress from "./StepProgress";
+import { ArrowRight, ChevronLeft, LogOut } from "lucide-react";
 import Step1BasicInfo from "./steps/Step1BasicInfo";
 import Step2Hobbies from "./steps/Step2Hobbies";
 import Step3Looking from "./steps/Step3Looking";
@@ -8,23 +8,39 @@ import Step4AboutMe from "./steps/Step4AboutMe";
 import Step5ProfilePic from "./steps/Step5ProfilePic";
 import Step6Location from "./steps/Step6Location";
 import ProfileSuccess from "./ProfileSuccess";
-import { UserFormData } from "../../types/User";
+import { Gender, UserFormData } from "../../types/User";
+import { AxiosError } from "axios";
 import api from "../../api/axios";
-import LogOutButton from "../buttons/LogOutButton";
-import { Loader } from "lucide-react";
+import { useLogout } from "../../hooks/useLogout";
+import { getToken } from "../../lib/session";
+import { BIO_MAX } from "../edit-profile/EditBio";
 
+export interface StepProps {
+  data: UserFormData;
+  updateData: (data: Partial<UserFormData>) => void;
+}
+
+const STEPS = [
+  { heading: "Tell us about you", sub: "Your first name and age are shown on your card." },
+  { heading: "What do you enjoy?", sub: "Pick as many as you like. People who share them show up first." },
+  { heading: "What are you looking for?", sub: "Each choice has its own colour, so people can tell at a glance." },
+  { heading: "A few words about you", sub: "Optional, but it makes it much easier for people to say hello." },
+  { heading: "Add a photo", sub: "Optional. People are more likely to connect when they can see you." },
+  { heading: "Where are you?", sub: "We use this to find people near you. Others only ever see the distance, never where you live." },
+];
 
 const CreateUser = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     age: "",
-    gender: "" as any,
+    gender: "" as Gender,
     hobbies: [],
-    lookingFor: "love",
+    lookingFor: "friend",
     lookingForGender: [],
     bio: "",
     profilePicture: null,
@@ -33,271 +49,142 @@ const CreateUser = () => {
     maxRadiusKm: 50,
   });
 
-  const totalSteps = 6;
+  const totalSteps = STEPS.length;
 
   const updateFormData = (data: Partial<UserFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
+  const age = parseInt(formData.age);
+  // Whether "Next" is allowed on each step. The step itself explains what is missing
+  const stepValid = [
+    formData.name.trim().length >= 2 && !isNaN(age) && age >= 18 && age <= 120 && Boolean(formData.gender),
+    formData.hobbies.length > 0,
+    Boolean(formData.lookingFor) && formData.lookingForGender.length > 0,
+    formData.bio.length <= BIO_MAX,
+    true,
+    Boolean(formData.latitude && formData.longitude),
+  ][currentStep - 1];
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
+  const logout = useLogout();
 
   const handleSubmit = async () => {
+    const token = getToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
     try {
-      if (!formData.name.trim()) {
-        alert("Name is required");
-        setCurrentStep(1);
-        return;
-      }
-
-      const age = parseInt(formData.age);
-      if (!formData.age || isNaN(age) || age < 18) {
-        alert("You must be at least 18 years old");
-        setCurrentStep(1);
-        return;
-      }
-
-      if (!formData.gender) {
-        alert("Gender is required");
-        setCurrentStep(1);
-        return;
-      }
-
-      if (formData.hobbies.length === 0) {
-        alert("Please select at least one hobby");
-        setCurrentStep(2);
-        return;
-      }
-
-      if (!formData.lookingFor) {
-        alert("Please select what you are looking for");
-        setCurrentStep(3);
-        return;
-      }
-
-      if (!formData.lookingForGender || formData.lookingForGender.length === 0) {
-        alert("Please select at least one gender preference");
-        setCurrentStep(3);
-        return;
-      }
-
-      if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
-        alert("Please allow location access");
-        setCurrentStep(6);
-        return;
-      }
-    
-      // Bio is optional - no validation needed
-      // Profile picture is optional - no validation needed
-
-      const token = sessionStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to create a profile");
-        navigate("/login");
-        return;
-      }
-
-      setIsSubmitting(true);
-
       const formDataToSend = new FormData();
-    
-      // Add all text fields
-      formDataToSend.append('name', formData.name.trim());
-      formDataToSend.append('age', formData.age);
-      formDataToSend.append('gender', formData.gender);
-      formDataToSend.append('lookingFor', formData.lookingFor);
-      formDataToSend.append('lookingForGender', formData.lookingForGender.join(','));
-      formDataToSend.append('bio', formData.bio || '');
-      formDataToSend.append('latitude', formData.latitude.toString());
-      formDataToSend.append('longitude', formData.longitude.toString());
-      
-      // Handle maxRadiusKm
-      if (formData.maxRadiusKm !== undefined && formData.maxRadiusKm !== null && formData.maxRadiusKm > 0) {
-        formDataToSend.append('maxRadiusKm', formData.maxRadiusKm.toString());
+      formDataToSend.append("name", formData.name.trim());
+      formDataToSend.append("age", formData.age);
+      formDataToSend.append("gender", formData.gender);
+      formDataToSend.append("lookingFor", formData.lookingFor);
+      formDataToSend.append("lookingForGender", formData.lookingForGender.join(","));
+      formDataToSend.append("bio", formData.bio.trim() || "");
+      formDataToSend.append("latitude", String(formData.latitude));
+      formDataToSend.append("longitude", String(formData.longitude));
+      if (formData.maxRadiusKm > 0) {
+        formDataToSend.append("maxRadiusKm", formData.maxRadiusKm.toString());
       }
-      formDataToSend.append('hobbies', formData.hobbies.join(','));
-      // Add profile picture if exists
+      formDataToSend.append("hobbies", formData.hobbies.join(","));
       if (formData.profilePicture instanceof File) {
-        formDataToSend.append('profilePicture', formData.profilePicture);
+        formDataToSend.append("profilePicture", formData.profilePicture);
       }
 
-      // ========================================
-      // Send FormData with multipart header
-      // ========================================
       await api.post("/me/profile", formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // wait 2 seconds to show success state, then navigate
-
-      // Only show success screen after successful response
-      setIsSubmitting(false);
       setIsSuccess(true);
-
-      setTimeout(() => {
-        navigate("/explore");
-      }, 1800);
-
-    } catch (error: any) {
-      // Reset loading state on error
-      setIsSubmitting(false);
-      setIsSuccess(false);
-
+      setTimeout(() => navigate("/explore"), 1800);
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string; error?: string }>;
+      const message = error.response?.data?.message || error.response?.data?.error;
       if (error.response) {
-        const status = error.response.status;
-
-        if (status === 403) {
-          // Check if it's actually a token issue or validation error
-          const errorMessage = error.response.data?.message || error.response.data?.error;
-          
-          if (errorMessage && errorMessage.toLowerCase().includes('token')) {
-            alert("Session expired. Please login again.");
-            sessionStorage.removeItem("token");
-            navigate("/login");
-          } else {
-            // It's a validation error, not token issue
-            alert(`Error: ${errorMessage || 'Failed to create profile'}`);
-          }
-          return;
-        }
-
-        if (status === 401) {
-          alert("Authentication failed. Please login again.");
-          sessionStorage.removeItem("token");
-          navigate("/login");
-          return;
-        }
-
-        if (status === 400) {
-          // Bad request - validation error
-          const message = error.response.data?.message || error.response.data?.error;
-          alert(`Validation Error: ${message}`);
-          return;
-        }
-
-        const message =
-          error.response.data?.message ||
-          error.response.data?.error ||
-          "Failed to create profile";
-
-        alert(`Error: ${message}`);
-      } else if (error.request) {
-        alert("Cannot connect to server. Please check your connection.");
+        setSubmitError(message || "We couldn’t create your profile. Please try again.");
       } else {
-        alert(`An error occurred: ${error.message}`);
+        setSubmitError("We can’t reach the server. Check your connection and try again.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  // how success component only after successful API call
+
   if (isSuccess) {
-    return <ProfileSuccess userName={formData.name} />;
+    return <ProfileSuccess userName={formData.name.trim()} />;
   }
 
-  // Show loading overlay when submitting
-  if (isSubmitting) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-t from-blue-500 to-slate-50">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl text-center">
-          <Loader className="w-16 h-16 animate-spin text-blue-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Creating your profile...
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we set everything up
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <Step1BasicInfo
-            data={formData}
-            updateData={updateFormData}
-            onNext={nextStep}
-          />
-        );
-      case 2:
-        return (
-          <Step2Hobbies
-            data={formData}
-            updateData={updateFormData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
-        );
-      case 3:
-        return (
-          <Step3Looking
-            data={formData}
-            updateData={updateFormData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
-        );
-
-      case 4:
-        return (
-          <Step4AboutMe
-            data={formData}
-            updateData={updateFormData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
-        );
-      case 5:
-        return (
-          <Step5ProfilePic
-            data={formData}
-            updateData={updateFormData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
-        );
-
-      case 6:
-        return (
-          <Step6Location
-            data={formData}
-            updateData={updateFormData}
-            onNext={handleSubmit}
-            onBack={prevStep}
-          />
-        );
-      default:
-        return null;
+  const next = () => {
+    if (!stepValid) return;
+    if (currentStep < totalSteps) {
+      setCurrentStep((s) => s + 1);
+      window.scrollTo(0, 0);
+    } else {
+      handleSubmit();
     }
   };
+
+  const props = { data: formData, updateData: updateFormData };
+  const step = [
+    <Step1BasicInfo {...props} />,
+    <Step2Hobbies {...props} />,
+    <Step3Looking {...props} />,
+    <Step4AboutMe {...props} />,
+    <Step5ProfilePic {...props} />,
+    <Step6Location {...props} />,
+  ][currentStep - 1];
+
+  const optionalEmpty =
+    (currentStep === 4 && !formData.bio.trim()) || (currentStep === 5 && !formData.profilePicture);
+  const nextLabel = isSubmitting
+    ? "Creating your profile…"
+    : currentStep === totalSteps
+    ? "Finish"
+    : optionalEmpty
+    ? "Skip for now"
+    : "Next";
 
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-t from-blue-500 to-slate-50 py-4 md:py-8">
-      
-      <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
-                <LogOutButton onClick={() => console.log('Logout clicked')} />
-            </div>    
-      
-      {/* Fixed height container for step indicator */}
-      <div className="w-full max-w-2xl mx-auto px-4 mb-4 md:mb-8">
-        <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
+    <div className="flow">
+      <header className="ph-h" style={{ paddingLeft: 8 }}>
+        {currentStep > 1 ? (
+          <button className="b-md btn" style={{ color: "var(--ink)", padding: "0 12px" }} onClick={() => setCurrentStep((s) => s - 1)}>
+            <ChevronLeft className="s" />
+            <span>Back</span>
+          </button>
+        ) : (
+          <button className="b-md btn" style={{ color: "var(--muted)", padding: "0 12px" }} onClick={logout}>
+            <LogOut className="s" />
+            <span>Log out</span>
+          </button>
+        )}
+        <span className="ph-note">Step {currentStep} of {totalSteps}</span>
+      </header>
+      <div className="flow-pad">
+        <div className="steps" aria-hidden="true">
+          {STEPS.map((_, k) => (
+            <span key={k} className={k < currentStep ? "on" : ""} />
+          ))}
+        </div>
       </div>
-
-      {/* Content area - centered boxes */}
-      <div className="flex-1 flex items-start justify-center px-4">
-        <div className="w-full max-w-md mx-auto">{renderStep()}</div>
+      <main className="flow-main">
+        <div>
+          <h1 className="flow-h1">{STEPS[currentStep - 1].heading}</h1>
+          <p className="flow-sub">{STEPS[currentStep - 1].sub}</p>
+        </div>
+        {submitError && <div className="alert" role="alert">{submitError}</div>}
+        {step}
+      </main>
+      <div className="flow-foot">
+        <button className="b-lg pri btn" style={{ width: "100%" }} onClick={next} disabled={!stepValid || isSubmitting}>
+          <span>{nextLabel}</span>
+          {!isSubmitting && <ArrowRight className="i" />}
+        </button>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { Check, Info } from "lucide-react";
+import { HOBBY_OPTIONS } from "../../constants/profileOptions";
 import { EditProfileData } from "../../types/User";
 import api from "../../api/axios";
+import { getErrorMessage } from "../../api/profiles";
 
 interface EditHobbiesProps {
   data: EditProfileData;
@@ -9,127 +12,66 @@ interface EditHobbiesProps {
   onBack: () => void;
 }
 
-const hobbiesOptions = [
-  "Reading",
-  "Gardening",
-  "Walking",
-  "Cooking",
-  "Music",
-  "Arts & Crafts",
-  "Photography",
-  "Travel",
-  "Sports",
-  "Dancing",
-  "Board Games",
-  "Volunteering",
-];
+// The pill picker, shared with sign-up step 2
+export const HobbyPicker: React.FC<{ value: string[]; onToggle: (hobby: string) => void }> = ({ value, onToggle }) => (
+  <div className="pick" role="group" aria-label="Hobbies">
+    {HOBBY_OPTIONS.map((hobby) => {
+      const on = value.includes(hobby);
+      return (
+        <button key={hobby} type="button" className="btn" aria-pressed={on} onClick={() => onToggle(hobby)}>
+          {on && <Check className="s" />}
+          {hobby}
+        </button>
+      );
+    })}
+  </div>
+);
 
-const EditHobbies: React.FC<EditHobbiesProps> = ({
-  updateData,
-  onBack,
-}) => {
-  const [hobbies, setHobbies] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+export const HobbyCount: React.FC<{ count: number }> = ({ count }) =>
+  count > 0 ? (
+    <p className="pick-count">{count} selected</p>
+  ) : (
+    <p className="pick-hint">
+      <Info className="s" />
+      Pick at least one so we can find people for you.
+    </p>
+  );
+
+const EditHobbies: React.FC<EditHobbiesProps> = ({ data, updateData, onNext, onBack }) => {
+  const [hobbies, setHobbies] = useState<string[]>(data.hobbies || []);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // 1️⃣ Load existing hobbies
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get<EditProfileData>("/me/bio");
-        setHobbies(res.data.hobbies || []);
-      } catch (err) {
-        setError("Failed to load hobbies");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
   const toggleHobby = (hobby: string) => {
-    setHobbies((prev) =>
-      prev.includes(hobby) ? prev.filter((h) => h !== hobby) : [...prev, hobby],
-    );
-
-    if (error) setError("");
+    setHobbies((prev) => (prev.includes(hobby) ? prev.filter((h) => h !== hobby) : [...prev, hobby]));
   };
 
   const handleSave = async () => {
-    if (hobbies.length === 0) {
-      setError("Please select at least one hobby.");
-      return;
-    }
-
+    if (hobbies.length === 0) return;
+    setSaving(true);
+    setError("");
     try {
       await api.put("/me/bio", { hobbies });
-      updateData({ hobbies }); // update parent state
-      onBack(); // close overlay
-    } catch {
-      setError("Failed to save hobbies");
+      updateData({ hobbies });
+      onNext();
+    } catch (err) {
+      setError(getErrorMessage(err, "Couldn’t save. Check your connection and try again."));
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) {
-    return <p className="text-center">Loading...</p>;
-  }
-
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/55 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-md">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
-          What are your hobbies?
-        </h2>
-        <p className="text-center text-slate-600 mb-4 md:mb-6 text-sm">
-          Select at least one
-        </p>
-
-        {/* Hobbies Grid - Compact on mobile */}
-        <div className="grid grid-cols-2 gap-2 md:gap-3">
-          {hobbiesOptions.map((hobby) => (
-            <button
-              key={hobby}
-              type="button"
-              className={`h-12 md:h-14 px-2 md:px-4 py-2 md:py-3 rounded-lg text-xs md:text-sm font-medium transition-all ${
-                hobbies.includes(hobby)
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
-              }`}
-              onClick={() => toggleHobby(hobby)}
-            >
-              {hobby}
-            </button>
-          ))}
-        </div>
-
-        {/* Selected Hobbies Count */}
-        {hobbies.length > 0 && (
-          <div className="text-center">
-            <p className="text-xs md:text-sm text-slate-600">
-              {hobbies.length} {hobbies.length === 1 ? "hobby" : "hobbies"}{" "}
-              selected
-            </p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm md:text-base text-center">
-            {error}
-          </div>
-        )}
-
-        {/* save Button */}
-        <div className="space-y-2 md:space-y-3">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
-            Save hobbies
-          </button>
-        </div>
+    <div className="form">
+      {error && <div className="alert" role="alert">{error}</div>}
+      <p className="form-sub">Pick as many as you like. People who share them show up first.</p>
+      <HobbyPicker value={hobbies} onToggle={toggleHobby} />
+      <HobbyCount count={hobbies.length} />
+      <div className="modal-a">
+        <button type="button" className="b-lg sec btn" onClick={onBack}>Cancel</button>
+        <button type="button" className="b-lg pri btn" onClick={handleSave} disabled={saving || hobbies.length === 0}>
+          {saving ? "Saving…" : "Save"}
+        </button>
       </div>
     </div>
   );

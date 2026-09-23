@@ -64,62 +64,38 @@ cd web
 
 ### 2. Run the Application
 
-**Note:** Use `docker compose` (modern) or `docker-compose` (legacy) depending on your Docker version. Both commands work the same way.
+Open Docker Desktop first, then:
 
 ```bash
-docker-compose build --no-cache
-docker-compose up
+./start.sh
 ```
 
-This automatically installs all the necessary dependencies and runs both backend and frontend.
+It builds and starts everything, waits until it's up and prints the links. Other options:
 
-### 3. Set Up Database
-
-1. Go to: http://localhost:5050
-2. Log in with:
-   - **Email:** `admin@matchme.com`
-   - **Password:** `adminho`
-3. Create a new server with these settings:
-
-```
-General:
-Name: matchme-db
-
-Connection:
-Host: postgres
-Port: 5432
-Database: matchme
-Username: matchme_user
-Password: matchme-password
+```bash
+./start.sh --reset     # wipe the database and start fresh
+./start.sh --no-seed   # start without demo users
+./start.sh --stop      # stop everything (data is kept)
+./start.sh --logs      # follow backend logs
 ```
 
-### 4. Use the Application
+Plain `docker compose up --build` still works too.
 
-Go to: http://localhost:5173
+### 3. Use the Application
+
+- App: http://localhost:5173
+- pgAdmin: http://localhost:5050 (`admin@matchme.com` / `adminho`). The `matchme-db` server is already added, and its password is `matchme-password`.
 
 ---
 
 ## Seed Database
 
-**(Optional)** 
+Demo users are created automatically on first start (the `seed` Spring profile, on by default in `docker-compose.yml`). If they already exist, seeding is skipped.
 
-To use the application with 100 seed users:
-
-1. Go to `docker-compose.yml` and uncomment line 42 by removing the `#`:
-
-```yaml
-    SPRING_DEVTOOLS_RESTART_ENABLED: "true"
-    # Remove the # below to automatically seed 100 users
-    SPRING_PROFILES_ACTIVE: seed
-```
-
-2. Run:
-
-```bash
-docker-compose up
-```
-
-The seed users will be automatically created.
+- Log in as **kaja@demo.ee** / **demo1234**. She already has matches, chats and requests.
+- Other demo users: `henrik`, `maie`, `mart`, `anne`, `toomas`, `viktor`, `peeter`, `helgi`, `annekristiina` (all `@demo.ee`, same password). Some are edge cases: Toomas has no bio, Anne-Kristiina has no photo and Mart has 8 hobbies.
+- There are also 60 random filler users without photos.
+- Demo users live around Tallinn and search 100 km, so a new account far from Tallinn won't see them.
 
 ---
 

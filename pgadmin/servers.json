@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "matchme-db",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "matchme",
+      "Username": "matchme_user",
+      "SSLMode": "prefer"
+    }
+  }
+}

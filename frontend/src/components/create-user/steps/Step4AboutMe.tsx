@@ -1,67 +1,24 @@
-import { UserFormData } from "../../../types/User";
-import NextButton from "../../buttons/NextButton";
-import PrevStepButton from "../../buttons/PrevStepButton";
+import { StepProps } from "../StepIndex";
+import { BIO_MAX } from "../../edit-profile/EditBio";
 
-interface Step4Props {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
-
-const Step4AboutMe = ({ data, updateData, onNext, onBack }: Step4Props) => {
-  const hasBio = data.bio.trim().length > 0;
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // If user typed something, validate it
-    if (hasBio) {
-      if (data.bio.trim().length > 150) {
-        alert("Bio must be no more than 150 characters");
-        return;
-      }
-    }
-
-    // Empty OR valid bio → continue
-    onNext();
-  };
-
-  return (
-    <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
-      <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
-        About Me
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="bio"
-            className="block text-xl font-medium text-slate-500 mb-2"
-          >
-            Tell us about yourself
-          </label>
-          <textarea
-            id="bio"
-            value={data.bio}
-            onChange={(e) => updateData({ bio: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            placeholder="What should others now about you..."
-            rows={6}
-            maxLength={150}
-          />
-          <p className="text-sm text-slate-500 mt-1">
-            {data.bio.length}/150 characters
-          </p>
-        </div>
-
-        <div className="space-y-2 md:space-y-3">
-          <NextButton type="submit">
-            {hasBio ? "Next" : "I'll do this later"}
-          </NextButton>
-          <PrevStepButton type="button" onClick={onBack} />
-        </div>
-      </form>
+const Step4AboutMe = ({ data, updateData }: StepProps) => (
+  <div className="form">
+    <div className="field">
+      <label htmlFor="bio">About me</label>
+      <textarea
+        id="bio"
+        className="ta"
+        value={data.bio}
+        onChange={(e) => updateData({ bio: e.target.value })}
+        placeholder="Early walks with my camera, afternoons in the garden. Looking for good company for both."
+        rows={5}
+        maxLength={BIO_MAX}
+      />
+      <p className={`count${data.bio.length >= BIO_MAX ? " full" : ""}`}>
+        {data.bio.length} of {BIO_MAX} characters
+      </p>
     </div>
-  );
-};
+  </div>
+);
+
 export default Step4AboutMe;

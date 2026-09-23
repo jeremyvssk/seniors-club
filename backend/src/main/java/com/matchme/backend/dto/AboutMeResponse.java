@@ -14,7 +14,7 @@ public class AboutMeResponse {
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
 
-    public Boolean isOnline() {
+    public Boolean getIsOnline() {
         return isOnline;
     }
     public void setIsOnline(Boolean isOnline) {

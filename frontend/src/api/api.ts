@@ -1,75 +1,55 @@
-import axios from 'axios';
+import api from './axios';
 import { ChatResponse, PagedMessages, ConnectionRequest, MatchedUser } from '../types';
 
-const API_URL = 'http://localhost:3001/api';
-
-const getAuthHeaders = () => {
-  const token = sessionStorage.getItem('token');
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
+// Uses the shared axios instance: same /api proxy, token injection and 401 handling as the rest of the app
 
 export const chatAPI = {
   getUserChats: async (): Promise<ChatResponse[]> => {
-    const response = await axios.get(`${API_URL}/chats`, getAuthHeaders());
+    const response = await api.get('/chats');
     return response.data;
   },
 
   getChatMessages: async (chatId: number, page: number = 0, size: number = 20): Promise<PagedMessages> => {
-    const response = await axios.get(
-      `${API_URL}/chats/${chatId}/messages?page=${page}&size=${size}`,
-      getAuthHeaders()
-    );
+    const response = await api.get(`/chats/${chatId}/messages`, { params: { page, size } });
     return response.data;
   },
 
   markMessagesAsRead: async (chatId: number): Promise<void> => {
-    await axios.post(`${API_URL}/chats/${chatId}/read`, {}, getAuthHeaders());
+    await api.post(`/chats/${chatId}/read`, {});
   },
 
   getOrCreateChatWithUser: async (otherUserId: number): Promise<ChatResponse> => {
-    const response = await axios.get(`${API_URL}/chats/with/${otherUserId}`, getAuthHeaders());
+    const response = await api.get(`/chats/with/${otherUserId}`);
     return response.data;
   },
 };
 
 export const matchAPI = {
   sendConnectionRequest: async (likedUserId: number) => {
-    const response = await axios.post(
-      `${API_URL}/matches/request`,
-      { likedUserId },
-      getAuthHeaders()
-    );
+    const response = await api.post('/matches/request', { likedUserId });
     return response.data;
   },
 
   getPendingRequests: async (): Promise<ConnectionRequest[]> => {
-    const response = await axios.get(`${API_URL}/matches/requests/pending`, getAuthHeaders());
+    const response = await api.get('/matches/requests/pending');
     return response.data;
   },
 
   acceptRequest: async (requestId: number) => {
-    const response = await axios.post(
-      `${API_URL}/matches/requests/${requestId}/accept`,
-      {},
-      getAuthHeaders()
-    );
+    const response = await api.post(`/matches/requests/${requestId}/accept`, {});
     return response.data;
   },
 
   declineRequest: async (requestId: number): Promise<void> => {
-    await axios.delete(`${API_URL}/matches/requests/${requestId}/decline`, getAuthHeaders());
+    await api.delete(`/matches/requests/${requestId}/decline`);
   },
 
   disconnect: async (userId: number): Promise<void> => {
-    await axios.delete(`${API_URL}/matches/disconnect/${userId}`, getAuthHeaders());
+    await api.delete(`/matches/disconnect/${userId}`);
   },
 
   getUserMatches: async (): Promise<MatchedUser[]> => {
-    const response = await axios.get(`${API_URL}/matches`, getAuthHeaders());
+    const response = await api.get('/matches');
     return response.data;
   },
 };

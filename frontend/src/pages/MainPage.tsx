@@ -1,76 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/sidebar/MainSidebar';
-import ProfileCard from '../components/ProfileCard';
-import LikeButton from '../components/buttons/LikeButton';
-import SkipButton from '../components/buttons/SkipButton';
-import LogOutButton from '../components/buttons/LogOutButton';
+import { Heart, Pencil, RefreshCw, X } from 'lucide-react';
+import ProfileCard, { ProfileDetails } from '../components/ProfileCard';
+import { Logo } from '../components/ui/design';
+import { useIsDesktop } from '../hooks/useIsDesktop';
+import { useChat } from '../context/ChatContext';
+import { matchAPI } from '../api/api';
 import api from '../api/axios';
-import { ViewableProfile } from '../types/User';
+import { fetchViewableProfile, getErrorMessage, ProfileWithId } from '../api/profiles';
 
-/* 
-    Animation states for the profile card
-    'out-left' = card sliding out to the left (skip)
-    'out-right' = card sliding out to the right (like)
-    'in-left' = new card coming in from the left
-    'in-right' = new card coming in from the right
-    'fade-in' = new card fading in (initial load)
-    null = no animation
-*/
-type AnimationState = 'out-left' | 'out-right' | 'in-left' | 'in-right' | 'fade-in' | null;
+type Out = 'left' | 'right' | null;
 
-interface ProfileWithId extends ViewableProfile {
-    userId: number;
-}
+const EmptyExplore: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+    const navigate = useNavigate();
+    return (
+        <div className="empty">
+            <svg viewBox="0 0 160 120" style={{ width: 160, height: 120 }} aria-hidden="true">
+                <rect x="38" y="14" width="74" height="96" rx="14" fill="#fff" transform="rotate(-8 75 62)" stroke="#DCE3F0" strokeWidth="2" />
+                <rect x="50" y="10" width="74" height="96" rx="14" fill="#fff" transform="rotate(7 87 58)" stroke="#DCE3F0" strokeWidth="2" />
+                <circle cx="78" cy="58" r="15" fill="#2455D3" />
+                <circle cx="96" cy="58" r="15" fill="#E0564A" fillOpacity="0.9" />
+            </svg>
+            <h2>You’ve met everyone nearby</h2>
+            <p>New people join every week. We’ll show them here as soon as they do. Adding hobbies or a bigger distance helps us find more people for you.</p>
+            <div className="empty-btns">
+                <button className="b-lg pri btn" onClick={onRetry}><RefreshCw className="i" /><span>Check again</span></button>
+                <button className="b-lg sec btn" onClick={() => navigate('/profile')}><Pencil className="i" /><span>Edit my profile</span></button>
+            </div>
+        </div>
+    );
+};
+
+const Skeleton: React.FC = () => (
+    <div className="card skel still" aria-hidden="true">
+        <div style={{ position: 'absolute', left: 20, bottom: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ width: 190, height: 48, borderRadius: 12, background: '#D3DCEC' }} />
+            <div style={{ width: 110, height: 18, borderRadius: 9, background: '#D3DCEC' }} />
+            <div style={{ width: 130, height: 36, borderRadius: 18, background: '#D3DCEC' }} />
+            <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ width: 90, height: 36, borderRadius: 18, background: '#D3DCEC' }} />
+                <div style={{ width: 110, height: 36, borderRadius: 18, background: '#D3DCEC' }} />
+                <div style={{ width: 70, height: 36, borderRadius: 18, background: '#D3DCEC' }} />
+            </div>
+        </div>
+    </div>
+);
 
 const MainPage: React.FC = () => {
-    const navigate = useNavigate();
-    
+    const isDesktop = useIsDesktop();
+    const { me } = useChat();
+    const myHobbies = me?.hobbies || [];
+
     const [currentProfile, setCurrentProfile] = useState<ProfileWithId | null>(null);
     const [nextProfile, setNextProfile] = useState<ProfileWithId | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [noMoreProfiles, setNoMoreProfiles] = useState(false); // True when backend returns empty array (no more users to show)
-    const [animationState, setAnimationState] = useState<AnimationState>(null);
-    const [isActionInProgress, setIsActionInProgress] = useState(false);
+    const [out, setOut] = useState<Out>(null);
     const [error, setError] = useState<string | null>(null);
     const queue = useRef<number[]>([]); // Queue of user IDs - IDs we haven't loaded yet
     const seenIds = useRef<Set<number>>(new Set()); // Track IDs we've already seen (to prevent duplicates from backend)
     const queuedIds = useRef<Set<number>>(new Set()); // IDs currently queued/reserved locally
     const isFetchingIdsRef = useRef(false); // prevent concurrent fetches
     const isActionInProgressRef = useRef(false); // Ref to prevent multiple actions (synchronous check)
-    /*
-        Fetch all profile data for a user
-        "async" = this function will wait for network requests
-        "await" = pause here until the request finishes
-        "Promise.all" = run all 3 requests at the same time, wait for all to finish (faster than doing them one by one)          
-    */
-    const fetchProfile = async (userId: number): Promise<ProfileWithId> => {
+
+    const fetchProfile = (userId: number): Promise<ProfileWithId> => {
         seenIds.current.add(userId);
-
-        const [user, profile, bio] = await Promise.all([
-            api.get(`/users/${userId}`),
-            api.get(`/users/${userId}/profile`),
-            api.get(`/users/${userId}/bio`)
-        ]);
-
-        return {
-            userId,
-            name: user.data.name,
-            age: bio.data.age.toString(),
-            gender: bio.data.gender,
-            bio: profile.data.bio,
-            hobbies: bio.data.hobbies,
-            lookingFor: bio.data.lookingFor,
-            lookingForGender: bio.data.lookingForGender,
-            profilePicture: user.data.profilePictureUrl || null,
-            distanceKm: bio.data.distanceKm 
-        };
+        return fetchViewableProfile(userId);
     };
+
     /*
         Fetch more user IDs from backend and add to queue
         Returns true if we got new IDs, false if no more users
-        - Prevents concurrent fetches
-        - Immediately reserves returned IDs in queuedIds to avoid duplicates
     */
     const fetchMoreIds = async (): Promise<boolean> => {
         if (isFetchingIdsRef.current) {
@@ -79,271 +79,172 @@ const MainPage: React.FC = () => {
         isFetchingIdsRef.current = true;
         try {
             const response = await api.get<number[]>('/recommendations');
-            if (response.data.length > 0) {
-                // Filter out IDs we've already interacted with or already queued/reserved
-                const newIds = response.data.filter(id =>
-                    !seenIds.current.has(id) && !queuedIds.current.has(id)
-                );
-                // Reserve them immediately and push to queue
-                newIds.forEach(id => {
-                    queuedIds.current.add(id);
-                    queue.current.push(id);
-                });
-
-                return queue.current.length > 0;
-            }
-            return false;
+            const newIds = response.data.filter(id => !seenIds.current.has(id) && !queuedIds.current.has(id));
+            newIds.forEach(id => {
+                queuedIds.current.add(id);
+                queue.current.push(id);
+            });
+            return queue.current.length > 0;
         } finally {
             isFetchingIdsRef.current = false;
         }
     };
 
-    // Take next ID from queue and load it as nextProfile
-    const preloadNext = async () => {
-        // Get more IDs if needed
-        if (queue.current.length === 0) {
-            await fetchMoreIds();
-        }
-        
-        // Take from queue (remove it) and preload
-        if (queue.current.length > 0) {
-            const nextId = queue.current.shift()!; // Remove from queue
-            // un-reserve: we're loading it now
+    // Take the next ID from the queue and load it. Skips people whose profile fails to load
+    const takeNext = async (): Promise<ProfileWithId | null> => {
+        while (true) {
+            if (queue.current.length === 0 && !(await fetchMoreIds())) return null;
+            const nextId = queue.current.shift()!;
             queuedIds.current.delete(nextId);
-            const next = await fetchProfile(nextId);
-            setNextProfile(next);
-        } else {
-            setNextProfile(null);
+            try {
+                return await fetchProfile(nextId);
+            } catch (err) {
+                console.error('Skipping profile that failed to load:', nextId, err);
+            }
         }
     };
-    // Load initial profile
+
     const loadInitial = async () => {
-        // Get IDs
-        const hasMore = await fetchMoreIds();
-        if (!hasMore) {
-            setNoMoreProfiles(true);
+        setIsLoading(true);
+        setNoMoreProfiles(false);
+        setError(null);
+        try {
+            const first = await takeNext();
+            setCurrentProfile(first);
+            setNoMoreProfiles(!first);
             setIsLoading(false);
-            return;
+            if (first) setNextProfile(await takeNext());
+        } catch (err) {
+            console.error('Failed to load recommendations:', err);
+            setError('We couldn’t load people right now. Check your connection and try again.');
+            setIsLoading(false);
         }
-
-        // Load first profile
-        const firstId = queue.current.shift()!;
-        queuedIds.current.delete(firstId);
-        const first = await fetchProfile(firstId);
-        
-        setAnimationState('fade-in');
-        setCurrentProfile(first);
-        setIsLoading(false);
-        
-        // Preload next
-        await preloadNext();
-        
-        setTimeout(() => setAnimationState(null), 400);
     };
-
 
     useEffect(() => {
         loadInitial();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    // Handles like/skip, updates backend, animates, and loads next profile.
+
+    // Like sends a connection request; skip just hides them. The card slides away, then the next one comes in
     const handleAction = async (actionType: 'like' | 'skip') => {
-        if (!currentProfile || animationState?.startsWith('out') || isActionInProgress) return;
+        if (!currentProfile || isActionInProgressRef.current) return;
+        isActionInProgressRef.current = true;
+        const person = currentProfile;
 
-        isActionInProgressRef.current = true; // Lock actions synchronously
-        setIsActionInProgress(true); // Lock actions
-
-        const direction = actionType === 'like' ? 'right' : 'left';
-        
+        setOut(actionType === 'like' ? 'right' : 'left');
         try {
-            // Start exit animation
-            setAnimationState(direction === 'right' ? 'out-right' : 'out-left');
-            
-            // Tell backend about the interaction
-            await api.post(`/${currentProfile.userId}/${actionType}`);
-
-            // Mark as seen only after interaction
-            seenIds.current.add(currentProfile.userId);
-            // Also ensure it's not reserved anymore
-            queuedIds.current.delete(currentProfile.userId);
-
-            // Wait for animation, then show next
-            setTimeout(async () => {
-                if (nextProfile) {
-                    // We have a preloaded profile - use it
-                    setCurrentProfile(nextProfile);
-                    setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
-                    
-                    // Preload the next one
-                    await preloadNext();
-                    
-                    setTimeout(() => {
-                        setAnimationState(null);
-                        isActionInProgressRef.current = false; // Unlock after everything is done
-                        setIsActionInProgress(false);
-                    }, 400);
-                } else {
-                    // No preloaded profile - check if there are more
-                    const hasMore = await fetchMoreIds();
-                    if (hasMore) {
-                        const nextId = queue.current.shift()!;
-                        queuedIds.current.delete(nextId);
-                        const next = await fetchProfile(nextId);
-                        
-                        setCurrentProfile(next);
-                        setAnimationState(direction === 'right' ? 'in-right' : 'in-left');
-                        
-                        await preloadNext();
-                        
-                        setTimeout(() => {
-                            setAnimationState(null);
-                            isActionInProgressRef.current = false; // Unlock after everything is done
-                            setIsActionInProgress(false);
-                        }, 400);
-                    } else {
-                        // No more profiles
-                        setCurrentProfile(null);
-                        setNoMoreProfiles(true);
-                        isActionInProgressRef.current = false; // Unlock even if no more
-                        setIsActionInProgress(false);
-                    }
-                }
-            }, 350);
+            if (actionType === 'like') {
+                await matchAPI.sendConnectionRequest(person.userId);
+            }
+            await api.post(`/${person.userId}/${actionType}`);
+            seenIds.current.add(person.userId);
+            queuedIds.current.delete(person.userId);
         } catch (err) {
             console.error(`Failed to ${actionType}:`, err);
-            setError(`Failed to ${actionType} profile`);
-            setAnimationState(null);
-            isActionInProgressRef.current = false; // Unlock on error
-            setIsActionInProgress(false); // Update UI State
+            setError(getErrorMessage(err, actionType === 'like' ? 'Couldn’t send your request. Try again.' : 'Something went wrong. Try again.'));
+            setOut(null);
+            isActionInProgressRef.current = false;
+            return;
         }
+
+        window.setTimeout(async () => {
+            const next = nextProfile ?? (await takeNext().catch(() => null));
+            setOut(null);
+            setCurrentProfile(next);
+            setNextProfile(null);
+            if (!next) {
+                setNoMoreProfiles(true);
+                isActionInProgressRef.current = false;
+                return;
+            }
+            isActionInProgressRef.current = false;
+            setNextProfile(await takeNext().catch(() => null));
+        }, 240);
     };
 
-    const handleLogout = () => {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        navigate('/login');
-    };
-    // Convert animation state to CSS class name
-    const getAnimationClass = () => {
-        switch (animationState) {
-            case 'out-left': return 'animate-slide-out-left';
-            case 'out-right': return 'animate-slide-out-right';
-            case 'in-left': return 'animate-slide-in-from-left';
-            case 'in-right': return 'animate-slide-in-from-right';
-            case 'fade-in': return 'animate-fade-in';
-            default: return '';
-        }
-    };
+    // Keyboard: left arrow skips, right arrow connects
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('input, textarea, [role="dialog"]')) return;
+            if (e.key === 'ArrowLeft') handleAction('skip');
+            if (e.key === 'ArrowRight') handleAction('like');
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    });
 
-    const buttonsDisabled = isLoading || isActionInProgress || Boolean(animationState && animationState.startsWith('out'));
+    useEffect(() => {
+        if (!error) return;
+        const t = window.setTimeout(() => setError(null), 4000);
+        return () => clearTimeout(t);
+    }, [error]);
 
-    return (
-        <div className="h-screen overflow-hidden pb-16 md:pb-0"
-            style={{ background: "linear-gradient(to top, #3b82f6, #f8fafc)" }}>
-            {/* Logout button - fixed in top right corner */}
-            <div className="fixed top-4 right-3 sm:top-2 sm:right-3 md:top-4 md:right-4 z-50">
-                <LogOutButton onClick={handleLogout} />
-            </div>    
-          
-            <div className="flex h-screen">
-                <Sidebar />
+    const busy = Boolean(out) || isLoading;
 
-                {/* Changed: use flex-col to stack title, card, buttons vertically with justify-center */}
-                <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                    
-                    {/* Title */}
-                    <div className="mb-4 md:mb-6 shrink-0">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 text-center">
-                            Explore Profiles
-                        </h1>
-                    </div>
+    const actions = (
+        <div className="acts" style={isLoading ? { opacity: 0.45 } : undefined} aria-hidden={isLoading}>
+            <button className="act btn" onClick={() => handleAction('skip')} disabled={busy}>
+                <span className="circ skip"><X className="i" /></span>Skip
+            </button>
+            <button className="act btn" onClick={() => handleAction('like')} disabled={busy}>
+                <span className="circ like"><Heart className="i" /></span>Connect
+            </button>
+        </div>
+    );
 
-                    {/* 
-                      Card container - FIXED HEIGHT so buttons don't move
-                      Height must be >= card min-height to prevent overlap
-                    */}
-                    <div className="h-[560px] sm:h-[600px] md:h-[640px] flex items-start justify-center shrink-0">
-                        {/* 
-                          - If loading, show skeleton
-                          - Else if we have a profile, show the card
-                          - Else if no more profiles, show empty state
-                          - Else show nothing
-                        */}
-                        {isLoading ? (
-                            <div className="w-[340px] sm:w-[380px] md:w-[420px]
-                                        min-h-[480px] sm:min-h-[500px] md:min-h-[520px]
-                                        bg-white rounded-2xl shadow-2xl 
-                                        animate-pulse flex flex-col">
-                                <div className="h-[280px] sm:h-[300px] md:h-80 bg-gray-200 rounded-t-2xl"></div>
-                                <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col">
-                                    <div className="h-7 bg-gray-200 rounded w-3/4"></div>
-                                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
-                                        <div className="h-6 bg-gray-200 rounded-full w-14"></div>
-                                    </div>
-                                    <div className="flex-1"></div>
-                                    <div className="h-6 bg-gray-200 rounded-full w-24"></div>
-                                </div>
-                            </div>
-                        ) : currentProfile ? (
-                            <div className={getAnimationClass()}>
-                                <ProfileCard 
-                                    profile={currentProfile} 
-                                />
-                            </div>
-                        ) : noMoreProfiles ? (
-                            <div className="text-center flex flex-col items-center justify-center max-w-md px-6 h-full">
-                                <div className="w-20 h-20 mb-5 rounded-full bg-linear-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
-                                    No more profiles nearby
-                                </h2>
-                                <p className="text-sm md:text-base text-gray-500">
-                                    Try expanding your distance or check back later
-                                </p>
-                            </div>
-                        ) : null}
-                    </div>
-
-                    {/* 
-                      Like/Skip buttons - FIXED HEIGHT container so position never changes
-                      Buttons only visible when we have a currentProfile and not loading
-                    */}
-                    <div className="h-20 flex items-center justify-center shrink-0 mt-4 sm:mt-6">
-                        {currentProfile && !isLoading && (
-                            <div className="flex gap-6 sm:gap-8 md:gap-12">
-                                <SkipButton 
-                                    onClick={() => { if (!isActionInProgressRef.current) handleAction('skip'); }} 
-                                    disabled={buttonsDisabled} 
-                                />
-                                <LikeButton 
-                                    userId={currentProfile?.userId || 0}  // Pass the user ID
-                                    isLiked={false}  // You can check this from API if needed
-                                    onLikeSuccess={(isMatch) => {
-                                        if (isMatch) {
-                                        // Handle match - maybe refresh matches list
-                                        console.log("It's a match!");
-                                        }
-                                        handleAction('like')
-                                    }}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {error && (
-                        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 
-                                      bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg
-                                      animate-slide-up z-50">
-                            {error}
-                        </div>
-                    )}
+    let stage: React.ReactNode;
+    if (isLoading) {
+        stage = (
+            <>
+                <div className="ex-card"><Skeleton /></div>
+                {actions}
+                <p className="sr" role="status">Finding people near you</p>
+            </>
+        );
+    } else if (currentProfile) {
+        stage = (
+            <>
+                <div className="ex-card">
+                    <ProfileCard
+                        key={currentProfile.userId}
+                        profile={currentProfile}
+                        myHobbies={myHobbies}
+                        withBioSheet={!isDesktop}
+                        className={out ? `out-${out}` : ''}
+                    />
+                </div>
+                {actions}
+            </>
+        );
+    } else if (noMoreProfiles) {
+        stage = <div className="ex-empty"><EmptyExplore onRetry={() => { seenIds.current.clear(); loadInitial(); }} /></div>;
+    } else if (error) {
+        stage = (
+            <div className="ex-empty">
+                <div className="empty">
+                    <h2>Something went wrong</h2>
+                    <p>{error}</p>
+                    <button className="b-lg pri btn" onClick={loadInitial}><RefreshCw className="i" /><span>Try again</span></button>
                 </div>
             </div>
+        );
+    }
+
+    return (
+        <div className="ex">
+            <header className="ph-h ph-only"><Logo /></header>
+            <main className="ex-main">
+                <div className="ex-col">{stage}</div>
+                {isDesktop && currentProfile && !isLoading && (
+                    <section className={out ? 'det out' : 'det'} aria-label={`About ${currentProfile.name}`} key={currentProfile.userId}>
+                        <p className="lbl">About {currentProfile.name}</p>
+                        <ProfileDetails profile={currentProfile} myHobbies={myHobbies} />
+                    </section>
+                )}
+            </main>
+            {error && (currentProfile || isLoading) && <div className="toast err" role="alert">{error}</div>}
         </div>
     );
 };

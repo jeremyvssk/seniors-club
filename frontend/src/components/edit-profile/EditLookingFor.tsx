@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { EditProfileData } from "../../types/User";
+import { Check } from "lucide-react";
+import { EditProfileData, Gender, LookingFor } from "../../types/User";
 import api from "../../api/axios";
-import { Heart, Handshake, Plane, Compass, VenusAndMars } from "lucide-react";
-
-type Gender = "man" | "woman" | "other"
+import { getErrorMessage } from "../../api/profiles";
+import { GENDER_OPTIONS } from "../../constants/profileOptions";
+import { LookingForIcon } from "../ui/design";
+import { LF_DESC, LF_LABEL } from "../../lib/format";
 
 interface EditLookingForProps {
   data: EditProfileData;
@@ -12,191 +14,81 @@ interface EditLookingForProps {
   onBack: () => void;
 }
 
-const options = [
-  {
-    value: "love" as const,
-    label: "Love",
-    icon: <Heart className="w-6 h-6 md:w-8 md:h-8" />,
-    description: "Looking for a romantic relationship",
-  },
-  {
-    value: "friend" as const,
-    label: "Friendship",
-    icon: <Handshake className="w-6 h-6 md:w-8 md:h-8" />,
-    description: "Looking for companionship and friendship",
-  },
-  {
-    value: "travel" as const,
-    label: "Travel Buddy",
-    icon: <Plane className="w-6 h-6 md:w-8 md:h-8" />,
-    description: "Looking for someone to explore with",
-  },
-  {
-    value: "open" as const,
-    label: "Still Figuring Out",
-    icon: <Compass className="w-6 h-6 md:w-8 md:h-8" />,
-    description: "Open to different types of connections",
-  },
-];
+const KINDS: LookingFor[] = ["love", "friend", "travel", "open"];
 
-const genderOptions: { value: Gender; label: string }[] = [ // Explicitly type the array
-  { value: "man", label: "Man" },
-  { value: "woman", label: "Woman" },
-  { value: "other", label: "Other" },
-];
+// The four colour-coded options, shared with sign-up step 3
+export const LookingForPicker: React.FC<{ value: LookingFor; onChange: (v: LookingFor) => void }> = ({ value, onChange }) => (
+  <div role="group" aria-label="Looking for" className="lfopts">
+    {KINDS.map((k) => {
+      const sel = value === k;
+      return (
+        <button key={k} type="button" className={`lfopt btn ${k}`} aria-pressed={sel} onClick={() => onChange(k)}>
+          <span className="lfi"><LookingForIcon kind={k} /></span>
+          <span>
+            <b>{LF_LABEL[k]}</b>
+            <small>{LF_DESC[k]}</small>
+          </span>
+          <span className="tick">{sel && <Check className="s" />}</span>
+        </button>
+      );
+    })}
+  </div>
+);
 
-const EditLookingFor = ({ data, updateData, onNext }: EditLookingForProps) => {
-  const [error, setError] = useState<string> ("");
+export const GenderPicker: React.FC<{ value: Gender[]; onToggle: (g: Gender) => void }> = ({ value, onToggle }) => (
+  <div className="pick" role="group" aria-label="Who you would like to meet">
+    {GENDER_OPTIONS.map((option) => {
+      const on = value.includes(option.value);
+      return (
+        <button key={option.value} type="button" className="btn" aria-pressed={on} onClick={() => onToggle(option.value)}>
+          {on && <Check className="s" />}
+          {option.value === "man" ? "Men" : option.value === "woman" ? "Women" : "Other"}
+        </button>
+      );
+    })}
+  </div>
+);
+
+const EditLookingFor = ({ data, updateData, onNext, onBack }: EditLookingForProps) => {
+  const [lookingFor, setLookingFor] = useState<LookingFor>(data.lookingFor || "open");
+  const [genders, setGenders] = useState<Gender[]>(data.lookingForGender || []);
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const toggleGenderPreference = (gender: Gender) => {
-    const currentPreferences = data.lookingForGender || [];
-    const newPreferences = currentPreferences.includes(gender)
-      ? currentPreferences.filter((g) => g !== gender)
-      : [...currentPreferences, gender];
-    updateData({ lookingForGender: newPreferences });
-
-    if (error) setError("");
-  };
+  const toggleGender = (g: Gender) =>
+    setGenders((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (genders.length === 0) return;
     setSaving(true);
-
-    if (!data.lookingForGender || data.lookingForGender.length === 0) {
-      setError("Please select at least one gender preference");
-      return;
+    setError("");
+    try {
+      await api.put("/me/bio", { lookingFor, lookingForGender: genders });
+      updateData({ lookingFor, lookingForGender: genders });
+      onNext();
+    } catch (err) {
+      console.error("Failed to save preferences:", err);
+      setError(getErrorMessage(err, "Couldn’t save. Check your connection and try again."));
+    } finally {
+      setSaving(false);
     }
- try {
-    //save both to database via backend
-
-    await api.put("/me/bio", {
-        lookingFor: data.lookingFor,
-        lookingForGender: data.lookingForGender
-    });
-    onNext(); //close the modal
- } catch (error) {
-    console.error("Failed to save preferences:", error);
-    alert("Failed to save preferences. Please try again.");
- } finally {
-    setSaving(false);
- }
-};
+  };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/55 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-md">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
-          What are you looking for?
-        </h2>
-        <p className="text-center text-slate-600 mb-4 md:mb-6 text-sm">
-          Choose one option
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* What are you looking for - Options */}
-          <div className="space-y-2 md:space-y-3">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`w-full min-h-18 md:h-24 p-3 md:p-4 rounded-lg text-left transition-all border-2 ${
-                  data.lookingFor === option.value
-                    ? "bg-blue-600 text-white shadow-lg border-blue-600"
-                    : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
-                }`}
-                onClick={() => updateData({ lookingFor: option.value })}
-              >
-                <div className="flex items-center gap-2 md:gap-4 h-full">
-                  <span
-                    className={
-                      data.lookingFor === option.value
-                        ? "text-white"
-                        : "text-blue-600"
-                    }
-                  >
-                    {option.icon}
-                  </span>
-                  <div className="flex-1">
-                    <h3
-                      className={`text-base md:text-xl font-semibold mb-0.5 ${
-                        data.lookingFor === option.value
-                          ? "text-white"
-                          : "text-slate-900"
-                      }`}
-                    >
-                      {option.label}
-                    </h3>
-                    <p
-                      className={`text-xs md:text-sm ${
-                        data.lookingFor === option.value
-                          ? "text-blue-100"
-                          : "text-slate-600"
-                      }`}
-                    >
-                      {option.description}
-                    </p>
-                  </div>
-                  {data.lookingFor === option.value && (
-                    <span className="text-lg md:text-2xl">✓</span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Gender Preferences Section */}
-          <div className="pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <VenusAndMars className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-              <h3 className="text-lg md:text-xl font-semibold text-slate-900">
-                Who Are You Looking For?
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-              {genderOptions.map((option) => {
-                const isSelected = (data.lookingForGender || []).includes(
-                  option.value
-                );
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`py-3 md:py-4 px-2 md:px-4 rounded-lg font-medium text-sm md:text-base transition-all border-2 ${
-                      isSelected
-                        ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400"
-                    }`}
-                    onClick={() => toggleGenderPreference(option.value)}
-                  >
-                    {option.label}
-                    {isSelected && <span className="ml-1 md:ml-2">✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-             {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm md:text-base text-center mt-3">
-                {error}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2 md:space-y-3">
-            <button
-              type="submit"
-              disabled={saving}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-            
-          </div>
-        </form>
+    <form onSubmit={handleSubmit} className="form">
+      {error && <div className="alert" role="alert">{error}</div>}
+      <LookingForPicker value={lookingFor} onChange={setLookingFor} />
+      <div className="field">
+        <p className="field-l">Who would you like to meet?</p>
+        <GenderPicker value={genders} onToggle={toggleGender} />
+        {genders.length === 0 && <p className="pick-hint">Pick at least one.</p>}
       </div>
-    </div>
+      <div className="modal-a">
+        <button type="button" className="b-lg sec btn" onClick={onBack}>Cancel</button>
+        <button type="submit" className="b-lg pri btn" disabled={saving || genders.length === 0}>{saving ? "Saving…" : "Save"}</button>
+      </div>
+    </form>
   );
 };
 

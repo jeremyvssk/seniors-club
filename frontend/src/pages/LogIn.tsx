@@ -1,14 +1,43 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { SubmitHandler, useForm } from "react-hook-form";
-import HomeButton from "../components/buttons/HomeButton";
-import LogInButton from "../components/buttons/LogInButton";
-import Header from "../components/headers/Header";
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { AxiosError } from "axios";
 import api from "../api/axios";
+import { Logo } from "../components/ui/design";
+import { saveSession } from "../lib/session";
 
 type LogInFields = {
   email: string;
   password: string;
+};
+
+// Shared frame for log in and sign up
+export const AuthFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="auth">
+    <header className="ph-h auth-h">
+      <Link to="/" style={{ color: "inherit", textDecoration: "none" }} aria-label="Seniors' Club home">
+        <Logo />
+      </Link>
+    </header>
+    <main className="auth-main">{children}</main>
+  </div>
+);
+
+export const PasswordInput: React.FC<React.ComponentProps<"input"> & { invalid?: boolean }> = ({
+  invalid,
+  ...props
+}) => {
+  const [show, setShow] = useState(false);
+  return (
+    <div className={`inp${invalid ? " err" : ""}`}>
+      <Lock className="s" />
+      <input {...props} type={show ? "text" : "password"} />
+      <button type="button" className="ib btn" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow((s) => !s)}>
+        {show ? <EyeOff className="s" /> : <Eye className="s" />}
+      </button>
+    </div>
+  );
 };
 
 const SeniorsClubLogIn: React.FC = () => {
@@ -23,136 +52,79 @@ const SeniorsClubLogIn: React.FC = () => {
   const onSubmit: SubmitHandler<LogInFields> = async (data) => {
     try {
       const response = await api.post("/login", {
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
       });
 
-      // Axios automatically parses JSON, data is in response.data
-      sessionStorage.setItem("token", response.data.token);
-      sessionStorage.setItem("user", JSON.stringify(response.data.user));
-
-      
+      saveSession(response.data.token, response.data.user);
 
       // checks if there is a profile
-     if (response.data.user.profileComplete) {
-        navigate("/explore"); // if there is, go to main page
+      navigate(response.data.user.profileComplete ? "/explore" : "/complete-profile");
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      if (error.response?.status === 401) {
+        setError("root", { message: "That email and password don’t match. Check for typos and try again." });
+      } else if (error.response) {
+        setError("root", { message: "Something went wrong on our side. Please try again." });
       } else {
-        navigate("/complete-profile"); // if not, set profile up
-      }
-    } catch (error: any) {
-      // Axios error handling
-      if (error.response) {
-        // Server responded with error
-        if (error.response.status === 401) {
-          setError("root", { 
-            message: "Invalid email or password" 
-          });
-        } else {
-          setError("root", {
-            message: "An error occurred",
-          });
-        }
-      } else if (error.request) {
-        // Request made but no response
-        setError("root", {
-          message: "Network error. Please try again.",
-        });
-      } else {
-        setError("root", {
-          message: "An error occurred",
-        });
+        setError("root", { message: "We can’t reach the server. Check your connection and try again." });
       }
     }
   };
 
   return (
-    <div>
-      <Header />
-      <div
-        className="min-h-screen text-white p-10 relative flex flex-col items-center px-6 pt-4 pb-16"
-        style={{
-          background: "linear-gradient(to top, #3b82f6, #f8fafc )",
-        }}
-      >
-        <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
-          <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
-            Log In
-          </h2>
-
-          {errors.root && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-700 text-sm">
-              {errors.root.message}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xl font-medium text-slate-500 mb-2"
-              >
-                Email
-              </label>
-              <input
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                    message: "Invalid email address",
-                  },
-                })}
-                type="email"
-                id="email"
-                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-500 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
-                placeholder="Enter your email"
-              />
-              {errors.email && (
-                <div className="text-red-600 text-sm mt-1">
-                  {errors.email.message}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xl font-medium text-slate-500 mb-2"
-              >
-                Password
-              </label>
-              <input
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters long",
-                  },
-                })}
-                type="password"
-                id="password"
-                className="w-full px-4 py-3 rounded-lg bg-white/10 border border-slate-400 text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-black/50"
-                placeholder="Enter your password"
-              />
-              {errors.password && (
-                <div className="text-red-600 text-sm mt-1">
-                  {errors.password.message}
-                </div>
-              )}
-            </div>
-
-            <LogInButton
-              type="submit"
-              disabled={isSubmitting}
-              className="py-4 text-xl"
-            />
-          </form>
-
-          <div className="flex justify-center mt-6">
-            <HomeButton onClick={() => navigate("/")} className="text-xl" />
-          </div>
-        </div>
+    <AuthFrame>
+      <div>
+        <h1 className="auth-h1">Welcome back</h1>
+        <p className="flow-sub">Log in to see who is nearby.</p>
       </div>
-    </div>
+
+      {errors.root && (
+        <div className="alert" role="alert">
+          <AlertCircle className="s" style={{ marginTop: 2 }} />
+          <span>{errors.root.message}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="form" noValidate>
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <div className={`inp${errors.email ? " err" : ""}`}>
+            <Mail className="s" />
+            <input
+              {...register("email", {
+                required: "Enter your email",
+                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, message: "That doesn’t look like an email address" },
+              })}
+              type="email"
+              id="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+            />
+          </div>
+          {errors.email && <p className="field-err">{errors.email.message}</p>}
+        </div>
+
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <PasswordInput
+            {...register("password", { required: "Enter your password" })}
+            id="password"
+            autoComplete="current-password"
+            invalid={Boolean(errors.password || errors.root)}
+          />
+          {errors.password && <p className="field-err">{errors.password.message}</p>}
+        </div>
+
+        <button type="submit" className="b-lg pri btn" style={{ width: "100%", marginTop: 6 }} disabled={isSubmitting}>
+          {isSubmitting ? "Logging in…" : "Log in"}
+        </button>
+      </form>
+
+      <p className="auth-alt">
+        New here? <Link to="/signup">Create an account</Link>
+      </p>
+    </AuthFrame>
   );
 };
 

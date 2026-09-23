@@ -1,123 +1,71 @@
-import { Gender, UserFormData } from "../../../types/User";
-import NextButton from "../../buttons/NextButton";
+import { Check } from "lucide-react";
+import { GENDER_OPTIONS } from "../../../constants/profileOptions";
+import { StepProps } from "../StepIndex";
 
-interface Step1Props {
-  data: UserFormData;
-  updateData: (data: Partial<UserFormData>) => void;
-  onNext: () => void;
-}
-
-const Step1BasicInfo = ({ data, updateData, onNext }: Step1Props) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validations
-    if (!data.name.trim()) {
-      alert("Please enter your name");
-      return;
-    }
-
-    if (data.name.trim().length < 2) {
-      alert("Name must be at least 2 characters long");
-      return;
-    }
-
-    const age = parseInt(data.age);
-    if (!data.age || isNaN(age)) {
-      alert("Please enter a valid age");
-      return;
-    }
-
-    if (age < 18) {
-      alert("You must be at least 18 years old to use this service");
-      return;
-    }
-
-    if (age > 130) {
-      alert("Please enter a valid age");
-      return;
-    }
-
-
-    if (!data.gender) {
-      alert("Please select your gender");
-      return;
-    }
-
-    // All validation passed - move to next step
-    onNext();
-  };
+const Step1BasicInfo = ({ data, updateData }: StepProps) => {
+  const age = parseInt(data.age);
+  const ageProblem =
+    data.age && (isNaN(age) || age < 18) ? "You need to be at least 18." : data.age && age > 120 ? "Check your age." : "";
+  const nameShort = data.name.length > 0 && data.name.trim().length < 2;
 
   return (
-    <div className="relative z-10 bg-white/55 backdrop-blur-sm rounded-2xl p-8 md:p-12 w-full max-w-md shadow-md">
-      <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
-        Personal information
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-xl font-medium text-slate-500 mb-2"
-          >
-            Name
-          </label>
+    <div className="form">
+      <div className="field">
+        <label htmlFor="name">First name</label>
+        <div className={`inp${nameShort ? " err" : ""}`}>
           <input
-            type="text"
             id="name"
+            type="text"
             value={data.name}
             onChange={(e) => updateData({ name: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your name"
-            minLength={2}
+            placeholder="For example, Kaja"
             maxLength={50}
-            required
+            autoComplete="given-name"
+            autoFocus
           />
         </div>
+        {nameShort && <p className="field-err">At least 2 letters, please.</p>}
+      </div>
 
-        <div>
-          <label
-            htmlFor="age"
-            className="block text-xl font-medium text-slate-500 mb-2"
-          >
-            Age
-          </label>
+      <div className="field">
+        <label htmlFor="age">Age</label>
+        <div className={`inp${ageProblem ? " err" : ""}`} style={{ maxWidth: 160 }}>
           <input
-            type="number"
             id="age"
+            type="number"
+            inputMode="numeric"
             value={data.age}
             onChange={(e) => updateData({ age: e.target.value })}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your age"
-            min="18"
-            max="120"
-            required
+            placeholder="67"
+            min={18}
+            max={120}
           />
         </div>
+        {ageProblem && <p className="field-err">{ageProblem}</p>}
+      </div>
 
-        <div>
-          <label
-            htmlFor="gender"
-            className="block text-xl font-medium text-slate-500 mb-2"
-          >
-            Gender
-          </label>
-          <select
-            id="gender"
-            value={data.gender}
-            onChange={(e) => updateData({ gender: e.target.value as Gender})}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          >
-            <option value="">Select gender</option>
-            <option value="man">Man</option>
-            <option value="woman">Woman</option>
-            <option value="other">Other</option>
-          </select>
+      <div className="field">
+        <p className="field-l">I am a</p>
+        <div className="pick" role="radiogroup" aria-label="Gender">
+          {GENDER_OPTIONS.map((option) => {
+            const on = data.gender === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className="btn"
+                role="radio"
+                aria-checked={on}
+                aria-pressed={on}
+                onClick={() => updateData({ gender: option.value })}
+              >
+                {on && <Check className="s" />}
+                {option.label}
+              </button>
+            );
+          })}
         </div>
-
-        <NextButton type="submit" />
-      </form>
+      </div>
     </div>
   );
 };

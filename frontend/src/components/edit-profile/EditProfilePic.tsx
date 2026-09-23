@@ -1,146 +1,98 @@
-import { useState, useRef, useEffect } from "react";
-import { EditProfileData } from "../../types/User";
+import React, { useEffect, useRef, useState } from "react";
+import { Camera, Trash2 } from "lucide-react";
 
-
-interface ProfilePictureProps {
-  data: EditProfileData;
-  updateData: (data: Partial<EditProfileData>) => void;
-  onNext: () => void;
-  onBack: () => void;
+interface PhotoPickerProps {
+  // Current photo: an uploaded URL or a file picked earlier
+  current?: string | File | null;
+  onChange: (file: File | null) => void;
 }
 
-const ProfilePicture = ({
-  data,
-  updateData,
-  onNext,
-}: ProfilePictureProps) => {
-  const [preview, setPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
+// Big preview plus choose/remove. Used by sign-up step 5 and the profile page
+export const PhotoPicker: React.FC<PhotoPickerProps> = ({ current, onChange }) => {
+  const [preview, setPreview] = useState<string | null>(typeof current === "string" ? current : null);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Restore preview when navigating back with existing profile picture
   useEffect(() => {
-    // First check if there's an existing uploaded image URL
-    if (data.profilePictureUrl) {
-      setPreview(data.profilePictureUrl);
-    } 
-    // Then check if there's a newly selected file
-    else if (data.profilePicture) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(data.profilePicture);
+    if (current instanceof File) {
+      const url = URL.createObjectURL(current);
+      setPreview(url);
+      return () => URL.revokeObjectURL(url);
     }
-  }, [data.profilePicture, data.profilePictureUrl]);
+    setPreview(typeof current === "string" ? current : null);
+  }, [current]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
-        return;
-      }
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("That file isn’t a photo. Choose a JPG or PNG.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("That photo is too large. Choose one under 5 MB.");
+      return;
+    }
+    setError("");
+    onChange(file);
+  };
 
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
-        return;
-      }
+  return (
+    <div className="photo">
+      {error && <div className="alert" role="alert">{error}</div>}
+      <div className="photo-box">
+        {preview ? <img src={preview} alt="Your photo" /> : <Camera className="i" aria-hidden="true" />}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} className="sr" id="photo-file" />
+      <div className="photo-a">
+        <button type="button" className="b-lg pri btn" onClick={() => inputRef.current?.click()}>
+          <Camera className="i" />
+          <span>{preview ? "Choose another" : "Choose a photo"}</span>
+        </button>
+        {preview && (
+          <button type="button" className="b-lg sec btn" onClick={() => onChange(null)}>
+            <Trash2 className="i" />
+            <span>Remove</span>
+          </button>
+        )}
+      </div>
+      <p className="form-sub" style={{ textAlign: "center" }}>JPG or PNG, up to 5 MB. A clear photo of your face works best.</p>
+    </div>
+  );
+};
 
-      updateData({ profilePicture: file });
+interface EditProfilePicProps {
+  current: string | null;
+  onSave: (file: File | null) => Promise<void>;
+  onBack: () => void;
+}
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+const EditProfilePic: React.FC<EditProfilePicProps> = ({ current, onSave, onBack }) => {
+  const [picked, setPicked] = useState<string | File | null>(current);
+  const [saving, setSaving] = useState(false);
+  const changed = picked !== current;
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSave(picked instanceof File ? picked : null);
+    } finally {
+      setSaving(false);
     }
   };
 
-const handleRemove = () => {
-  updateData({ profilePicture: null, profilePictureUrl: null });
-  setPreview(null);
-  if (fileInputRef.current) {
-    fileInputRef.current.value = "";
-  }
-};
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onNext();
-  };
-
-  // const hasPhoto = preview !== null;
-
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white/55 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-md">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-1 md:mb-2">
-          Profile picture
-        </h2>
-        <p className="text-center text-slate-500 text-sm mb-4 md:mb-6">
-          Choose a new photo or remove the current one
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* Upload Area - Balanced size */}
-          <div className="w-full">
-            {preview ? (
-              <div className="space-y-2 md:space-y-3">
-                <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center shadow-sm">
-                  <img
-                    src={preview}
-                    alt="Profile preview"
-                    className="w-full h-full object-cover"
-                  />
-                  
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemove}
-                  className="w-full px-4 py-2.5 md:py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors text-sm md:text-base shadow-md hover:shadow-lg"
-                >
-                  Remove Photo
-                </button>
-              </div>
-            ) : (
-              <div className="w-full border-2 border-dashed border-slate-300 rounded-lg p-8 md:p-12 text-center hover:border-slate-400 transition-colors bg-white/50">
-                <div className="text-6xl md:text-7xl mb-3">👤</div>
-                <p className="text-slate-700 mb-4 font-medium text-base">
-                  No photo selected
-                </p>
-                <label
-                  htmlFor="profilePic"
-                  className="inline-block px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all cursor-pointer shadow-md hover:shadow-lg text-sm md:text-base"
-                >
-                  Choose Photo
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  id="profilePic"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </div>
-            )}
-          </div>
-
-   {/* Buttons */}
-          <div className="space-y-2">
-            <button
-              type="submit"
-              className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
-            >
-              Save
-              {/* {hasPhoto ? "Save Changes" : "Close"} */}
-            </button>
-          </div>
-        </form>
+    <div className="form">
+      <PhotoPicker current={picked} onChange={setPicked} />
+      <div className="modal-a">
+        <button type="button" className="b-lg sec btn" onClick={onBack}>Cancel</button>
+        <button type="button" className="b-lg pri btn" onClick={save} disabled={!changed || saving}>
+          {saving ? "Saving…" : "Save"}
+        </button>
       </div>
     </div>
   );
 };
 
-export default ProfilePicture;
+export default EditProfilePic;
