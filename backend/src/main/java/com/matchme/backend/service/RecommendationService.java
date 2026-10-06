@@ -12,6 +12,7 @@ import com.matchme.backend.repo.UserProfileRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,8 +90,9 @@ public class RecommendationService {
             candidateProfiles
         );
 
-        // Return top 10 matches
+        // Return top 10 matches, people with a photo first (stable sort keeps the score order within each group)
         return scoredProfiles.stream()
+            .sorted(Comparator.comparing((UserProfile p) -> p.getProfilePictureUrl() == null || p.getProfilePictureUrl().isBlank()))
             .limit(10)
             .collect(Collectors.toList());
     }
